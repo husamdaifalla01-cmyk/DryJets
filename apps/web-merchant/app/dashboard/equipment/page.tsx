@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { StatCard } from '@/components/ui/stat-card';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { EquipmentCard } from '@/components/equipment/EquipmentCard';
-import { Plus, Activity, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { Plus, Activity, AlertTriangle, Zap, TrendingUp } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '@/lib/animations';
 
 interface Equipment {
   id: string;
@@ -36,14 +38,10 @@ export default function EquipmentPage() {
 
   const fetchEquipment = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/v1/iot/equipment', {
-      //   headers: { Authorization: `Bearer ${token}` },
-      // });
-      // const data = await response.json();
-      // setEquipment(data);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
 
-      // Mock data for now
+      // Mock data
       setEquipment([
         {
           id: '1',
@@ -97,6 +95,34 @@ export default function EquipmentPage() {
           isRunning: false,
           openAlerts: 0,
         },
+        {
+          id: '5',
+          name: 'Steam Boiler #1',
+          type: 'STEAM_BOILER',
+          status: 'OPERATIONAL',
+          isIotEnabled: true,
+          lastTelemetryAt: new Date().toISOString(),
+          healthScore: 91,
+          healthStatus: 'EXCELLENT',
+          efficiencyScore: 88,
+          isRunning: true,
+          openAlerts: 0,
+          lastMaintenanceDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+        {
+          id: '6',
+          name: 'Dryer #2',
+          type: 'DRYER',
+          status: 'OPERATIONAL',
+          isIotEnabled: true,
+          lastTelemetryAt: new Date().toISOString(),
+          healthScore: 82,
+          healthStatus: 'GOOD',
+          efficiencyScore: 79,
+          isRunning: true,
+          openAlerts: 1,
+          lastMaintenanceDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+        },
       ]);
     } catch (error) {
       console.error('Failed to fetch equipment:', error);
@@ -126,81 +152,126 @@ export default function EquipmentPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Activity className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading equipment...</p>
+      <div className="container mx-auto py-8">
+        {/* Header Skeleton */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <div className="h-9 w-64 bg-muted rounded mb-2 skeleton" />
+            <div className="h-5 w-96 bg-muted rounded skeleton" />
+          </div>
+          <div className="h-10 w-40 bg-muted rounded skeleton" />
+        </div>
+
+        {/* Stats Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-24 bg-muted rounded-2xl skeleton" />
+          ))}
+        </div>
+
+        {/* Filter Skeleton */}
+        <div className="flex space-x-2 mb-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-10 w-32 bg-muted rounded skeleton" />
+          ))}
+        </div>
+
+        {/* Equipment Grid Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
+    <motion.div
+      className="container mx-auto py-8"
+      initial="hidden"
+      animate="visible"
+      variants={staggerContainer}
+    >
+      {/* Header */}
+      <motion.div variants={fadeInUp} className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Equipment Management</h1>
-          <p className="text-muted-foreground mt-1">
-            Monitor and manage your equipment with IoT insights
+          <h1 className="text-4xl font-heading font-bold bg-brand-gradient bg-clip-text text-transparent">
+            Equipment Management
+          </h1>
+          <p className="text-muted-foreground mt-2 text-lg">
+            Monitor and manage your equipment with real-time IoT insights
           </p>
         </div>
-        <Button onClick={() => router.push('/dashboard/equipment/add')}>
+        <Button
+          onClick={() => router.push('/dashboard/equipment/add')}
+          className="bg-brand-gradient hover:opacity-90 shadow-lift"
+          size="lg"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add Equipment
         </Button>
-      </div>
+      </motion.div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Total Equipment</CardDescription>
-            <CardTitle className="text-3xl">{stats.total}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>IoT Enabled</CardDescription>
-            <CardTitle className="text-3xl text-blue-600">{stats.iotEnabled}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Currently Running</CardDescription>
-            <CardTitle className="text-3xl text-green-600">{stats.running}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Open Alerts</CardDescription>
-            <CardTitle className="text-3xl text-orange-600">{stats.alerts}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Avg Health Score</CardDescription>
-            <CardTitle className="text-3xl">
-              {stats.avgHealth > 0 ? `${stats.avgHealth}%` : 'N/A'}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
+      {/* Stats Overview - Using StatCard */}
+      <motion.div
+        variants={fadeInUp}
+        className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8"
+      >
+        <StatCard
+          title="Total Equipment"
+          value={stats.total}
+          icon={Zap}
+          variant="default"
+        />
+        <StatCard
+          title="IoT Enabled"
+          value={stats.iotEnabled}
+          icon={Activity}
+          variant="info"
+          trend={12}
+        />
+        <StatCard
+          title="Currently Running"
+          value={stats.running}
+          icon={TrendingUp}
+          variant="success"
+        />
+        <StatCard
+          title="Open Alerts"
+          value={stats.alerts}
+          icon={AlertTriangle}
+          variant={stats.alerts > 0 ? 'warning' : 'success'}
+        />
+        <StatCard
+          title="Avg Health"
+          value={stats.avgHealth}
+          suffix="%"
+          variant={
+            stats.avgHealth >= 80
+              ? 'success'
+              : stats.avgHealth >= 60
+              ? 'info'
+              : stats.avgHealth >= 40
+              ? 'warning'
+              : 'error'
+          }
+        />
+      </motion.div>
 
       {/* Filter Tabs */}
-      <div className="flex space-x-2 mb-6">
+      <motion.div variants={fadeInUp} className="flex space-x-2 mb-8">
         <Button
           variant={filter === 'all' ? 'default' : 'outline'}
           onClick={() => setFilter('all')}
+          className={filter === 'all' ? 'bg-brand-gradient' : ''}
         >
           All Equipment ({equipment.length})
         </Button>
         <Button
           variant={filter === 'iot' ? 'default' : 'outline'}
           onClick={() => setFilter('iot')}
+          className={filter === 'iot' ? 'bg-brand-gradient' : ''}
         >
           <Activity className="h-4 w-4 mr-2" />
           IoT Enabled ({stats.iotEnabled})
@@ -208,39 +279,52 @@ export default function EquipmentPage() {
         <Button
           variant={filter === 'no-iot' ? 'default' : 'outline'}
           onClick={() => setFilter('no-iot')}
+          className={filter === 'no-iot' ? 'bg-brand-gradient' : ''}
         >
           No IoT ({equipment.length - stats.iotEnabled})
         </Button>
-      </div>
+      </motion.div>
 
-      {/* Equipment Grid */}
+      {/* Equipment Grid with Stagger Animation */}
       {filteredEquipment.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <XCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Equipment Found</h3>
-            <p className="text-muted-foreground mb-4">
-              {filter === 'iot'
-                ? 'No IoT-enabled equipment. Enable IoT on your equipment to start monitoring.'
-                : 'Add equipment to get started with monitoring and management.'}
-            </p>
-            <Button onClick={() => router.push('/dashboard/equipment/add')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Equipment
-            </Button>
-          </CardContent>
-        </Card>
+        <motion.div variants={fadeInUp} className="text-center py-16">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+            <Zap className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2">No Equipment Found</h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            {filter === 'iot'
+              ? 'No IoT-enabled equipment found. Enable IoT on your equipment to start real-time monitoring.'
+              : 'Get started by adding your first equipment to monitor performance and maintenance.'}
+          </p>
+          <Button
+            onClick={() => router.push('/dashboard/equipment/add')}
+            className="bg-brand-gradient hover:opacity-90"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Equipment
+          </Button>
+        </motion.div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEquipment.map((eq) => (
-            <EquipmentCard
+        <motion.div
+          variants={staggerContainer}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          {filteredEquipment.map((eq, index) => (
+            <motion.div
               key={eq.id}
-              equipment={eq}
-              onClick={() => router.push(`/dashboard/equipment/${eq.id}`)}
-            />
+              variants={fadeInUp}
+              custom={index}
+              transition={{ delay: index * 0.1 }}
+            >
+              <EquipmentCard
+                equipment={eq}
+                onClick={() => router.push(`/dashboard/equipment/${eq.id}`)}
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
