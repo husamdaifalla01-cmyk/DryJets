@@ -15,7 +15,8 @@
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "@types/bcrypt": "^6.0.0",
-    "bcrypt": "^6.0.0"
+    "bcrypt": "^6.0.0",
+    "recharts": "^3.3.0"
   },
   "devDependencies": {
     "prisma": "^5.10.0",
