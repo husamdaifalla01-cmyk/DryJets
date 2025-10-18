@@ -11,6 +11,27 @@ async function main() {
   await prisma.orderItem.deleteMany();
   await prisma.orderStatusHistory.deleteMany();
   await prisma.order.deleteMany();
+  // Equipment tables (skip if not exist)
+  try {
+    await prisma.equipmentTelemetryLog.deleteMany();
+  } catch (e) {
+    console.log('  - Skipping equipmentTelemetryLog (table may not exist yet)');
+  }
+  try {
+    await prisma.maintenanceAlert.deleteMany();
+  } catch (e) {
+    console.log('  - Skipping maintenanceAlert (table may not exist yet)');
+  }
+  try {
+    await prisma.equipmentTelemetry.deleteMany();
+  } catch (e) {
+    console.log('  - Skipping equipmentTelemetry (table may not exist yet)');
+  }
+  try {
+    await prisma.equipment.deleteMany();
+  } catch (e) {
+    console.log('  - Skipping equipment (table may not exist yet)');
+  }
   await prisma.service.deleteMany();
   await prisma.merchantLocation.deleteMany();
   await prisma.merchant.deleteMany();
