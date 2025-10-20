@@ -1,371 +1,541 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StatCard } from '@/components/ui/stat-card';
-import { SkeletonCard, SkeletonChart } from '@/components/ui/skeleton';
-import { RecommendationCard } from '@/components/analytics/RecommendationCard';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Zap, Droplets, DollarSign, Lightbulb, TrendingDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import {
+  TrendingUp,
+  Zap,
+  Droplets,
+  DollarSign,
+  Lightbulb,
+  TrendingDown,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Thermometer,
+  Activity,
+  Package,
+  Wrench,
+  Filter,
+  ChevronRight,
+} from 'lucide-react';
 import { motion } from 'framer-motion';
-import { staggerContainer, fadeInUp } from '@/lib/animations';
+import { useEquipment } from '@/lib/hooks/useIoT';
 
-interface ResourceData {
-  date: string;
-  energy: number;
-  water: number;
-  cost: number;
-}
-
-interface Recommendation {
-  type: string;
-  priority: string;
-  title: string;
-  description: string;
-  potentialSavings: {
-    amount: number;
-    unit: string;
-    period: string;
-  };
-  actionItems: string[];
-}
+const COLORS = ['#0A78FF', '#00B7A5', '#FF6B6B', '#FFB800', '#9B59B6'];
 
 export default function AnalyticsPage() {
-  const [resourceData, setResourceData] = useState<ResourceData[]>([]);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedEquipment, setSelectedEquipment] = useState<string>('all');
+  const merchantId = 'merchant-1';
+  const { data: equipment = [], isLoading } = useEquipment(merchantId);
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, []);
+  // Mock personalized data per equipment
+  const mockEquipmentData = useMemo(() => {
+    return equipment.map(eq => ({
+      id: eq.id,
+      name: eq.name,
+      type: eq.type,
+      healthScore: eq.healthScore || 85,
+      efficiencyScore: eq.efficiencyScore || 88,
+      energyUsage: 45 + Math.random() * 20, // kWh/day
+      waterUsage: 280 + Math.random() * 80, // L/day
+      dailyCost: 32 + Math.random() * 10,
+      cyclesCompleted: Math.floor(12 + Math.random() * 8),
+      utilizationRate: 65 + Math.random() * 25, // %
+      assignedOrders: Math.floor(5 + Math.random() * 15),
+      assignedServices: ['Dry Clean', 'Wash & Fold', 'Press'],
+      lastMaintenance: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+      nextMaintenance: new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000),
+      alerts: eq.openAlerts,
+      historicalData: Array.from({ length: 30 }, (_, i) => ({
+        date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        energy: 40 + Math.random() * 20,
+        water: 250 + Math.random() * 100,
+        cost: 28 + Math.random() * 12,
+        efficiency: 75 + Math.random() * 20,
+      })),
+    }));
+  }, [equipment]);
 
-  const fetchAnalytics = async () => {
-    try {
-      // TODO: Replace with actual API calls
-      // const resourceResponse = await fetch('/api/v1/iot/optimization/usage-summary');
-      // const recsResponse = await fetch('/api/v1/iot/optimization/recommendations');
+  // Aggregate stats
+  const stats = useMemo(() => {
+    const selectedData = selectedEquipment === 'all'
+      ? mockEquipmentData
+      : mockEquipmentData.filter(eq => eq.id === selectedEquipment);
 
-      // Mock resource data (last 30 days)
-      const mockResourceData: ResourceData[] = [];
-      for (let i = 29; i >= 0; i--) {
-        const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-        mockResourceData.push({
-          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          energy: 45 + Math.random() * 15,
-          water: 280 + Math.random() * 60,
-          cost: 32 + Math.random() * 8,
-        });
-      }
-      setResourceData(mockResourceData);
+    const totalEnergy = selectedData.reduce((sum, eq) => sum + eq.energyUsage, 0);
+    const totalWater = selectedData.reduce((sum, eq) => sum + eq.waterUsage, 0);
+    const totalCost = selectedData.reduce((sum, eq) => sum + eq.dailyCost, 0);
+    const avgEfficiency = selectedData.reduce((sum, eq) => sum + eq.efficiencyScore, 0) / selectedData.length || 0;
+    const avgHealth = selectedData.reduce((sum, eq) => sum + eq.healthScore, 0) / selectedData.length || 0;
+    const totalOrders = selectedData.reduce((sum, eq) => sum + eq.assignedOrders, 0);
+    const totalAlerts = selectedData.reduce((sum, eq) => sum + eq.alerts, 0);
 
-      // Mock recommendations
-      setRecommendations([
-        {
-          type: 'ENERGY',
-          priority: 'HIGH',
-          title: 'High Energy Consumption Detected',
-          description: 'Your equipment is consuming an average of 2.8kW during operating hours, which is 20% higher than industry standards (2.2kW).',
-          potentialSavings: {
-            amount: 135,
-            unit: 'USD',
-            period: 'monthly',
-          },
-          actionItems: [
-            'Clean lint filters and ventilation systems',
-            'Inspect heating elements for buildup',
-            'Consider upgrading to energy-efficient equipment',
-            'Schedule preventive maintenance',
-          ],
-        },
-        {
-          type: 'SCHEDULING',
-          priority: 'MEDIUM',
-          title: 'Off-Peak Energy Opportunity',
-          description: 'Shifting 30% of operations to off-peak hours (10pm-6am) could reduce energy costs significantly.',
-          potentialSavings: {
-            amount: 85,
-            unit: 'USD',
-            period: 'monthly',
-          },
-          actionItems: [
-            'Review customer pickup/delivery preferences',
-            'Offer incentives for off-peak orders',
-            'Batch process during off-peak hours',
-          ],
-        },
-        {
-          type: 'WATER',
-          priority: 'MEDIUM',
-          title: 'Water Optimization Available',
-          description: 'Average water usage is 52L per cycle. Optimizing wash cycles could reduce this to 42L.',
-          potentialSavings: {
-            amount: 45,
-            unit: 'USD',
-            period: 'monthly',
-          },
-          actionItems: [
-            'Use appropriate water levels for load size',
-            'Implement water recycling systems',
-            'Check for leaks and inefficiencies',
-          ],
-        },
-      ]);
-    } catch (error) {
-      console.error('Failed to fetch analytics:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Calculate potential savings
+    const energySavings = totalEnergy * 0.15 * 0.12 * 30; // 15% reduction, $0.12/kWh, 30 days
+    const waterSavings = totalWater * 0.10 * 0.005 * 30; // 10% reduction, $0.005/L, 30 days
+    const maintenanceSavings = 150; // Predictive maintenance savings
 
-  const totalSavings = recommendations.reduce((sum, rec) => sum + rec.potentialSavings.amount, 0);
-  const avgEnergy = resourceData.reduce((sum, d) => sum + d.energy, 0) / resourceData.length || 0;
-  const avgWater = resourceData.reduce((sum, d) => sum + d.water, 0) / resourceData.length || 0;
-  const avgCost = resourceData.reduce((sum, d) => sum + d.cost, 0) / resourceData.length || 0;
+    return {
+      totalEnergy: totalEnergy.toFixed(1),
+      totalWater: Math.round(totalWater),
+      totalCost: totalCost.toFixed(2),
+      avgEfficiency: avgEfficiency.toFixed(1),
+      avgHealth: avgHealth.toFixed(1),
+      totalOrders,
+      totalAlerts,
+      potentialSavings: (energySavings + waterSavings + maintenanceSavings).toFixed(2),
+      energySavings: energySavings.toFixed(2),
+      waterSavings: waterSavings.toFixed(2),
+      maintenanceSavings,
+    };
+  }, [mockEquipmentData, selectedEquipment]);
 
-  if (loading) {
+  // Equipment performance comparison
+  const performanceData = mockEquipmentData.map(eq => ({
+    name: eq.name,
+    efficiency: eq.efficiencyScore,
+    health: eq.healthScore,
+    utilization: eq.utilizationRate,
+  }));
+
+  // Service distribution
+  const serviceDistribution = [
+    { name: 'Dry Clean', value: 42, orders: 156 },
+    { name: 'Wash & Fold', value: 28, orders: 104 },
+    { name: 'Press', value: 18, orders: 67 },
+    { name: 'Specialty', value: 12, orders: 45 },
+  ];
+
+  const selectedEquipmentData = selectedEquipment === 'all'
+    ? mockEquipmentData[0]
+    : mockEquipmentData.find(eq => eq.id === selectedEquipment) || mockEquipmentData[0];
+
+  if (isLoading) {
     return (
       <div className="container mx-auto py-8">
-        <div className="mb-8">
-          <div className="h-10 w-80 bg-muted rounded mb-2 skeleton" />
-          <div className="h-5 w-96 bg-muted rounded skeleton" />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 bg-muted rounded-2xl skeleton" />
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {[...Array(2)].map((_, i) => (
-            <SkeletonChart key={i} />
-          ))}
-        </div>
-
-        <SkeletonChart className="mb-6" />
-
-        <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <SkeletonCard key={i} />
-          ))}
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <Activity className="h-12 w-12 animate-spin text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading analytics...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <motion.div
-      className="container mx-auto py-8"
-      initial="hidden"
-      animate="visible"
-      variants={staggerContainer}
-    >
-      <motion.div variants={fadeInUp} className="mb-8">
-        <h1 className="text-4xl font-heading font-bold bg-brand-gradient bg-clip-text text-transparent">
-          Resource Analytics & Optimization
-        </h1>
-        <p className="text-muted-foreground mt-2 text-lg">
-          Monitor energy, water usage, and discover cost-saving opportunities
-        </p>
-      </motion.div>
-
-      <motion.div
-        variants={fadeInUp}
-        className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8"
-      >
-        <StatCard
-          title="Potential Monthly Savings"
-          value={totalSavings}
-          prefix="$"
-          icon={DollarSign}
-          variant="success"
-        />
-        <StatCard
-          title="Avg Daily Energy"
-          value={parseFloat(avgEnergy.toFixed(1))}
-          suffix=" kWh"
-          icon={Zap}
-          variant="info"
-          decimals={1}
-        />
-        <StatCard
-          title="Avg Daily Water"
-          value={Math.round(avgWater)}
-          suffix=" L"
-          icon={Droplets}
-          variant="info"
-        />
-        <StatCard
-          title="Avg Daily Cost"
-          value={parseFloat(avgCost.toFixed(2))}
-          prefix="$"
-          icon={TrendingDown}
-          variant="default"
-          decimals={2}
-        />
-      </motion.div>
-
-      <motion.div variants={fadeInUp} className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <Card className="shadow-lift-hover border-primary-100 dark:border-primary-900">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary-600" />
-              Energy Consumption
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">Daily kWh usage - Last 30 days</p>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={resourceData}>
-                <defs>
-                  <linearGradient id="energyGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0A78FF" stopOpacity={0.9} />
-                    <stop offset="100%" stopColor="#0A78FF" stopOpacity={0.3} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
-                <XAxis dataKey="date" stroke="#9ca3af" fontSize={12} />
-                <YAxis stroke="#9ca3af" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Bar dataKey="energy" fill="url(#energyGradient)" name="Energy (kWh)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-lift-hover border-eco-100 dark:border-eco-900">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Droplets className="h-5 w-5 text-eco-600" />
-              Water Usage
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">Daily liters - Last 30 days</p>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={resourceData}>
-                <defs>
-                  <linearGradient id="waterGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#00B7A5" stopOpacity={0.9} />
-                    <stop offset="100%" stopColor="#00B7A5" stopOpacity={0.3} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
-                <XAxis dataKey="date" stroke="#9ca3af" fontSize={12} />
-                <YAxis stroke="#9ca3af" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Bar dataKey="water" fill="url(#waterGradient)" name="Water (L)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      <motion.div variants={fadeInUp}>
-        <Card className="mb-8 shadow-lift-hover">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-eco-600" />
-              Daily Operating Costs
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">Combined energy and water costs - Last 30 days</p>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={resourceData}>
-                <defs>
-                  <linearGradient id="costGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#0A78FF" />
-                    <stop offset="100%" stopColor="#00B7A5" />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
-                <XAxis dataKey="date" stroke="#9ca3af" fontSize={12} />
-                <YAxis stroke="#9ca3af" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="cost"
-                  stroke="url(#costGradient)"
-                  name="Cost ($)"
-                  strokeWidth={3}
-                  dot={{ fill: '#0A78FF', r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      <motion.div variants={fadeInUp}>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-warning-100 to-warning-200 dark:from-warning-900/30 dark:to-warning-800/20">
-            <Lightbulb className="h-6 w-6 text-warning-600 dark:text-warning-500" />
+    <div className="container mx-auto py-8 space-y-8">
+      {/* Header with Gradient */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 p-8 text-white">
+        <div className="relative z-10">
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-4xl font-heading font-bold mb-2">
+                Equipment Analytics & Optimization
+              </h1>
+              <p className="text-white/90 text-lg mb-4">
+                Monitor performance, resource usage, and discover savings opportunities
+              </p>
+              <div className="flex items-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4" />
+                  <span>{stats.avgEfficiency}% avg efficiency</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  <span>${stats.potentialSavings} potential savings</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  <span>{stats.totalOrders} assigned orders</span>
+                </div>
+              </div>
+            </div>
+            {stats.totalAlerts > 0 && (
+              <Badge className="bg-white/20 text-white border-white/30">
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                {stats.totalAlerts} alerts
+              </Badge>
+            )}
           </div>
-          <h2 className="text-3xl font-heading font-bold">Optimization Recommendations</h2>
         </div>
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
+        <div className="absolute bottom-0 left-0 -mb-10 -ml-10 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
+      </div>
 
-        <div className="space-y-4 mb-8">
-          {recommendations.map((rec, index) => (
-            <RecommendationCard key={index} recommendation={rec} />
-          ))}
-        </div>
+      {/* Equipment Filter */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Equipment Filter
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={selectedEquipment === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedEquipment('all')}
+              className={selectedEquipment === 'all' ? 'bg-gradient-to-r from-emerald-600 to-teal-600' : ''}
+            >
+              All Equipment ({equipment.length})
+            </Button>
+            {equipment.map((eq) => (
+              <Button
+                key={eq.id}
+                variant={selectedEquipment === eq.id ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedEquipment(eq.id)}
+                className={selectedEquipment === eq.id ? 'bg-gradient-to-r from-emerald-600 to-teal-600' : ''}
+              >
+                {eq.name}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-        <Card className="bg-gradient-to-br from-primary-50 to-eco-50 dark:from-primary-950/30 dark:to-eco-950/20 border-primary-200 dark:border-primary-800 shadow-lift">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-2xl">
-              <div className="p-2 rounded-full bg-eco-gradient">
-                <TrendingUp className="h-5 w-5 text-white" />
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/50">
+                  <DollarSign className="h-6 w-6 text-white" />
+                </div>
+                <Badge variant="default" className="bg-green-500">Savings</Badge>
               </div>
-              Annual ROI Projection
+              <p className="text-sm text-muted-foreground mb-1">Potential Monthly Savings</p>
+              <p className="text-3xl font-bold mb-2 text-green-600">${stats.potentialSavings}</p>
+              <p className="text-xs text-muted-foreground">
+                ${(parseFloat(stats.potentialSavings) * 12).toFixed(2)} annually
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-blue-500/50">
+                  <Zap className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mb-1">Daily Energy Usage</p>
+              <p className="text-3xl font-bold mb-2">{stats.totalEnergy} kWh</p>
+              <p className="text-xs text-green-600">Save ${stats.energySavings}/month</p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/50">
+                  <Droplets className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mb-1">Daily Water Usage</p>
+              <p className="text-3xl font-bold mb-2">{stats.totalWater} L</p>
+              <p className="text-xs text-green-600">Save ${stats.waterSavings}/month</p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/50">
+                  <Activity className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mb-1">Avg Efficiency</p>
+              <p className="text-3xl font-bold mb-2">{stats.avgEfficiency}%</p>
+              <p className="text-xs text-muted-foreground">Health: {stats.avgHealth}%</p>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+
+      {/* Equipment Details Tab */}
+      {selectedEquipment !== 'all' && selectedEquipmentData && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wrench className="h-5 w-5" />
+              {selectedEquipmentData.name} - Detailed Analytics
             </CardTitle>
-            <p className="text-sm text-muted-foreground mt-2">
-              By implementing all recommendations above
-            </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center md:text-left">
-                <p className="text-sm font-medium text-muted-foreground mb-2">Total Annual Savings</p>
-                <p className="text-4xl font-heading font-bold bg-eco-gradient bg-clip-text text-transparent">
-                  ${(totalSavings * 12).toLocaleString()}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">per year</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Health Score</span>
+                  <Badge variant={selectedEquipmentData.healthScore > 85 ? 'default' : 'destructive'}>
+                    {selectedEquipmentData.healthScore}%
+                  </Badge>
+                </div>
+                <Progress value={selectedEquipmentData.healthScore} className="h-2" />
               </div>
-              <div className="text-center md:text-left">
-                <p className="text-sm font-medium text-muted-foreground mb-2">Implementation Cost</p>
-                <p className="text-4xl font-heading font-bold text-foreground">$0 - $500</p>
-                <p className="text-xs text-eco-600 dark:text-eco-500 mt-1 font-medium">Mostly operational changes</p>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Efficiency</span>
+                  <Badge variant={selectedEquipmentData.efficiencyScore > 80 ? 'default' : 'secondary'}>
+                    {selectedEquipmentData.efficiencyScore}%
+                  </Badge>
+                </div>
+                <Progress value={selectedEquipmentData.efficiencyScore} className="h-2" />
               </div>
-              <div className="text-center md:text-left">
-                <p className="text-sm font-medium text-muted-foreground mb-2">First Year ROI</p>
-                <p className="text-4xl font-heading font-bold text-eco-600 dark:text-eco-500">300-500%</p>
-                <p className="text-xs text-muted-foreground mt-1">Return on investment</p>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Utilization</span>
+                  <Badge variant="outline">{selectedEquipmentData.utilizationRate.toFixed(1)}%</Badge>
+                </div>
+                <Progress value={selectedEquipmentData.utilizationRate} className="h-2" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <Package className="h-5 w-5 text-blue-600 mb-2" />
+                <p className="text-sm text-muted-foreground">Assigned Orders</p>
+                <p className="text-2xl font-bold">{selectedEquipmentData.assignedOrders}</p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <Clock className="h-5 w-5 text-purple-600 mb-2" />
+                <p className="text-sm text-muted-foreground">Cycles Today</p>
+                <p className="text-2xl font-bold">{selectedEquipmentData.cyclesCompleted}</p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                <Zap className="h-5 w-5 text-green-600 mb-2" />
+                <p className="text-sm text-muted-foreground">Energy Usage</p>
+                <p className="text-2xl font-bold">{selectedEquipmentData.energyUsage.toFixed(1)} kWh</p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                <Droplets className="h-5 w-5 text-cyan-600 mb-2" />
+                <p className="text-sm text-muted-foreground">Water Usage</p>
+                <p className="text-2xl font-bold">{Math.round(selectedEquipmentData.waterUsage)} L</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
+              <div className="flex items-start gap-3">
+                <Lightbulb className="h-5 w-5 text-amber-600 mt-1" />
+                <div className="flex-1">
+                  <h4 className="font-semibold mb-2 text-amber-900 dark:text-amber-100">Services Assigned</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedEquipmentData.assignedServices.map((service) => (
+                      <Badge key={service} variant="secondary">{service}</Badge>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
-      </motion.div>
-    </motion.div>
+      )}
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-emerald-600" />
+              30-Day Energy Trend
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={selectedEquipmentData.historicalData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
+                <XAxis dataKey="date" stroke="#9ca3af" fontSize={12} />
+                <YAxis stroke="#9ca3af" fontSize={12} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="energy" stroke="#0A78FF" strokeWidth={2} name="Energy (kWh)" />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-purple-600" />
+              Efficiency Over Time
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={selectedEquipmentData.historicalData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
+                <XAxis dataKey="date" stroke="#9ca3af" fontSize={12} />
+                <YAxis stroke="#9ca3af" fontSize={12} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="efficiency" stroke="#9B59B6" strokeWidth={2} name="Efficiency (%)" />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Equipment Comparison */}
+      {selectedEquipment === 'all' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-blue-600" />
+              Equipment Performance Comparison
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={performanceData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
+                <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} />
+                <YAxis stroke="#9ca3af" fontSize={12} />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="efficiency" fill="#0A78FF" name="Efficiency (%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="health" fill="#00B7A5" name="Health (%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="utilization" fill="#9B59B6" name="Utilization (%)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Service Distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-pink-600" />
+              Service Distribution by Equipment
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={serviceDistribution}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {serviceDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-amber-600" />
+              Optimization Recommendations
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold mb-1 text-green-900 dark:text-green-100">Energy Efficiency</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Reduce energy consumption by 15% through off-peak scheduling
+                  </p>
+                  <p className="text-sm font-semibold text-green-600 mt-2">Save: ${stats.energySavings}/month</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <div className="flex items-start gap-3">
+                <Droplets className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold mb-1 text-blue-900 dark:text-blue-100">Water Conservation</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Optimize wash cycles and implement water recycling
+                  </p>
+                  <p className="text-sm font-semibold text-blue-600 mt-2">Save: ${stats.waterSavings}/month</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <div className="flex items-start gap-3">
+                <Wrench className="h-5 w-5 text-purple-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold mb-1 text-purple-900 dark:text-purple-100">Predictive Maintenance</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Schedule maintenance based on equipment health scores
+                  </p>
+                  <p className="text-sm font-semibold text-purple-600 mt-2">Save: ${stats.maintenanceSavings}/month</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ROI Projection */}
+      <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20 border-emerald-200 dark:border-emerald-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-2xl">
+            <div className="p-2 rounded-full bg-gradient-to-br from-emerald-600 to-teal-600">
+              <TrendingUp className="h-5 w-5 text-white" />
+            </div>
+            Annual ROI Projection
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-2">Total Annual Savings</p>
+              <p className="text-4xl font-bold text-emerald-600">
+                ${(parseFloat(stats.potentialSavings) * 12).toFixed(2)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">per year</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-2">Implementation Cost</p>
+              <p className="text-4xl font-bold">$0 - $500</p>
+              <p className="text-xs text-emerald-600 mt-1 font-medium">Mostly operational changes</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-2">First Year ROI</p>
+              <p className="text-4xl font-bold text-emerald-600">300-500%</p>
+              <p className="text-xs text-muted-foreground mt-1">Return on investment</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

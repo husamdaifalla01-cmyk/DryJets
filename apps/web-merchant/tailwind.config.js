@@ -1,3 +1,5 @@
+const { tokens } = require('../../packages/ui/dryjets-tokens');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ['class'],
@@ -10,82 +12,20 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // DryJets Brand Colors
+        // DryJetsOS Design System Tokens
+        ...tokens.colors,
+
+        // Legacy compatibility (keep for backward compatibility)
         brand: {
-          primary: '#0A78FF',
-          eco: '#00B7A5',
-          warning: '#FFB74D',
-          error: '#FF6B6B',
+          primary: tokens.colors.primary.DEFAULT,
+          eco: tokens.colors.success.DEFAULT,
+          warning: tokens.colors.warning.DEFAULT,
+          error: tokens.colors.danger.DEFAULT,
         },
-        // Deep Tech Blue (Primary)
-        primary: {
-          DEFAULT: '#0A78FF',
-          50: '#E6F3FF',
-          100: '#CCE7FF',
-          200: '#99CEFF',
-          300: '#66B6FF',
-          400: '#339DFF',
-          500: '#0A78FF',
-          600: '#0060CC',
-          700: '#004899',
-          800: '#003066',
-          900: '#001833',
-          950: '#000C1A',
-          foreground: '#FFFFFF',
-        },
-        // Fresh Teal (Eco/Efficiency)
-        eco: {
-          DEFAULT: '#00B7A5',
-          50: '#E6F9F7',
-          100: '#CCF3EF',
-          200: '#99E7DF',
-          300: '#66DBCF',
-          400: '#33CFBF',
-          500: '#00B7A5',
-          600: '#009284',
-          700: '#006E63',
-          800: '#004942',
-          900: '#002521',
-          950: '#001311',
-        },
-        // Warm Amber (Warnings)
-        warning: {
-          DEFAULT: '#FFB74D',
-          50: '#FFF5E6',
-          100: '#FFEBCC',
-          200: '#FFD799',
-          300: '#FFC366',
-          400: '#FFAF33',
-          500: '#FFB74D',
-          600: '#CC8F3E',
-          700: '#99682E',
-          800: '#66451F',
-          900: '#33230F',
-          950: '#1A1208',
-        },
-        // Coral Red (Errors/Critical)
-        error: {
-          DEFAULT: '#FF6B6B',
-          50: '#FFE6E6',
-          100: '#FFCCCC',
-          200: '#FF9999',
-          300: '#FF6666',
-          400: '#FF3333',
-          500: '#FF6B6B',
-          600: '#CC5656',
-          700: '#994040',
-          800: '#662B2B',
-          900: '#331515',
-          950: '#1A0B0B',
-        },
-        // Neutrals
-        dark: {
-          text: '#0B1B2B',
-          muted: '#425466',
-          surface: '#F6F8FA',
-          deep: '#0F1724',
-        },
-        // Shadcn/UI compatible colors
+        eco: tokens.colors.success,
+        error: tokens.colors.danger,
+
+        // Shadcn/UI compatible colors (keep for UI components)
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -117,28 +57,32 @@ module.exports = {
         },
       },
       borderRadius: {
+        ...tokens.borderRadius,
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
-        xl: '1rem',
-        '2xl': '1.5rem',
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        heading: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        ...tokens.typography.fontFamily,
+        heading: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'], // Keep legacy
       },
+      fontSize: tokens.typography.fontSize,
+      fontWeight: tokens.typography.fontWeight,
+      spacing: tokens.spacing,
       boxShadow: {
+        ...tokens.shadows,
+        // Legacy shadows (keep for backward compatibility)
         'lift': '0 4px 12px rgba(10, 120, 255, 0.15)',
         'lift-lg': '0 8px 24px rgba(10, 120, 255, 0.2)',
-        'glow': '0 0 20px rgba(10, 120, 255, 0.3)',
-        'eco-glow': '0 0 20px rgba(0, 183, 165, 0.3)',
+        'glow': tokens.shadows['glow-primary'],
+        'eco-glow': tokens.shadows['glow-success'],
       },
       backgroundImage: {
         'brand-gradient': 'linear-gradient(135deg, #0A78FF 0%, #00B7A5 100%)',
         'eco-gradient': 'linear-gradient(135deg, #00B7A5 0%, #33CFBF 100%)',
         'primary-gradient': 'linear-gradient(135deg, #0A78FF 0%, #339DFF 100%)',
-        'warning-gradient': 'linear-gradient(135deg, #FFB74D 0%, #FFC366 100%)',
-        'error-gradient': 'linear-gradient(135deg, #FF6B6B 0%, #FF9999 100%)',
+        'warning-gradient': 'linear-gradient(135deg, #FFB020 0%, #FFC733 100%)',
+        'error-gradient': 'linear-gradient(135deg, #FF3B30 0%, #FF4737 100%)',
       },
       animation: {
         'shimmer': 'shimmer 2s linear infinite',
@@ -182,6 +126,7 @@ module.exports = {
       transitionTimingFunction: {
         'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
       },
+      zIndex: tokens.zIndex,
     },
   },
   plugins: [require('tailwindcss-animate')],

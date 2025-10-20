@@ -1,0 +1,443 @@
+{
+  "competitor": "CleanCloud",
+  "analysis_date": "2025-10-19",
+  "feature_categories": {
+    "pos_core": {
+      "features": [
+        {
+          "name": "Fast Checkout",
+          "location": "POS Terminal / CleanCounter",
+          "merchant_impact": "Faster customer processing, reduced wait times",
+          "dryjets_status": "✅ Implemented"
+        },
+        {
+          "name": "Order Management",
+          "location": "Orders Dashboard",
+          "merchant_impact": "Track all orders in one place, search and filter",
+          "dryjets_status": "✅ Implemented + Enhanced with Equipment Assignment"
+        },
+        {
+          "name": "Real-time Multi-location Sync",
+          "location": "Cloud Backend",
+          "merchant_impact": "Consistent data across all locations",
+          "dryjets_status": "🔄 To Implement - Offline-first sync"
+        }
+      ]
+    },
+    "payment_integrations": {
+      "features": [
+        {
+          "name": "Stripe Integration",
+          "provider": "Stripe",
+          "location": "Payment Settings",
+          "merchant_impact": "Accept credit cards, automated reconciliation",
+          "dryjets_status": "✅ Implemented"
+        },
+        {
+          "name": "PayRange",
+          "provider": "PayRange",
+          "location": "Machine Payment Mapping",
+          "merchant_impact": "Mobile payments for laundromats",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "FasCard",
+          "provider": "FasCard",
+          "location": "Machine Payment Mapping",
+          "merchant_impact": "Card-based machine payments",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "TangerPay / SpyderWash / Laundroworks",
+          "provider": "Multiple",
+          "location": "Machine Payment Mapping",
+          "merchant_impact": "Alternative payment systems for equipment",
+          "dryjets_status": "❌ To Implement"
+        }
+      ]
+    },
+    "machine_integrations": {
+      "features": [
+        {
+          "name": "Speed Queen Integration",
+          "provider": "Speed Queen",
+          "location": "Equipment Dashboard + IoT Telemetry",
+          "merchant_impact": "Track machine usage, automate payments",
+          "dryjets_status": "🔄 Partial - IoT telemetry ready, payment integration pending"
+        },
+        {
+          "name": "Huebsch Integration",
+          "provider": "Huebsch",
+          "location": "Equipment Dashboard",
+          "merchant_impact": "Commercial washer/dryer monitoring",
+          "dryjets_status": "🔄 Partial - IoT telemetry ready"
+        },
+        {
+          "name": "Mettler Toledo (Scales)",
+          "provider": "Mettler Toledo",
+          "location": "Wash & Fold Workflow",
+          "merchant_impact": "Automated weight-based pricing",
+          "dryjets_status": "❌ To Implement"
+        }
+      ]
+    },
+    "assembly_conveyor": {
+      "features": [
+        {
+          "name": "Metalprogetti Integration",
+          "provider": "Metalprogetti",
+          "location": "Assembly Dashboard + Plant Mode",
+          "merchant_impact": "Automated garment sorting, 24/7 kiosk support",
+          "dryjets_status": "❌ To Implement - UI hooks designed"
+        },
+        {
+          "name": "QuickSort/GMS Integration",
+          "provider": "QuickSort/GMS",
+          "location": "Assembly Dashboard",
+          "merchant_impact": "High-speed garment assembly",
+          "dryjets_status": "❌ To Implement - UI hooks designed"
+        },
+        {
+          "name": "Assisted Assembly (Barcode Scanning)",
+          "location": "Assembly UI",
+          "merchant_impact": "Staff-guided assembly with barcode guns",
+          "dryjets_status": "❌ To Implement - UI designed"
+        },
+        {
+          "name": "Auto Assembly Status",
+          "location": "Assembly Dashboard",
+          "merchant_impact": "Monitor conveyor system real-time",
+          "dryjets_status": "❌ To Implement"
+        }
+      ]
+    },
+    "reporting_analytics": {
+      "features": [
+        {
+          "name": "Real-time Insights Dashboard",
+          "location": "Analytics Page",
+          "merchant_impact": "Revenue, orders, efficiency metrics",
+          "dryjets_status": "✅ Implemented + Enhanced with Equipment Analytics"
+        },
+        {
+          "name": "Multi-location Reporting",
+          "location": "Analytics Page (Store Selector)",
+          "merchant_impact": "Compare performance across locations",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "Performance Monitoring",
+          "location": "Analytics + Equipment Health",
+          "merchant_impact": "Track KPIs, equipment uptime",
+          "dryjets_status": "✅ Implemented"
+        },
+        {
+          "name": "Export Reports (CSV/PDF)",
+          "location": "Analytics Page",
+          "merchant_impact": "Financial records, audits",
+          "dryjets_status": "🔄 Partial - Structure ready"
+        }
+      ]
+    },
+    "accounting_integrations": {
+      "features": [
+        {
+          "name": "QuickBooks Integration",
+          "provider": "QuickBooks",
+          "location": "Settings > Integrations",
+          "merchant_impact": "Auto-sync revenue, expenses to QB",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "Xero Integration",
+          "provider": "Xero",
+          "location": "Settings > Integrations",
+          "merchant_impact": "Accounting automation for Xero users",
+          "dryjets_status": "❌ To Implement"
+        }
+      ]
+    },
+    "staff_payroll": {
+      "features": [
+        {
+          "name": "Clock In/Out",
+          "location": "Staff Dashboard / POS",
+          "merchant_impact": "Track employee hours automatically",
+          "dryjets_status": "❌ To Implement - UI designed"
+        },
+        {
+          "name": "Payroll Processing",
+          "location": "Payroll Dashboard",
+          "merchant_impact": "Calculate wages, overtime, export to systems",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "Gusto Integration",
+          "provider": "Gusto",
+          "location": "Settings > Payroll",
+          "merchant_impact": "Automated payroll runs, tax filing",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "Staff Accountability Logging",
+          "location": "Audit Trail",
+          "merchant_impact": "Track who did what, when",
+          "dryjets_status": "🔄 To Implement - Part of offline-first architecture"
+        }
+      ]
+    },
+    "pickup_delivery": {
+      "features": [
+        {
+          "name": "Route Optimization",
+          "location": "Dispatch Dashboard",
+          "merchant_impact": "Efficient driver routes, save fuel/time",
+          "dryjets_status": "✅ Implemented (Driver routing)"
+        },
+        {
+          "name": "Driver Mobile Apps (iOS/Android)",
+          "location": "Mobile App",
+          "merchant_impact": "Real-time driver tracking, proof of delivery",
+          "dryjets_status": "✅ Implemented (React Native apps)"
+        },
+        {
+          "name": "DoorDash/Uber Integration",
+          "provider": "DoorDash, Uber",
+          "location": "Dispatch Settings",
+          "merchant_impact": "Outsource deliveries to gig economy",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "Recurring Pickup Scheduling",
+          "location": "Customer Orders",
+          "merchant_impact": "Subscription-like service for regulars",
+          "dryjets_status": "❌ To Implement"
+        }
+      ]
+    },
+    "customer_management": {
+      "features": [
+        {
+          "name": "Loyalty Points",
+          "location": "Customer Profile",
+          "merchant_impact": "Increase retention, repeat business",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "Promo Codes / Referrals",
+          "location": "Marketing Dashboard",
+          "merchant_impact": "Customer acquisition campaigns",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "Subscription Offerings",
+          "location": "Customer Profile / Plans",
+          "merchant_impact": "Predictable recurring revenue",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "Customer Segmentation",
+          "location": "Marketing > Segments",
+          "merchant_impact": "Targeted campaigns (VIPs, churned, etc.)",
+          "dryjets_status": "❌ To Implement"
+        }
+      ]
+    },
+    "marketing_tools": {
+      "features": [
+        {
+          "name": "Email Campaigns",
+          "location": "Marketing Dashboard",
+          "merchant_impact": "Re-engage customers, promotions",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "SMS Campaigns",
+          "location": "Marketing Dashboard (Twilio integrated)",
+          "merchant_impact": "High open-rate notifications",
+          "dryjets_status": "✅ Implemented (Twilio ready)"
+        },
+        {
+          "name": "Push Notifications",
+          "location": "Mobile App",
+          "merchant_impact": "Order updates, promotions",
+          "dryjets_status": "✅ Implemented (Firebase)"
+        },
+        {
+          "name": "Automated Marketing Rules",
+          "location": "Marketing > Automation",
+          "merchant_impact": "Trigger campaigns based on behavior",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "Review Requests (Google/Yelp/Facebook)",
+          "location": "Marketing > Reviews",
+          "merchant_impact": "Build online reputation automatically",
+          "dryjets_status": "❌ To Implement"
+        }
+      ]
+    },
+    "locker_kiosk": {
+      "features": [
+        {
+          "name": "Fully Integrated Lockers",
+          "location": "Kiosk Dashboard",
+          "merchant_impact": "24/7 pickup, no staff needed",
+          "dryjets_status": "❌ To Implement - UI hooks designed"
+        },
+        {
+          "name": "Partial Locker Integration (SMS codes)",
+          "location": "Kiosk Dashboard",
+          "merchant_impact": "Customer self-service notifications",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "Kiosk Payment Processing",
+          "location": "Kiosk Terminal",
+          "merchant_impact": "Self-checkout for customers",
+          "dryjets_status": "❌ To Implement"
+        }
+      ]
+    },
+    "plant_management": {
+      "features": [
+        {
+          "name": "Multi-store Plant Mode",
+          "location": "Plant Dashboard",
+          "merchant_impact": "Centralized processing for multiple stores",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "Outsourcing Order Management",
+          "location": "Plant Mode",
+          "merchant_impact": "Send orders to third-party cleaners",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "Driver Tracking Between Locations",
+          "location": "Dispatch + Plant Mode",
+          "merchant_impact": "Inter-store logistics visibility",
+          "dryjets_status": "❌ To Implement"
+        }
+      ]
+    },
+    "hardware": {
+      "features": [
+        {
+          "name": "CleanCounter (All-in-one Terminal)",
+          "location": "Physical Hardware",
+          "merchant_impact": "POS, printer, scanner in one device",
+          "dryjets_status": "❌ Not Applicable (DryJets is web/desktop first)"
+        },
+        {
+          "name": "Barcode Label Printer (Heat Seal)",
+          "location": "POS Integration",
+          "merchant_impact": "Garment tracking labels",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "Barcode Scanner Gun",
+          "location": "Assembly UI",
+          "merchant_impact": "Fast garment scanning",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "Receipt Printer",
+          "location": "POS",
+          "merchant_impact": "Customer receipts, tickets",
+          "dryjets_status": "❌ To Implement"
+        }
+      ]
+    },
+    "website_branding": {
+      "features": [
+        {
+          "name": "Branded Website Builder",
+          "location": "Marketing > Website",
+          "merchant_impact": "Custom domain, online booking",
+          "dryjets_status": "❌ To Implement"
+        },
+        {
+          "name": "Branded Mobile App (iOS/Android)",
+          "location": "Mobile Apps",
+          "merchant_impact": "White-label customer apps",
+          "dryjets_status": "✅ Implemented (React Native base ready)"
+        }
+      ]
+    }
+  },
+  "dryjets_competitive_advantages": [
+    {
+      "feature": "Offline-First Architecture",
+      "advantage": "Works without internet, syncs when reconnected - critical for reliability",
+      "cleancloud_has": false
+    },
+    {
+      "feature": "IoT + ML Predictive Maintenance",
+      "advantage": "Prevent equipment failures before they happen, reduce downtime 30%+",
+      "cleancloud_has": false
+    },
+    {
+      "feature": "Equipment Analytics Dashboard",
+      "advantage": "Per-machine energy/water tracking, cost optimization recommendations",
+      "cleancloud_has": "partial"
+    },
+    {
+      "feature": "Real-time Telemetry Monitoring",
+      "advantage": "Power, water, temp, vibration sensors with threshold alerts",
+      "cleancloud_has": false
+    },
+    {
+      "feature": "Maintenance Management System",
+      "advantage": "Full maintenance workflow: alerts → scheduling → parts → resolution → reporting",
+      "cleancloud_has": "basic"
+    },
+    {
+      "feature": "Tech-First Brand Identity",
+      "advantage": "Modern UI, neon accents, geometric design - appeals to tech-savvy operators",
+      "cleancloud_has": false
+    },
+    {
+      "feature": "Electron Desktop App",
+      "advantage": "Native desktop experience with SQLite, better performance than web-only",
+      "cleancloud_has": false
+    },
+    {
+      "feature": "Open Architecture",
+      "advantage": "Modular design allows custom integrations, not locked into proprietary hardware",
+      "cleancloud_has": false
+    }
+  ],
+  "implementation_priority": [
+    {
+      "phase": "1 - Offline-First Core",
+      "features": ["Offline storage adapters", "Sync engine", "Network status UI", "Conflict resolution"],
+      "timeline": "2 weeks"
+    },
+    {
+      "phase": "2 - Payment Integrations",
+      "features": ["FasCard", "PayRange", "TangerPay", "Speed Queen payments"],
+      "timeline": "3 weeks"
+    },
+    {
+      "phase": "3 - Assembly & Kiosk",
+      "features": ["Metalprogetti integration", "QuickSort integration", "Locker management", "Barcode scanning"],
+      "timeline": "4 weeks"
+    },
+    {
+      "phase": "4 - Staff & Payroll",
+      "features": ["Clock in/out", "Timesheet editor", "Gusto integration", "Payroll runs"],
+      "timeline": "2 weeks"
+    },
+    {
+      "phase": "5 - Accounting & Marketing",
+      "features": ["QuickBooks/Xero sync", "Email campaigns", "Loyalty points", "Review automation"],
+      "timeline": "3 weeks"
+    },
+    {
+      "phase": "6 - Multi-store & Plant",
+      "features": ["Multi-location sync", "Plant mode", "Outsourcing workflows"],
+      "timeline": "4 weeks"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@dryjets/ui",
+  "version": "0.1.0",
+  "description": "DryJets Design System Tokens",
+  "main": "dryjets-tokens.ts",
+  "types": "dryjets-tokens.ts",
+  "scripts": {},
+  "keywords": ["design-system", "tokens", "dryjets"],
+  "author": "DryJets",
+  "license": "MIT"
+}
