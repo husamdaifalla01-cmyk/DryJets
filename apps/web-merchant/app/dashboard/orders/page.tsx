@@ -32,6 +32,8 @@ import {
 import { motion } from 'framer-motion';
 import { format, isToday, isThisWeek, parseISO } from 'date-fns';
 import { useOrders } from '@/lib/hooks/useOrders';
+import { KPICard } from '@/components/dashboard/KPICard';
+import { DataTable } from '@/components/dashboard/DataTable';
 
 const statusConfig = {
   PENDING: {
@@ -237,85 +239,124 @@ export default function OrdersPage() {
         <div className="absolute bottom-0 left-0 -mb-10 -ml-10 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
       </div>
 
-      {/* Key Metrics */}
+      {/* Key Metrics - Using new KPICard components */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-blue-500/50">
-                  <DollarSign className="h-6 w-6 text-white" />
-                </div>
-                <div className={`flex items-center gap-1 text-sm font-semibold ${stats.revenueChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {stats.revenueChange >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                  {Math.abs(stats.revenueChange)}%
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-1">Total Revenue</p>
-              <p className="text-3xl font-bold mb-2">${stats.totalRevenue.toFixed(2)}</p>
-              <p className="text-xs text-muted-foreground">Avg: ${stats.avgOrderValue.toFixed(2)}/order</p>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <KPICard
+          title="Total Revenue"
+          value={`$${stats.totalRevenue.toFixed(2)}`}
+          trend={{
+            value: stats.revenueChange,
+            direction: stats.revenueChange >= 0 ? 'up' : 'down',
+            period: 'week',
+          }}
+          size="md"
+          variant="success"
+        />
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/50">
-                  <Package className="h-6 w-6 text-white" />
-                </div>
-                <div className={`flex items-center gap-1 text-sm font-semibold ${stats.ordersChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {stats.ordersChange >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                  {Math.abs(stats.ordersChange)}%
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-1">Total Orders</p>
-              <p className="text-3xl font-bold mb-2">{stats.total}</p>
-              <p className="text-xs text-muted-foreground">{stats.today} today · {stats.thisWeek} this week</p>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <KPICard
+          title="Total Orders"
+          value={stats.total}
+          trend={{
+            value: Math.abs(stats.ordersChange),
+            direction: stats.ordersChange >= 0 ? 'up' : 'down',
+            period: 'week',
+          }}
+          size="md"
+        />
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center shadow-lg shadow-yellow-500/50">
-                  <Clock className="h-6 w-6 text-white" />
-                </div>
-                {stats.pending > 0 && (
-                  <Badge variant="destructive" className="text-xs">
-                    {stats.pending} pending
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground mb-1">Active Orders</p>
-              <p className="text-3xl font-bold mb-2">{stats.pending + stats.inProgress}</p>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">{stats.inProgress} in progress</span>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <KPICard
+          title="Active Orders"
+          value={stats.pending + stats.inProgress}
+          trend={{
+            value: 4.2,
+            direction: 'down',
+            period: 'day',
+          }}
+          size="md"
+          variant="warning"
+        />
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/50">
-                  <CheckCircle2 className="h-6 w-6 text-white" />
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-1">Ready for Pickup</p>
-              <p className="text-3xl font-bold mb-2">{stats.readyForPickup}</p>
-              <p className="text-xs text-muted-foreground">{stats.completed} completed</p>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <KPICard
+          title="Completion Rate"
+          value={`${stats.completionRate.toFixed(0)}%`}
+          trend={{
+            value: 3.5,
+            direction: 'up',
+            period: 'week',
+          }}
+          size="md"
+          variant="success"
+        />
       </div>
 
-      {/* Filters and Search */}
+      {/* Orders Data Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Orders List
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            data={filteredOrders}
+            columns={[
+              {
+                id: 'orderNumber',
+                header: 'Order',
+                accessor: (row) => (
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold">{row.orderNumber}</p>
+                    {row.priority === 'express' && (
+                      <Badge variant="destructive" className="text-xs">
+                        <Zap className="h-3 w-3 mr-1" />
+                        Express
+                      </Badge>
+                    )}
+                  </div>
+                ),
+                sortable: true,
+              },
+              {
+                id: 'customerName',
+                header: 'Customer',
+                accessorKey: 'customerName',
+                sortable: true,
+              },
+              {
+                id: 'status',
+                header: 'Status',
+                accessor: (row) => {
+                  const statusInfo = statusConfig[row.status as keyof typeof statusConfig];
+                  return (
+                    <Badge className={statusInfo?.color + ' border text-xs'}>
+                      {statusInfo?.label}
+                    </Badge>
+                  );
+                },
+              },
+              {
+                id: 'totalAmount',
+                header: 'Amount',
+                accessor: (row) => `$${row.totalAmount.toFixed(2)}`,
+                align: 'right',
+              },
+              {
+                id: 'fulfillmentMode',
+                header: 'Fulfillment',
+                accessor: (row) => (
+                  <Badge variant="outline" className="text-xs">
+                    {row.fulfillmentMode || 'Delivery'}
+                  </Badge>
+                ),
+                align: 'center',
+              },
+            ]}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Filters and Search - Keep for advanced filtering */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

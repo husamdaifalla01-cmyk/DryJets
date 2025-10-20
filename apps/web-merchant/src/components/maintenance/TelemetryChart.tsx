@@ -168,7 +168,7 @@ export function TelemetryChart({ equipmentId }: Props) {
                 <div>
                   <p className="text-sm text-muted-foreground">Current Reading</p>
                   <p className="text-3xl font-bold" style={{ color: config.color }}>
-                    {telemetryData[0][config.dataKey as keyof typeof telemetryData[0]]} {config.unit}
+                    {String(telemetryData[0][config.dataKey as keyof typeof telemetryData[0]])} {config.unit}
                   </p>
                 </div>
                 <div className="text-right">

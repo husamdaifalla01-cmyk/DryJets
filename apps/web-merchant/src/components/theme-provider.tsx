@@ -36,6 +36,8 @@ export function ThemeProvider({
   });
 
   React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const root = window.document.documentElement;
 
     root.classList.remove('light', 'dark');
@@ -71,6 +73,10 @@ export const useTheme = () => {
   const context = React.useContext(ThemeProviderContext);
 
   if (context === undefined) {
+    // During SSR, return initial state instead of throwing
+    if (typeof window === 'undefined') {
+      return initialState;
+    }
     throw new Error('useTheme must be used within a ThemeProvider');
   }
 

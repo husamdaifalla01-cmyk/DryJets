@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatCard } from '@/components/ui/stat-card';
 import { SkeletonCard } from '@/components/ui/skeleton';
 import { EquipmentCard } from '@/components/equipment/EquipmentCard';
@@ -10,6 +12,8 @@ import { Plus, Activity, AlertTriangle, Zap, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { staggerContainer, fadeInUp } from '@/lib/animations';
 import { useEquipment } from '@/lib/hooks/useIoT';
+import { KPICard } from '@/components/dashboard/KPICard';
+import { DataTable } from '@/components/dashboard/DataTable';
 
 interface Equipment {
   id: string;
@@ -119,48 +123,45 @@ export default function EquipmentPage() {
         </Button>
       </motion.div>
 
-      {/* Stats Overview - Using StatCard */}
+      {/* Stats Overview - Using new KPICard components */}
       <motion.div
         variants={fadeInUp}
-        className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8"
       >
-        <StatCard
+        <KPICard
           title="Total Equipment"
           value={stats.total}
-          icon={Zap}
-          variant="default"
+          size="sm"
         />
-        <StatCard
+        <KPICard
           title="IoT Enabled"
           value={stats.iotEnabled}
-          icon={Activity}
-          variant="info"
-          trend={12}
-        />
-        <StatCard
-          title="Currently Running"
-          value={stats.running}
-          icon={TrendingUp}
+          trend={{ value: 2, direction: 'up', period: 'week' }}
+          size="sm"
           variant="success"
         />
-        <StatCard
-          title="Open Alerts"
+        <KPICard
+          title="Running"
+          value={stats.running}
+          size="sm"
+          variant="success"
+        />
+        <KPICard
+          title="Alerts"
           value={stats.alerts}
-          icon={AlertTriangle}
+          size="sm"
           variant={stats.alerts > 0 ? 'warning' : 'success'}
         />
-        <StatCard
+        <KPICard
           title="Avg Health"
-          value={stats.avgHealth}
-          suffix="%"
+          value={`${stats.avgHealth}%`}
+          size="sm"
           variant={
             stats.avgHealth >= 80
               ? 'success'
               : stats.avgHealth >= 60
-              ? 'info'
-              : stats.avgHealth >= 40
               ? 'warning'
-              : 'error'
+              : 'danger'
           }
         />
       </motion.div>
@@ -212,24 +213,105 @@ export default function EquipmentPage() {
           </Button>
         </motion.div>
       ) : (
-        <motion.div
-          variants={staggerContainer}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {filteredEquipment.map((eq, index) => (
-            <motion.div
-              key={eq.id}
-              variants={fadeInUp}
-              custom={index}
-              transition={{ delay: index * 0.1 }}
-            >
-              <EquipmentCard
-                equipment={eq}
-                onClick={() => router.push(`/dashboard/equipment/${eq.id}`)}
+        <>
+          {/* Cards Grid */}
+          <motion.div
+            variants={staggerContainer}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"
+          >
+            {filteredEquipment.map((eq, index) => (
+              <motion.div
+                key={eq.id}
+                variants={fadeInUp}
+                custom={index}
+                transition={{ delay: index * 0.1 }}
+              >
+                <EquipmentCard
+                  equipment={eq}
+                  onClick={() => router.push(`/dashboard/equipment/${eq.id}`)}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Data Table View */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Equipment Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DataTable
+                data={filteredEquipment}
+                columns={[
+                  {
+                    id: 'name',
+                    header: 'Equipment',
+                    accessor: (row) => (
+                      <div className="flex items-center gap-2">
+                        <div className="font-semibold">{row.name}</div>
+                        <Badge variant="outline" className="text-xs">
+                          {row.type}
+                        </Badge>
+                      </div>
+                    ),
+                    sortable: true,
+                  },
+                  {
+                    id: 'status',
+                    header: 'Status',
+                    accessor: (row) => (
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${
+                          row.status === 'OPERATIONAL' ? 'bg-green-500/10 text-green-700 border-green-500/20' :
+                          row.status === 'WARNING' ? 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20' :
+                          'bg-red-500/10 text-red-700 border-red-500/20'
+                        }`}
+                      >
+                        {row.status}
+                      </Badge>
+                    ),
+                  },
+                  {
+                    id: 'healthScore',
+                    header: 'Health',
+                    accessor: (row) => (
+                      <div className="flex items-center gap-2">
+                        <span className={`font-semibold ${
+                          row.healthScore && row.healthScore >= 85 ? 'text-green-600' :
+                          row.healthScore && row.healthScore >= 70 ? 'text-yellow-600' : 'text-red-600'
+                        }`}>
+                          {row.healthScore}%
+                        </span>
+                      </div>
+                    ),
+                    align: 'center',
+                  },
+                  {
+                    id: 'iotStatus',
+                    header: 'IoT',
+                    accessor: (row) => (
+                      <Badge variant={row.isIotEnabled ? "default" : "secondary"} className="text-xs">
+                        {row.isIotEnabled ? 'Enabled' : 'Disabled'}
+                      </Badge>
+                    ),
+                    align: 'center',
+                  },
+                  {
+                    id: 'alerts',
+                    header: 'Alerts',
+                    accessor: (row) => (
+                      <span className={row.openAlerts > 0 ? 'text-red-600 font-semibold' : 'text-gray-500'}>
+                        {row.openAlerts}
+                      </span>
+                    ),
+                    align: 'center',
+                  },
+                ]}
               />
-            </motion.div>
-          ))}
-        </motion.div>
+            </CardContent>
+          </Card>
+        </>
       )}
     </motion.div>
   );

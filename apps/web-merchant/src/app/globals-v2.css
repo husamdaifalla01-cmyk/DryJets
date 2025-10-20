@@ -1,0 +1,409 @@
+/**
+ * DryJets Enterprise Design System - globals-v2.css
+ * Daily Use Color Palette - User-Friendly Design
+ *
+ * Philosophy:
+ * - Soft, matte colors that reduce eye strain
+ * - Warm neutrals for comfort during extended use
+ * - Professional yet calming interface
+ * - WCAG AAA accessibility compliance
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ========================================
+       DRYJETS DAILY USE COLOR PALETTE
+       User-Friendly Design for Extended Sessions
+       ======================================== */
+
+    /* Primary - Sky Blue (Trust & Clarity) */
+    --primary-DEFAULT: #4A90E2;
+    --primary-50: #EBF4FB;
+    --primary-100: #D7E9F7;
+    --primary-200: #AFD3EF;
+    --primary-300: #87BDE7;
+    --primary-400: #5FA7DF;
+    --primary-500: #4A90E2;
+    --primary-600: #2E6CAF;
+    --primary-700: #235388;
+    --primary-800: #183A60;
+    --primary-900: #0D2138;
+
+    /* Success - Sage Green (Growth & Confirmation) */
+    --success-DEFAULT: #52B788;
+    --success-50: #EDF7F2;
+    --success-100: #DBEFE5;
+    --success-200: #B7DFCB;
+    --success-300: #93CFB1;
+    --success-400: #6FBF97;
+    --success-500: #52B788;
+    --success-600: #3D8A66;
+    --success-700: #2E6850;
+    --success-800: #1F4536;
+    --success-900: #0F231B;
+
+    /* Warning - Warm Amber (Attention Without Alarm) */
+    --warning-DEFAULT: #F4A261;
+    --warning-50: #FEF5EF;
+    --warning-100: #FDEBDF;
+    --warning-200: #FBD7BF;
+    --warning-300: #F9C39F;
+    --warning-400: #F7AF7F;
+    --warning-500: #F4A261;
+    --warning-600: #E07A3D;
+    --warning-700: #B35E2D;
+    --warning-800: #86461E;
+    --warning-900: #592F0F;
+
+    /* Danger - Soft Coral (Urgent But Not Aggressive) */
+    --danger-DEFAULT: #E76F51;
+    --danger-50: #FCF1EE;
+    --danger-100: #F9E3DD;
+    --danger-200: #F3C7BB;
+    --danger-300: #EDAB99;
+    --danger-400: #E78F77;
+    --danger-500: #E76F51;
+    --danger-600: #D84A28;
+    --danger-700: #A8391F;
+    --danger-800: #782817;
+    --danger-900: #481710;
+
+    /* Background - Warm Whites & Creams */
+    --background-DEFAULT: #FAFAFA;
+    --background-darker: #F5F5F7;
+    --background-lighter: #FDFDFD;
+    --background-subtle: #EFEFEF;
+    --background-card: #FFFFFF;
+    --background-elevated: #FFFFFF;
+
+    /* Foreground - Rich Grays */
+    --foreground-DEFAULT: #2D3748;
+    --foreground-secondary: #4A5568;
+    --foreground-tertiary: #718096;
+    --foreground-muted: #A0AEC0;
+    --foreground-disabled: #CBD5E0;
+
+    /* Border - Gentle Dividers */
+    --border-DEFAULT: #E2E8F0;
+    --border-subtle: #EDF2F7;
+    --border-focus: #4A90E2;
+    --border-hover: #CBD5E0;
+
+    /* ========================================
+       SHADCN/UI COMPATIBLE VARIABLES (HSL)
+       ======================================== */
+
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 217 100% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 217 100% 51%;
+    --radius: 0.75rem;
+
+    /* ========================================
+       TYPOGRAPHY
+       ======================================== */
+
+    --font-sans: 'Inter', 'Inter Tight', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+    --font-heading: 'Poppins', 'Inter', system-ui, sans-serif;
+
+    /* ========================================
+       SPACING & LAYOUT
+       ======================================== */
+
+    --sidebar-width: 240px;
+    --sidebar-collapsed: 64px;
+    --header-height: 56px;
+
+    /* ========================================
+       ANIMATIONS
+       ======================================== */
+
+    --transition-fast: 120ms;
+    --transition-base: 200ms;
+    --transition-slow: 400ms;
+
+    /* ========================================
+       SHADOWS & GLOWS (Precision OS)
+       ======================================== */
+
+    --shadow-glow-primary: 0 0 20px rgba(0, 102, 255, 0.3), 0 0 40px rgba(0, 102, 255, 0.15);
+    --shadow-glow-success: 0 0 20px rgba(0, 168, 107, 0.3), 0 0 40px rgba(0, 168, 107, 0.15);
+    --shadow-glow-warning: 0 0 20px rgba(255, 149, 0, 0.3), 0 0 40px rgba(255, 149, 0, 0.15);
+    --shadow-glow-danger: 0 0 20px rgba(255, 59, 48, 0.4), 0 0 40px rgba(255, 59, 48, 0.2);
+  }
+
+  .dark {
+    /* ========================================
+       DARK MODE OVERRIDES
+       ======================================== */
+
+    /* Background - Dark Mode */
+    --background-DEFAULT: #0F1419;
+    --background-darker: #0A0E12;
+    --background-lighter: #1A1F26;
+    --background-subtle: #252A33;
+    --background-card: #1E2329;
+    --background-elevated: #272D35;
+
+    /* Foreground - Dark Mode */
+    --foreground-DEFAULT: #FAFAFA;
+    --foreground-secondary: #A1A1A6;
+    --foreground-tertiary: #636366;
+    --foreground-muted: #48484A;
+    --foreground-disabled: #3A3A3C;
+
+    /* Border - Dark Mode */
+    --border-DEFAULT: #2A2A2D;
+    --border-subtle: #1A1A1D;
+    --border-focus: #0066FF;
+    --border-hover: #3A3A3C;
+
+    /* Shadcn HSL - Dark Mode */
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 100% 51%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    /* Smooth theme transitions */
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    /* Smooth color transitions for theme changes */
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+
+  /* Smooth theme transition for all elements */
+  *,
+  *::before,
+  *::after {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 200ms;
+    transition-timing-function: ease;
+  }
+}
+
+@layer components {
+  /* ========================================
+     PRECISION OS COMPONENTS
+     ======================================== */
+
+  /* Glass Morphism Card */
+  .glass-card {
+    @apply backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border border-white/20 dark:border-gray-700/20;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Glass Morphism Variants */
+  .glass-card-subtle {
+    @apply backdrop-blur-sm bg-white/60 dark:bg-gray-900/60 border border-white/10 dark:border-gray-700/10;
+  }
+
+  .glass-card-strong {
+    @apply backdrop-blur-lg bg-white/90 dark:bg-gray-900/90 border border-white/30 dark:border-gray-700/30;
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, var(--primary-500) 0%, var(--success-500) 100%);
+  }
+
+  /* Shimmer Loading Effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.2) 20%,
+      rgba(255, 255, 255, 0.5) 60%,
+      rgba(255, 255, 255, 0)
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  /* Shadow Lift Hover */
+  .shadow-lift-hover {
+    @apply transition-all;
+    transition-duration: var(--transition-fast);
+  }
+
+  .shadow-lift-hover:hover {
+    @apply transform scale-[1.03];
+    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.15);
+  }
+
+  /* Pulsing Dot Indicator */
+  .pulse-dot {
+    @apply relative inline-flex h-3 w-3 rounded-full;
+  }
+
+  .pulse-dot::before {
+    content: '';
+    @apply absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping;
+  }
+
+  /* Skeleton Loader */
+  .skeleton {
+    @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+  }
+
+  /* Custom Scrollbar (Precision OS) */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply rounded-full;
+    background-color: var(--foreground-muted);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: var(--foreground-tertiary);
+  }
+
+  /* Enterprise Card Styles */
+  .enterprise-card {
+    @apply rounded-lg border p-6;
+    background-color: var(--background-card);
+    border-color: var(--border-DEFAULT);
+    transition: all var(--transition-base) ease;
+  }
+
+  .enterprise-card:hover {
+    border-color: var(--border-hover);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Status Badges */
+  .status-badge-online {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    background-color: rgba(0, 168, 107, 0.1);
+    color: var(--success-500);
+    border: 1px solid rgba(0, 168, 107, 0.3);
+  }
+
+  .status-badge-offline {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    background-color: rgba(255, 59, 48, 0.1);
+    color: var(--danger-500);
+    border: 1px solid rgba(255, 59, 48, 0.3);
+  }
+
+  .status-badge-syncing {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    background-color: rgba(0, 102, 255, 0.1);
+    color: var(--primary-500);
+    border: 1px solid rgba(0, 102, 255, 0.3);
+  }
+
+  .status-badge-warning {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    background-color: rgba(255, 149, 0, 0.1);
+    color: var(--warning-500);
+    border: 1px solid rgba(255, 149, 0, 0.3);
+  }
+}
+
+@layer utilities {
+  /* Transition Utilities */
+  .transition-fast {
+    transition-duration: var(--transition-fast);
+  }
+
+  .transition-base {
+    transition-duration: var(--transition-base);
+  }
+
+  .transition-slow {
+    transition-duration: var(--transition-slow);
+  }
+
+  /* Animation Delay Utilities */
+  .animation-delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  /* Text Utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Reduced Motion Support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

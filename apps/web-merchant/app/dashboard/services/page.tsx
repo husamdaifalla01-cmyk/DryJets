@@ -99,7 +99,7 @@ export default function ServicesPage() {
       toast({
         title: 'Error',
         description: 'Failed to update service status',
-        variant: 'destructive',
+        variant: 'error',
       });
     }
   };

@@ -57,7 +57,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
       toast({
         title: 'Error',
         description: 'Failed to update order status',
-        variant: 'destructive',
+        variant: 'error',
       });
     }
   };

@@ -1,5 +1,4 @@
 import { AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { MaintenanceAlert } from '@/types/maintenance';
 import { Badge } from '@/components/ui/badge';
@@ -37,24 +36,22 @@ export function MaintenanceAlertBanner({ alert, onAcknowledge, onViewDetails }: 
 
   if (alert.acknowledged) {
     return (
-      <Alert className="bg-gray-500/10 border-gray-500/30">
+      <div className="bg-gray-500/10 border-2 border-gray-500/30 rounded-lg p-3">
         <div className="flex items-center gap-3">
           <CheckCircle className="h-5 w-5 text-gray-600" />
           <div className="flex-1">
-            <AlertDescription>
-              <span className="font-semibold">{alert.equipmentName}:</span> {alert.message}
-              <span className="text-xs text-muted-foreground ml-2">
-                (Acknowledged by {alert.acknowledgedBy})
-              </span>
-            </AlertDescription>
+            <span className="font-semibold">{alert.equipmentName}:</span> {alert.message}
+            <span className="text-xs text-gray-600 ml-2">
+              (Acknowledged by {alert.acknowledgedBy})
+            </span>
           </div>
         </div>
-      </Alert>
+      </div>
     );
   }
 
   return (
-    <Alert className={config.bg + ' border-2'}>
+    <div className={config.bg + ' border-2 rounded-lg p-4'}>
       <div className="flex items-start gap-3">
         <Icon className={`h-5 w-5 ${config.iconColor} mt-0.5`} />
         <div className="flex-1">
@@ -64,10 +61,10 @@ export function MaintenanceAlertBanner({ alert, onAcknowledge, onViewDetails }: 
             </Badge>
             <span className="font-semibold">{alert.equipmentName}</span>
           </div>
-          <AlertDescription className="mb-2">
+          <div className="mb-2">
             {alert.message}
-          </AlertDescription>
-          <div className="text-sm text-muted-foreground mb-3">
+          </div>
+          <div className="text-sm text-gray-600 mb-3">
             <span className="font-semibold">{alert.type.replace(/_/g, ' ')}:</span>{' '}
             {alert.reading} {alert.unit} (threshold: {alert.threshold} {alert.unit})
           </div>
@@ -82,6 +79,6 @@ export function MaintenanceAlertBanner({ alert, onAcknowledge, onViewDetails }: 
           </div>
         </div>
       </div>
-    </Alert>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +33,10 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
+import { KPICard } from '@/components/dashboard/KPICard';
+import { DataTable } from '@/components/dashboard/DataTable';
+import type { Column } from '@/components/dashboard/DataTable';
+import { AddOrderSheet } from '@/components/orders/AddOrderSheet';
 
 // Enhanced mock data with personalization and equipment insights
 const mockDashboardData = {
@@ -197,6 +202,7 @@ const equipmentStatusColor = {
 
 export default function DashboardPage() {
   const { merchant, insights, todayStats, equipment, recentOrders, weeklyAnalytics, alerts, customerInsights } = mockDashboardData;
+  const [addOrderOpen, setAddOrderOpen] = React.useState(false);
 
   // Calculate totals
   const totalRevenue = weeklyAnalytics.revenue.reduce((sum, d) => sum + d.amount, 0);
@@ -209,58 +215,73 @@ export default function DashboardPage() {
   const totalAlerts = equipment.reduce((sum, eq) => sum + eq.alerts.length, 0);
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
-      {/* Personalized Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-600 p-8 text-white">
+    <div className="container mx-auto py-6 space-y-6 max-w-7xl px-4">
+      {/* Optimized Compact Hero Section - ~50% height reduction */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-700 dark:to-primary-800 p-6 text-white">
         <div className="relative z-10">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-4xl font-heading font-bold">
-                  {insights.greeting}, {merchant.name}! 👋
-                </h1>
-                <Badge className="bg-white/20 text-white border-white/30">
-                  <Award className="h-3 w-3 mr-1" />
-                  {merchant.tier} Tier
-                </Badge>
-              </div>
-              <p className="text-white/90 text-lg mb-4">Welcome back to {merchant.businessName}</p>
-              <div className="flex items-center gap-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 fill-yellow-300 text-yellow-300" />
-                  <span>{customerInsights.averageLifetimeValue} customer LTV</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Target className="h-4 w-4" />
-                  <span>{todayStats.completionRate}% completion rate</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  <span>Performance: {merchant.performance}</span>
-                </div>
-              </div>
+          <div className="flex items-center justify-between">
+            {/* Left: Greeting + Badge */}
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-heading font-bold">
+                {insights.greeting}, {merchant.name}! 👋
+              </h1>
+              <Badge className="bg-white/20 text-white border-white/30 text-xs">
+                <Award className="h-3 w-3 mr-1" />
+                {merchant.tier} Tier
+              </Badge>
             </div>
-            <div className="text-right">
-              <p className="text-sm opacity-90 mb-1">Today's Peak Hours</p>
-              <p className="text-2xl font-bold">{insights.peakHoursToday}</p>
-            </div>
-          </div>
 
-          {/* AI-Powered Recommendation */}
-          <div className="mt-6 p-4 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20">
-            <div className="flex items-start gap-3">
-              <Sparkles className="h-5 w-5 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="font-medium mb-1">AI Recommendation</p>
-                <p className="text-sm text-white/90">{insights.topRecommendation}</p>
+            {/* Center: Mini Stats Bar */}
+            <div className="hidden md:flex items-center gap-8 text-sm">
+              <div className="flex items-center gap-2">
+                <Star className="h-4 w-4 fill-yellow-300 text-yellow-300" />
+                <div>
+                  <div className="font-semibold">${customerInsights.averageLifetimeValue}</div>
+                  <div className="text-xs text-white/70">Customer LTV</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                <div>
+                  <div className="font-semibold">{todayStats.completionRate}%</div>
+                  <div className="text-xs text-white/70">Completion Rate</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                <div>
+                  <div className="font-semibold">{merchant.performance}</div>
+                  <div className="text-xs text-white/70">Performance</div>
+                </div>
               </div>
             </div>
+
+            {/* Right: Add New Order Button */}
+            <Button
+              size="lg"
+              className="bg-white text-primary-700 hover:bg-white/90 shadow-lg"
+              onClick={() => setAddOrderOpen(true)}
+            >
+              <Package className="h-4 w-4 mr-2" />
+              Add New Order
+            </Button>
           </div>
         </div>
 
-        {/* Background decoration */}
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
-        <div className="absolute bottom-0 left-0 -mb-10 -ml-10 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
+        {/* Subtle background decoration */}
+        <div className="absolute top-0 right-0 -mt-8 -mr-8 h-32 w-32 rounded-full bg-white/5 blur-2xl" />
+        <div className="absolute bottom-0 left-0 -mb-8 -ml-8 h-32 w-32 rounded-full bg-white/5 blur-2xl" />
+      </div>
+
+      {/* AI Recommendation as compact info strip */}
+      <div className="p-3 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800">
+        <div className="flex items-center gap-3">
+          <Sparkles className="h-4 w-4 text-primary-600 dark:text-primary-400 flex-shrink-0" />
+          <div className="flex-1">
+            <span className="text-sm font-medium text-primary-900 dark:text-primary-100">AI Recommendation: </span>
+            <span className="text-sm text-primary-700 dark:text-primary-300">{insights.topRecommendation}</span>
+          </div>
+        </div>
       </div>
 
       {/* Critical Alerts Banner */}
@@ -281,119 +302,54 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Key Metrics Grid */}
+      {/* Key Metrics Grid - Using new KPICard component */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Revenue Card with Goal Progress */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
-          <Card className="relative overflow-hidden">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/50">
-                  <DollarSign className="h-6 w-6 text-white" />
-                </div>
-                <div className={`flex items-center gap-1 text-sm font-semibold ${todayStats.revenueChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {todayStats.revenueChange >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                  {Math.abs(todayStats.revenueChange)}%
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-1">Today's Revenue</p>
-              <p className="text-3xl font-bold mb-2">${todayStats.revenue.toFixed(2)}</p>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Goal: ${todayStats.revenueGoal}</span>
-                  <span className="font-semibold">{Math.round((todayStats.revenue / todayStats.revenueGoal) * 100)}%</span>
-                </div>
-                <Progress value={(todayStats.revenue / todayStats.revenueGoal) * 100} className="h-2" />
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <KPICard
+          title="Today's Revenue"
+          value={`$${todayStats.revenue.toFixed(2)}`}
+          trend={{
+            value: todayStats.revenueChange,
+            direction: todayStats.revenueChange >= 0 ? 'up' : 'down',
+            period: 'day',
+          }}
+          size="md"
+          variant="success"
+        />
 
-        {/* Orders Card with Completion Rate */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-blue-500/50">
-                  <ShoppingBag className="h-6 w-6 text-white" />
-                </div>
-                <div className={`flex items-center gap-1 text-sm font-semibold ${todayStats.ordersChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {todayStats.ordersChange >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                  {Math.abs(todayStats.ordersChange)}%
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-1">Orders Today</p>
-              <p className="text-3xl font-bold mb-2">{todayStats.orders}</p>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Completion: {todayStats.completionRate}%</span>
-                <Badge variant="outline" className="text-xs">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  On Track
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <KPICard
+          title="Orders Today"
+          value={todayStats.orders}
+          trend={{
+            value: Math.abs(todayStats.ordersChange),
+            direction: todayStats.ordersChange >= 0 ? 'up' : 'down',
+            period: 'day',
+          }}
+          size="md"
+        />
 
-        {/* Equipment Health Card */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`h-12 w-12 rounded-xl flex items-center justify-center shadow-lg ${
-                  avgHealthScore >= 85 ? 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-green-500/50' :
-                  avgHealthScore >= 70 ? 'bg-gradient-to-br from-yellow-500 to-orange-600 shadow-yellow-500/50' :
-                  'bg-gradient-to-br from-red-500 to-rose-600 shadow-red-500/50'
-                }`}>
-                  <Activity className="h-6 w-6 text-white" />
-                </div>
-                {totalAlerts > 0 && (
-                  <Badge variant="destructive" className="text-xs">
-                    {totalAlerts} Alert{totalAlerts > 1 ? 's' : ''}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground mb-1">Equipment Health</p>
-              <p className="text-3xl font-bold mb-2">{Math.round(avgHealthScore)}%</p>
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">{equipment.length} machines active</span>
-                  {criticalEquipment > 0 && (
-                    <span className="text-red-600 font-semibold">{criticalEquipment} needs attention</span>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <KPICard
+          title="Equipment Health"
+          value={`${Math.round(avgHealthScore)}%`}
+          trend={{
+            value: 5,
+            direction: 'up',
+            period: 'week',
+          }}
+          size="md"
+          variant={avgHealthScore >= 85 ? 'success' : avgHealthScore >= 70 ? 'warning' : 'danger'}
+        />
 
-        {/* Customer Satisfaction */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/50">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-                <Badge variant="outline" className="text-xs">
-                  +{todayStats.newCustomers} new
-                </Badge>
-              </div>
-              <p className="text-sm text-muted-foreground mb-1">Customer Satisfaction</p>
-              <div className="flex items-baseline gap-2 mb-2">
-                <p className="text-3xl font-bold">{insights.customerSatisfaction}</p>
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className={`h-4 w-4 ${i < Math.floor(insights.customerSatisfaction) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Repeat rate: {customerInsights.repeatRate}%</span>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <KPICard
+          title="Customer Satisfaction"
+          value={insights.customerSatisfaction}
+          trend={{
+            value: 2.1,
+            direction: 'up',
+            period: 'month',
+          }}
+          size="md"
+          variant="success"
+        />
       </div>
 
       {/* Main Content Grid */}
@@ -436,9 +392,9 @@ export default function DashboardPage() {
                           eq.status === 'OPERATIONAL' ? 'bg-green-500/10' :
                           eq.status === 'WARNING' ? 'bg-yellow-500/10' : 'bg-red-500/10'
                         } flex items-center justify-center`}>
-                          {eq.type === 'WASHER' ? <Droplet className={`h-5 w-5 ${equipmentStatusColor[eq.status]}`} /> :
-                           eq.type === 'DRYER' ? <ThermometerSun className={`h-5 w-5 ${equipmentStatusColor[eq.status]}`} /> :
-                           <Zap className={`h-5 w-5 ${equipmentStatusColor[eq.status]}`} />}
+                          {eq.type === 'WASHER' ? <Droplet className={`h-5 w-5 ${equipmentStatusColor[eq.status as keyof typeof equipmentStatusColor]}`} /> :
+                           eq.type === 'DRYER' ? <ThermometerSun className={`h-5 w-5 ${equipmentStatusColor[eq.status as keyof typeof equipmentStatusColor]}`} /> :
+                           <Zap className={`h-5 w-5 ${equipmentStatusColor[eq.status as keyof typeof equipmentStatusColor]}`} />}
                         </div>
                         <div>
                           <h4 className="font-semibold">{eq.name}</h4>
@@ -554,7 +510,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Recent Orders */}
+          {/* Recent Orders - Using new DataTable component */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -567,56 +523,56 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {recentOrders.map((order) => {
-                  const statusInfo = statusConfig[order.status as keyof typeof statusConfig];
-                  const StatusIcon = statusInfo?.icon || Package;
-
-                  return (
-                    <Link key={order.id} href={`/dashboard/orders/${order.id}`}>
-                      <div className="flex items-center justify-between p-4 rounded-xl border hover:shadow-md transition-all cursor-pointer group">
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:shadow-blue-500/50 transition-shadow">
-                            <StatusIcon className="h-6 w-6 text-white" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="font-semibold">{order.orderNumber}</p>
-                              {order.priority === 'express' && (
-                                <Badge variant="destructive" className="text-xs">
-                                  <Zap className="h-3 w-3 mr-1" />
-                                  Express
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground">{order.customerName} · {order.serviceType}</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {order.assignedEquipment ? `On ${order.assignedEquipment}` : 'Awaiting assignment'}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <p className="font-bold text-lg">${order.totalAmount.toFixed(2)}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {order.status === 'IN_PROGRESS' ? (
-                                `Ready ${format(order.estimatedCompletion, 'h:mm a')}`
-                              ) : order.status === 'READY_FOR_PICKUP' ? (
-                                'Ready now'
-                              ) : (
-                                format(order.createdAt, 'h:mm a')
-                              )}
-                            </p>
-                          </div>
-                          <Badge className={statusInfo?.color + ' border'}>
-                            {statusInfo?.label}
+              <DataTable
+                data={recentOrders}
+                columns={[
+                  {
+                    id: 'orderNumber',
+                    header: 'Order',
+                    accessor: (row) => (
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold">{row.orderNumber}</p>
+                        {row.priority === 'express' && (
+                          <Badge variant="destructive" className="text-xs">
+                            <Zap className="h-3 w-3 mr-1" />
+                            Express
                           </Badge>
-                        </div>
+                        )}
                       </div>
-                    </Link>
-                  );
-                })}
-              </div>
+                    ),
+                    sortable: true,
+                  },
+                  {
+                    id: 'customerName',
+                    header: 'Customer',
+                    accessorKey: 'customerName',
+                    sortable: true,
+                  },
+                  {
+                    id: 'serviceType',
+                    header: 'Service',
+                    accessorKey: 'serviceType',
+                  },
+                  {
+                    id: 'status',
+                    header: 'Status',
+                    accessor: (row) => {
+                      const statusInfo = statusConfig[row.status as keyof typeof statusConfig];
+                      return (
+                        <Badge className={statusInfo?.color + ' border text-xs'}>
+                          {statusInfo?.label}
+                        </Badge>
+                      );
+                    },
+                  },
+                  {
+                    id: 'totalAmount',
+                    header: 'Amount',
+                    accessor: (row) => `$${row.totalAmount.toFixed(2)}`,
+                    align: 'right',
+                  },
+                ]}
+              />
             </CardContent>
           </Card>
         </div>
@@ -784,6 +740,9 @@ export default function DashboardPage() {
           </Card>
         </div>
       </div>
+
+      {/* Add Order Sheet */}
+      <AddOrderSheet open={addOrderOpen} onOpenChange={setAddOrderOpen} />
     </div>
   );
 }

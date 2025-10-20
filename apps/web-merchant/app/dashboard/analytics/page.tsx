@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useEquipment } from '@/lib/hooks/useIoT';
+import { KPICard } from '@/components/dashboard/KPICard';
 
 const COLORS = ['#0A78FF', '#00B7A5', '#FF6B6B', '#FFB800', '#9B59B6'];
 
@@ -202,70 +203,53 @@ export default function AnalyticsPage() {
         </CardContent>
       </Card>
 
-      {/* Key Metrics */}
+      {/* Key Metrics - Using new KPICard components */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/50">
-                  <DollarSign className="h-6 w-6 text-white" />
-                </div>
-                <Badge variant="default" className="bg-green-500">Savings</Badge>
-              </div>
-              <p className="text-sm text-muted-foreground mb-1">Potential Monthly Savings</p>
-              <p className="text-3xl font-bold mb-2 text-green-600">${stats.potentialSavings}</p>
-              <p className="text-xs text-muted-foreground">
-                ${(parseFloat(stats.potentialSavings) * 12).toFixed(2)} annually
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <KPICard
+          title="Potential Savings"
+          value={`$${stats.potentialSavings}`}
+          trend={{
+            value: 8.5,
+            direction: 'up',
+            period: 'month',
+          }}
+          size="md"
+          variant="success"
+        />
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-blue-500/50">
-                  <Zap className="h-6 w-6 text-white" />
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-1">Daily Energy Usage</p>
-              <p className="text-3xl font-bold mb-2">{stats.totalEnergy} kWh</p>
-              <p className="text-xs text-green-600">Save ${stats.energySavings}/month</p>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <KPICard
+          title="Energy Usage"
+          value={`${stats.totalEnergy} kWh`}
+          trend={{
+            value: 3.2,
+            direction: 'down',
+            period: 'week',
+          }}
+          size="md"
+        />
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/50">
-                  <Droplets className="h-6 w-6 text-white" />
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-1">Daily Water Usage</p>
-              <p className="text-3xl font-bold mb-2">{stats.totalWater} L</p>
-              <p className="text-xs text-green-600">Save ${stats.waterSavings}/month</p>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <KPICard
+          title="Water Usage"
+          value={`${stats.totalWater} L`}
+          trend={{
+            value: 2.1,
+            direction: 'down',
+            period: 'week',
+          }}
+          size="md"
+        />
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/50">
-                  <Activity className="h-6 w-6 text-white" />
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-1">Avg Efficiency</p>
-              <p className="text-3xl font-bold mb-2">{stats.avgEfficiency}%</p>
-              <p className="text-xs text-muted-foreground">Health: {stats.avgHealth}%</p>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <KPICard
+          title="Avg Efficiency"
+          value={`${stats.avgEfficiency}%`}
+          trend={{
+            value: 4.3,
+            direction: 'up',
+            period: 'month',
+          }}
+          size="md"
+          variant="success"
+        />
       </div>
 
       {/* Equipment Details Tab */}

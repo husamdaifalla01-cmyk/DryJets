@@ -30,25 +30,25 @@ enum UserStatus {
 }
 
 model User {
-  id                String     @id @default(cuid())
-  email             String     @unique
-  phone             String?    @unique
-  passwordHash      String
-  role              UserRole
-  status            UserStatus @default(PENDING_VERIFICATION)
-  emailVerified     Boolean    @default(false)
-  phoneVerified     Boolean    @default(false)
-  profileImage      String?
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
-  lastLoginAt       DateTime?
+  id            String     @id @default(cuid())
+  email         String     @unique
+  phone         String?    @unique
+  passwordHash  String
+  role          UserRole
+  status        UserStatus @default(PENDING_VERIFICATION)
+  emailVerified Boolean    @default(false)
+  phoneVerified Boolean    @default(false)
+  profileImage  String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  lastLoginAt   DateTime?
 
   // Relationships
-  customer          Customer?
-  driver            Driver?
-  merchant          Merchant?
-  notifications     Notification[]
-  sessions          UserSession[]
+  customer      Customer?
+  driver        Driver?
+  merchant      Merchant?
+  notifications Notification[]
+  sessions      UserSession[]
 
   @@index([email])
   @@index([phone])
@@ -56,15 +56,15 @@ model User {
 }
 
 model UserSession {
-  id           String   @id @default(cuid())
-  userId       String
-  token        String   @unique
-  deviceInfo   Json?
-  ipAddress    String?
-  expiresAt    DateTime
-  createdAt    DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique
+  deviceInfo Json?
+  ipAddress  String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([token])
@@ -75,27 +75,27 @@ model UserSession {
 // ============================================
 
 model Customer {
-  id                    String   @id @default(cuid())
-  userId                String   @unique
-  firstName             String
-  lastName              String
-  loyaltyPoints         Int      @default(0)
-  preferredDetergent    String?
-  preferredFoldOption   String?  // "HANGER" | "FOLD"
-  preferredStarchLevel  String?  // "NONE" | "LIGHT" | "MEDIUM" | "HEAVY"
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  firstName            String
+  lastName             String
+  loyaltyPoints        Int      @default(0)
+  preferredDetergent   String?
+  preferredFoldOption  String? // "HANGER" | "FOLD"
+  preferredStarchLevel String? // "NONE" | "LIGHT" | "MEDIUM" | "HEAVY"
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   // Relationships
-  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  addresses             Address[]
-  orders                Order[]
-  reviews               Review[]
-  favoriteMerchants     FavoriteMerchant[]
-  wardrobeItems         WardrobeItem[]
-  subscriptions         Subscription[]
-  referrals             Referral[]        @relation("Referrer")
-  referredBy            Referral?         @relation("Referred")
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addresses         Address[]
+  orders            Order[]
+  reviews           Review[]
+  favoriteMerchants FavoriteMerchant[]
+  wardrobeItems     WardrobeItem[]
+  subscriptions     Subscription[]
+  referrals         Referral[]         @relation("Referrer")
+  referredBy        Referral?          @relation("Referred")
 
   @@index([userId])
 }
@@ -120,36 +120,36 @@ enum VehicleType {
 }
 
 model Driver {
-  id                      String         @id @default(cuid())
-  userId                  String         @unique
-  firstName               String
-  lastName                String
-  status                  DriverStatus   @default(OFFLINE)
-  vehicleType             VehicleType
-  vehicleMake             String?
-  vehicleModel            String?
-  vehiclePlate            String
-  vehicleColor            String?
-  licenseNumber           String
-  licenseExpiry           DateTime
-  backgroundCheckStatus   String         @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
-  backgroundCheckDate     DateTime?
-  insuranceVerified       Boolean        @default(false)
-  currentLatitude         Float?
-  currentLongitude        Float?
-  totalEarnings           Float          @default(0)
-  totalTrips              Int            @default(0)
-  rating                  Float          @default(5.0)
-  ratingCount             Int            @default(0)
-  createdAt               DateTime       @default(now())
-  updatedAt               DateTime       @updatedAt
+  id                    String       @id @default(cuid())
+  userId                String       @unique
+  firstName             String
+  lastName              String
+  status                DriverStatus @default(OFFLINE)
+  vehicleType           VehicleType
+  vehicleMake           String?
+  vehicleModel          String?
+  vehiclePlate          String
+  vehicleColor          String?
+  licenseNumber         String
+  licenseExpiry         DateTime
+  backgroundCheckStatus String       @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
+  backgroundCheckDate   DateTime?
+  insuranceVerified     Boolean      @default(false)
+  currentLatitude       Float?
+  currentLongitude      Float?
+  totalEarnings         Float        @default(0)
+  totalTrips            Int          @default(0)
+  rating                Float        @default(5.0)
+  ratingCount           Int          @default(0)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
 
   // Relationships
-  user                    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  pickups                 Order[]        @relation("DriverPickup")
-  deliveries              Order[]        @relation("DriverDelivery")
-  earnings                DriverEarning[]
-  reviews                 Review[]
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pickups    Order[]         @relation("DriverPickup")
+  deliveries Order[]         @relation("DriverDelivery")
+  earnings   DriverEarning[]
+  reviews    Review[]
 
   @@index([userId])
   @@index([status])
@@ -157,20 +157,20 @@ model Driver {
 }
 
 model DriverEarning {
-  id            String   @id @default(cuid())
-  driverId      String
-  orderId       String
-  amount        Float
-  tip           Float    @default(0)
-  bonus         Float    @default(0)
-  surge         Float    @default(0)
-  platformFee   Float
-  netEarning    Float
-  paidOut       Boolean  @default(false)
-  paidOutAt     DateTime?
-  createdAt     DateTime @default(now())
+  id          String    @id @default(cuid())
+  driverId    String
+  orderId     String
+  amount      Float
+  tip         Float     @default(0)
+  bonus       Float     @default(0)
+  surge       Float     @default(0)
+  platformFee Float
+  netEarning  Float
+  paidOut     Boolean   @default(false)
+  paidOutAt   DateTime?
+  createdAt   DateTime  @default(now())
 
-  driver        Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  driver Driver @relation(fields: [driverId], references: [id], onDelete: Cascade)
 
   @@index([driverId])
   @@index([orderId])
@@ -194,34 +194,34 @@ enum MerchantTier {
 }
 
 model Merchant {
-  id                    String         @id @default(cuid())
-  userId                String         @unique
-  businessName          String
-  businessType          MerchantType
-  tier                  MerchantTier   @default(BASIC)
-  taxId                 String?
-  stripeAccountId       String?        @unique
-  stripeOnboarded       Boolean        @default(false)
-  totalOrders           Int            @default(0)
-  totalRevenue          Float          @default(0)
-  rating                Float          @default(5.0)
-  ratingCount           Int            @default(0)
-  verified              Boolean        @default(false)
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
+  id              String       @id @default(cuid())
+  userId          String       @unique
+  businessName    String
+  businessType    MerchantType
+  tier            MerchantTier @default(BASIC)
+  taxId           String?
+  stripeAccountId String?      @unique
+  stripeOnboarded Boolean      @default(false)
+  totalOrders     Int          @default(0)
+  totalRevenue    Float        @default(0)
+  rating          Float        @default(5.0)
+  ratingCount     Int          @default(0)
+  verified        Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   // Relationships
-  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  locations             MerchantLocation[]
-  services              Service[]
-  orders                Order[]
-  staff                 Staff[]
-  inventory             InventoryItem[]
-  equipment             Equipment[]
-  reviews               Review[]
-  favoritedBy           FavoriteMerchant[]
-  promotions            Promotion[]
-  maintenanceAlerts     MaintenanceAlert[]
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  locations         MerchantLocation[]
+  services          Service[]
+  orders            Order[]
+  staff             Staff[]
+  inventory         InventoryItem[]
+  equipment         Equipment[]
+  reviews           Review[]
+  favoritedBy       FavoriteMerchant[]
+  promotions        Promotion[]
+  maintenanceAlerts MaintenanceAlert[]
 
   @@index([userId])
   @@index([businessName])
@@ -229,26 +229,26 @@ model Merchant {
 }
 
 model MerchantLocation {
-  id                String   @id @default(cuid())
-  merchantId        String
-  name              String
-  address           String
-  city              String
-  state             String
-  zipCode           String
-  country           String   @default("USA")
-  latitude          Float
-  longitude         Float
-  phone             String
-  email             String?
-  isMain            Boolean  @default(false)
-  isActive          Boolean  @default(true)
-  operatingHours    Json     // { "monday": { "open": "08:00", "close": "18:00" }, ... }
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id             String   @id @default(cuid())
+  merchantId     String
+  name           String
+  address        String
+  city           String
+  state          String
+  zipCode        String
+  country        String   @default("USA")
+  latitude       Float
+  longitude      Float
+  phone          String
+  email          String?
+  isMain         Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  operatingHours Json // { "monday": { "open": "08:00", "close": "18:00" }, ... }
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  merchant          Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  orders            Order[]
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  orders   Order[]
 
   @@index([merchantId])
   @@index([latitude, longitude])
@@ -278,20 +278,20 @@ enum PricingModel {
 }
 
 model Service {
-  id              String        @id @default(cuid())
-  merchantId      String
-  name            String
-  description     String?
-  type            ServiceType
-  pricingModel    PricingModel
-  basePrice       Float
-  estimatedTime   Int           // in minutes
-  isActive        Boolean       @default(true)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id            String       @id @default(cuid())
+  merchantId    String
+  name          String
+  description   String?
+  type          ServiceType
+  pricingModel  PricingModel
+  basePrice     Float
+  estimatedTime Int // in minutes
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
-  merchant        Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  orderItems      OrderItem[]
+  merchant   Merchant    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
 
   @@index([merchantId])
   @@index([type])
@@ -333,71 +333,71 @@ enum FulfillmentMode {
 }
 
 model Order {
-  id                    String           @id @default(cuid())
-  orderNumber           String           @unique
-  customerId            String
-  merchantId            String
-  merchantLocationId    String
-  pickupDriverId        String?
-  deliveryDriverId      String?
-  type                  OrderType        @default(ON_DEMAND)
-  status                OrderStatus      @default(PENDING_PAYMENT)
-  fulfillmentMode       FulfillmentMode  @default(FULL_SERVICE)
+  id                 String          @id @default(cuid())
+  orderNumber        String          @unique
+  customerId         String
+  merchantId         String
+  merchantLocationId String
+  pickupDriverId     String?
+  deliveryDriverId   String?
+  type               OrderType       @default(ON_DEMAND)
+  status             OrderStatus     @default(PENDING_PAYMENT)
+  fulfillmentMode    FulfillmentMode @default(FULL_SERVICE)
 
   // Pricing
-  subtotal              Float
-  taxAmount             Float
-  serviceFee            Float
-  deliveryFee           Float
-  tip                   Float            @default(0)
-  discount              Float            @default(0)
-  selfServiceDiscount   Float            @default(0)
-  totalAmount           Float
+  subtotal            Float
+  taxAmount           Float
+  serviceFee          Float
+  deliveryFee         Float
+  tip                 Float @default(0)
+  discount            Float @default(0)
+  selfServiceDiscount Float @default(0)
+  totalAmount         Float
 
   // Addresses
-  pickupAddressId       String
-  deliveryAddressId     String
+  pickupAddressId   String
+  deliveryAddressId String
 
   // Scheduling
-  scheduledPickupAt     DateTime?
-  scheduledDeliveryAt   DateTime?
-  actualPickupAt        DateTime?
-  actualDeliveryAt      DateTime?
-  customerDropoffTime   DateTime?
-  customerPickupTime    DateTime?
+  scheduledPickupAt   DateTime?
+  scheduledDeliveryAt DateTime?
+  actualPickupAt      DateTime?
+  actualDeliveryAt    DateTime?
+  customerDropoffTime DateTime?
+  customerPickupTime  DateTime?
 
   // Special instructions
-  specialInstructions   String?
-  customerNotes         String?
-  merchantNotes         String?
+  specialInstructions String?
+  customerNotes       String?
+  merchantNotes       String?
 
   // Self-service confirmation
-  dropoffConfirmed      Boolean          @default(false)
+  dropoffConfirmed      Boolean   @default(false)
   dropoffConfirmedAt    DateTime?
-  pickupConfirmed       Boolean          @default(false)
+  pickupConfirmed       Boolean   @default(false)
   pickupConfirmedAt     DateTime?
-  confirmationPhotoUrls String[]         @default([])
+  confirmationPhotoUrls String[]  @default([])
 
   // Metadata
-  estimatedWeight       Float?
-  actualWeight          Float?
-  photoUrls             String[]         @default([])
+  estimatedWeight Float?
+  actualWeight    Float?
+  photoUrls       String[] @default([])
 
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relationships
-  customer              Customer     @relation(fields: [customerId], references: [id])
-  merchant              Merchant     @relation(fields: [merchantId], references: [id])
-  merchantLocation      MerchantLocation @relation(fields: [merchantLocationId], references: [id])
-  pickupDriver          Driver?      @relation("DriverPickup", fields: [pickupDriverId], references: [id])
-  deliveryDriver        Driver?      @relation("DriverDelivery", fields: [deliveryDriverId], references: [id])
-  pickupAddress         Address      @relation("PickupAddress", fields: [pickupAddressId], references: [id])
-  deliveryAddress       Address      @relation("DeliveryAddress", fields: [deliveryAddressId], references: [id])
-  items                 OrderItem[]
-  statusHistory         OrderStatusHistory[]
-  payment               Payment?
-  review                Review?
+  customer         Customer             @relation(fields: [customerId], references: [id])
+  merchant         Merchant             @relation(fields: [merchantId], references: [id])
+  merchantLocation MerchantLocation     @relation(fields: [merchantLocationId], references: [id])
+  pickupDriver     Driver?              @relation("DriverPickup", fields: [pickupDriverId], references: [id])
+  deliveryDriver   Driver?              @relation("DriverDelivery", fields: [deliveryDriverId], references: [id])
+  pickupAddress    Address              @relation("PickupAddress", fields: [pickupAddressId], references: [id])
+  deliveryAddress  Address              @relation("DeliveryAddress", fields: [deliveryAddressId], references: [id])
+  items            OrderItem[]
+  statusHistory    OrderStatusHistory[]
+  payment          Payment?
+  review           Review?
 
   @@index([customerId])
   @@index([merchantId])
@@ -409,38 +409,38 @@ model Order {
 }
 
 model OrderItem {
-  id                String   @id @default(cuid())
-  orderId           String
-  serviceId         String
-  itemName          String
-  description       String?
-  quantity          Int      @default(1)
-  unitPrice         Float
-  totalPrice        Float
+  id                  String   @id @default(cuid())
+  orderId             String
+  serviceId           String
+  itemName            String
+  description         String?
+  quantity            Int      @default(1)
+  unitPrice           Float
+  totalPrice          Float
   specialInstructions String?
-  photoUrl          String?
-  fabricType        String?  // AI-detected
-  stainType         String?  // AI-detected
-  createdAt         DateTime @default(now())
+  photoUrl            String?
+  fabricType          String? // AI-detected
+  stainType           String? // AI-detected
+  createdAt           DateTime @default(now())
 
-  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  service           Service  @relation(fields: [serviceId], references: [id])
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id])
 
   @@index([orderId])
   @@index([serviceId])
 }
 
 model OrderStatusHistory {
-  id          String      @id @default(cuid())
-  orderId     String
-  status      OrderStatus
-  notes       String?
-  latitude    Float?
-  longitude   Float?
-  createdBy   String?     // userId who triggered the status change
-  createdAt   DateTime    @default(now())
+  id        String      @id @default(cuid())
+  orderId   String
+  status    OrderStatus
+  notes     String?
+  latitude  Float?
+  longitude Float?
+  createdBy String? // userId who triggered the status change
+  createdAt DateTime    @default(now())
 
-  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([createdAt])
@@ -453,7 +453,7 @@ model OrderStatusHistory {
 model Address {
   id            String   @id @default(cuid())
   customerId    String
-  label         String?  // "Home", "Work", "Other"
+  label         String? // "Home", "Work", "Other"
   street        String
   apartment     String?
   city          String
@@ -462,14 +462,14 @@ model Address {
   country       String   @default("USA")
   latitude      Float?
   longitude     Float?
-  deliveryNotes String?  // Gate code, special instructions
+  deliveryNotes String? // Gate code, special instructions
   isDefault     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  pickupOrders  Order[]  @relation("PickupAddress")
-  deliveryOrders Order[] @relation("DeliveryAddress")
+  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  pickupOrders   Order[]  @relation("PickupAddress")
+  deliveryOrders Order[]  @relation("DeliveryAddress")
 
   @@index([customerId])
 }
@@ -513,7 +513,7 @@ model Payment {
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
-  order               Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([status])
@@ -530,23 +530,23 @@ enum ReviewType {
 }
 
 model Review {
-  id          String     @id @default(cuid())
-  orderId     String     @unique
-  customerId  String
-  merchantId  String?
-  driverId    String?
-  type        ReviewType
-  rating      Int        // 1-5
-  comment     String?
-  response    String?    // Merchant/Driver response
-  isPublic    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id         String     @id @default(cuid())
+  orderId    String     @unique
+  customerId String
+  merchantId String?
+  driverId   String?
+  type       ReviewType
+  rating     Int // 1-5
+  comment    String?
+  response   String? // Merchant/Driver response
+  isPublic   Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
-  order       Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  customer    Customer   @relation(fields: [customerId], references: [id])
-  merchant    Merchant?  @relation(fields: [merchantId], references: [id])
-  driver      Driver?    @relation(fields: [driverId], references: [id])
+  order    Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customer Customer  @relation(fields: [customerId], references: [id])
+  merchant Merchant? @relation(fields: [merchantId], references: [id])
+  driver   Driver?   @relation(fields: [driverId], references: [id])
 
   @@index([customerId])
   @@index([merchantId])
@@ -559,20 +559,20 @@ model Review {
 // ============================================
 
 model InventoryItem {
-  id                String   @id @default(cuid())
-  merchantId        String
-  name              String
-  category          String   // "DETERGENT", "HANGER", "BAG", "TAG", etc.
-  currentStock      Int
-  minStockLevel     Int
-  unit              String   // "UNITS", "LITERS", "KG"
-  costPerUnit       Float
-  supplierId        String?
-  lastRestockedAt   DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id              String    @id @default(cuid())
+  merchantId      String
+  name            String
+  category        String // "DETERGENT", "HANGER", "BAG", "TAG", etc.
+  currentStock    Int
+  minStockLevel   Int
+  unit            String // "UNITS", "LITERS", "KG"
+  costPerUnit     Float
+  supplierId      String?
+  lastRestockedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  merchant          Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
 
   @@index([merchantId])
   @@index([currentStock])
@@ -597,11 +597,11 @@ enum EquipmentStatus {
 }
 
 model Equipment {
-  id                  String           @id @default(cuid())
+  id                  String          @id @default(cuid())
   merchantId          String
   name                String
   type                EquipmentType
-  status              EquipmentStatus  @default(OPERATIONAL)
+  status              EquipmentStatus @default(OPERATIONAL)
   manufacturer        String?
   model               String?
   serialNumber        String?
@@ -611,19 +611,19 @@ model Equipment {
   maintenanceNotes    String?
 
   // IoT Integration
-  isIotEnabled        Boolean          @default(false)
-  iotDeviceId         String?          @unique
-  iotApiKey           String?          // For device authentication
-  lastTelemetryAt     DateTime?
+  isIotEnabled    Boolean   @default(false)
+  iotDeviceId     String?   @unique
+  iotApiKey       String? // For device authentication
+  lastTelemetryAt DateTime?
 
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relationships
-  merchant            Merchant                  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  telemetry           EquipmentTelemetry?
-  telemetryHistory    EquipmentTelemetryLog[]
-  maintenanceAlerts   MaintenanceAlert[]
+  merchant          Merchant                @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  telemetry         EquipmentTelemetry?
+  telemetryHistory  EquipmentTelemetryLog[]
+  maintenanceAlerts MaintenanceAlert[]
 
   @@index([merchantId])
   @@index([status])
@@ -640,26 +640,65 @@ enum StaffRole {
   PRESSER
   CASHIER
   DELIVERY
+  // Enterprise roles (Phase 3 - Multi-tenant)
+  STORE_MANAGER // Single store management
+  REGIONAL_MANAGER // Multi-store oversight
+  ENTERPRISE_ADMIN // Full organization access
+  STAFF_MEMBER // Limited access
+  FINANCE_MANAGER // Billing & reports only
+  OPERATIONS // Orders & dispatch only
 }
 
 model Staff {
-  id            String     @id @default(cuid())
-  merchantId    String
-  firstName     String
-  lastName      String
-  email         String?
-  phone         String
-  role          StaffRole
-  hourlyRate    Float?
-  isActive      Boolean    @default(true)
-  hiredAt       DateTime   @default(now())
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id         String    @id @default(cuid())
+  merchantId String
+  firstName  String
+  lastName   String
+  email      String?
+  phone      String
+  role       StaffRole
+  hourlyRate Float?
+  isActive   Boolean   @default(true)
+  hiredAt    DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  merchant      Merchant   @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  merchant    Merchant          @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  permissions StaffPermission[] // Phase 3: Granular RBAC
 
   @@index([merchantId])
   @@index([isActive])
+}
+
+// Phase 3: Role-Based Access Control (RBAC)
+model StaffPermission {
+  id         String  @id @default(cuid())
+  staffId    String
+  merchantId String
+  locationId String? // null = all locations
+
+  // Permissions
+  canViewOrders      Boolean @default(false)
+  canCreateOrders    Boolean @default(false)
+  canEditOrders      Boolean @default(false)
+  canCancelOrders    Boolean @default(false)
+  canViewAnalytics   Boolean @default(false)
+  canViewFinance     Boolean @default(false)
+  canManageStaff     Boolean @default(false)
+  canManageEquipment Boolean @default(false)
+  canManageSettings  Boolean @default(false)
+  canManageInventory Boolean @default(false)
+  canManageDrivers   Boolean @default(false)
+  canViewReports     Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  staff Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId])
+  @@index([merchantId])
+  @@index([locationId])
 }
 
 // ============================================
@@ -691,7 +730,7 @@ model Promotion {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  merchant      Merchant?     @relation(fields: [merchantId], references: [id])
+  merchant Merchant? @relation(fields: [merchantId], references: [id])
 
   @@index([code])
   @@index([merchantId])
@@ -715,17 +754,17 @@ enum SubscriptionStatus {
 }
 
 model Subscription {
-  id                String                @id @default(cuid())
-  customerId        String
-  merchantId        String
-  frequency         SubscriptionFrequency
-  status            SubscriptionStatus    @default(ACTIVE)
-  nextScheduledDate DateTime
+  id                  String                @id @default(cuid())
+  customerId          String
+  merchantId          String
+  frequency           SubscriptionFrequency
+  status              SubscriptionStatus    @default(ACTIVE)
+  nextScheduledDate   DateTime
   preferredPickupTime String?
-  createdAt         DateTime              @default(now())
-  updatedAt         DateTime              @updatedAt
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
 
-  customer          Customer              @relation(fields: [customerId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
 
   @@index([customerId])
   @@index([status])
@@ -737,22 +776,22 @@ model Subscription {
 // ============================================
 
 model WardrobeItem {
-  id              String   @id @default(cuid())
-  customerId      String
-  name            String
-  category        String   // "SHIRT", "PANTS", "DRESS", etc.
-  fabricType      String?  // AI-detected
-  color           String?
-  brand           String?
-  photoUrl        String?
-  purchaseDate    DateTime?
-  lastCleanedAt   DateTime?
-  cleaningCount   Int      @default(0)
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String    @id @default(cuid())
+  customerId    String
+  name          String
+  category      String // "SHIRT", "PANTS", "DRESS", etc.
+  fabricType    String? // AI-detected
+  color         String?
+  brand         String?
+  photoUrl      String?
+  purchaseDate  DateTime?
+  lastCleanedAt DateTime?
+  cleaningCount Int       @default(0)
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@index([customerId])
 }
@@ -770,21 +809,21 @@ model Referral {
   rewardPaidOut Boolean  @default(false)
   createdAt     DateTime @default(now())
 
-  referrer      Customer @relation("Referrer", fields: [referrerId], references: [id])
-  referred      Customer @relation("Referred", fields: [referredId], references: [id])
+  referrer Customer @relation("Referrer", fields: [referrerId], references: [id])
+  referred Customer @relation("Referred", fields: [referredId], references: [id])
 
   @@index([referrerId])
   @@index([code])
 }
 
 model FavoriteMerchant {
-  id          String   @id @default(cuid())
-  customerId  String
-  merchantId  String
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  customerId String
+  merchantId String
+  createdAt  DateTime @default(now())
 
-  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
 
   @@unique([customerId, merchantId])
   @@index([customerId])
@@ -811,18 +850,18 @@ enum NotificationChannel {
 }
 
 model Notification {
-  id          String              @id @default(cuid())
-  userId      String
-  type        NotificationType
-  channel     NotificationChannel
-  title       String
-  message     String
-  data        Json?
-  isRead      Boolean             @default(false)
-  sentAt      DateTime            @default(now())
-  readAt      DateTime?
+  id      String              @id @default(cuid())
+  userId  String
+  type    NotificationType
+  channel NotificationChannel
+  title   String
+  message String
+  data    Json?
+  isRead  Boolean             @default(false)
+  sentAt  DateTime            @default(now())
+  readAt  DateTime?
 
-  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([isRead])
@@ -834,17 +873,114 @@ model Notification {
 // ============================================
 
 model AnalyticsEvent {
-  id          String   @id @default(cuid())
-  userId      String?
-  eventType   String   // "ORDER_CREATED", "PAGE_VIEW", etc.
-  eventData   Json
-  metadata    Json?
-  ipAddress   String?
-  userAgent   String?
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String?
+  eventType String // "ORDER_CREATED", "PAGE_VIEW", etc.
+  eventData Json
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([eventType])
+  @@index([createdAt])
+}
+
+// ============================================
+// WORKFLOW STATE PERSISTENCE (Phase 3)
+// ============================================
+
+enum WorkflowType {
+  CREATE_ORDER
+  SCHEDULE_MAINTENANCE
+  BOOK_APPOINTMENT
+  DRIVER_DISPATCH
+  CUSTOMER_REGISTRATION
+  BULK_ORDER_UPLOAD
+}
+
+model WorkflowState {
+  id           String       @id @default(cuid())
+  userId       String
+  merchantId   String?
+  workflowType WorkflowType
+  stepIndex    Int          @default(0)
+  totalSteps   Int
+  data         Json // Current form data / progress
+  completedAt  DateTime?
+  expiresAt    DateTime? // Auto-cleanup old workflows
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([userId, workflowType])
+  @@index([merchantId])
+  @@index([completedAt])
+  @@index([expiresAt])
+}
+
+// ============================================
+// AUDIT LOGGING & COMPLIANCE (Phase 3)
+// ============================================
+
+enum AuditAction {
+  // Order actions
+  ORDER_CREATED
+  ORDER_UPDATED
+  ORDER_CANCELLED
+  ORDER_STATUS_CHANGED
+  ORDER_REFUNDED
+
+  // Staff actions
+  STAFF_CREATED
+  STAFF_UPDATED
+  STAFF_DELETED
+  STAFF_PERMISSION_CHANGED
+  STAFF_ROLE_CHANGED
+
+  // Equipment actions
+  EQUIPMENT_CREATED
+  EQUIPMENT_UPDATED
+  EQUIPMENT_DELETED
+  EQUIPMENT_MAINTENANCE_SCHEDULED
+
+  // Settings actions
+  SETTINGS_UPDATED
+  PRICING_CHANGED
+  LOCATION_ADDED
+  LOCATION_REMOVED
+
+  // Financial actions
+  PAYMENT_PROCESSED
+  REFUND_ISSUED
+  PAYOUT_COMPLETED
+
+  // Security actions
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  PASSWORD_CHANGED
+  PERMISSION_DENIED
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  userId     String
+  merchantId String?
+  locationId String?
+  action     AuditAction
+  entityType String // "Order", "Staff", "Equipment", etc.
+  entityId   String
+  changes    Json? // Before/after diff
+  metadata   Json? // Additional context
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime    @default(now())
+
+  @@index([userId])
+  @@index([merchantId])
+  @@index([locationId])
+  @@index([action])
+  @@index([entityType, entityId])
   @@index([createdAt])
 }
 
@@ -854,15 +990,15 @@ model AnalyticsEvent {
 
 // Real-time telemetry (latest reading)
 model EquipmentTelemetry {
-  id                String    @id @default(cuid())
-  equipmentId       String    @unique
+  id          String @id @default(cuid())
+  equipmentId String @unique
 
   // Sensor readings
-  powerWatts        Float?
-  waterLiters       Float?
-  temperature       Float?
-  vibration         Float?
-  cycleType         String?   // "WASH" | "DRY" | "STEAM" | "PRESS"
+  powerWatts  Float?
+  waterLiters Float?
+  temperature Float?
+  vibration   Float?
+  cycleType   String? // "WASH" | "DRY" | "STEAM" | "PRESS"
 
   // Cycle info
   isRunning         Boolean   @default(false)
@@ -871,25 +1007,25 @@ model EquipmentTelemetry {
   cycleCount        Int       @default(0)
 
   // Computed metrics
-  healthScore       Int       @default(100) // 0-100
-  efficiencyScore   Int       @default(100) // 0-100
+  healthScore     Int @default(100) // 0-100
+  efficiencyScore Int @default(100) // 0-100
 
-  updatedAt         DateTime  @updatedAt
-  equipment         Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  updatedAt DateTime  @updatedAt
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
 
   @@index([equipmentId])
 }
 
 // Historical telemetry logs (for analytics and ML training)
 model EquipmentTelemetryLog {
-  id              String    @id @default(cuid())
-  equipmentId     String
-  timestamp       DateTime  @default(now())
+  id          String   @id @default(cuid())
+  equipmentId String
+  timestamp   DateTime @default(now())
 
   // Snapshot of readings
-  data            Json      // Store full telemetry object for flexibility
+  data Json // Store full telemetry object for flexibility
 
-  equipment       Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
 
   @@index([equipmentId, timestamp])
   @@index([timestamp])
@@ -925,27 +1061,27 @@ enum AlertStatus {
 }
 
 model MaintenanceAlert {
-  id              String               @id @default(cuid())
-  equipmentId     String
-  merchantId      String
+  id          String @id @default(cuid())
+  equipmentId String
+  merchantId  String
 
-  type            MaintenanceAlertType
-  severity        AlertSeverity
-  title           String
-  description     String
-  recommendation  String?              // Suggested action
+  type           MaintenanceAlertType
+  severity       AlertSeverity
+  title          String
+  description    String
+  recommendation String? // Suggested action
 
   // Trigger data
-  triggerData     Json?                // What caused the alert
+  triggerData Json? // What caused the alert
 
-  status          AlertStatus          @default(OPEN)
-  createdAt       DateTime             @default(now())
-  acknowledgedAt  DateTime?
-  resolvedAt      DateTime?
-  resolution      String?              // How it was resolved
+  status         AlertStatus @default(OPEN)
+  createdAt      DateTime    @default(now())
+  acknowledgedAt DateTime?
+  resolvedAt     DateTime?
+  resolution     String? // How it was resolved
 
-  equipment       Equipment            @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
-  merchant        Merchant             @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  merchant  Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
 
   @@index([merchantId, status])
   @@index([equipmentId, status])

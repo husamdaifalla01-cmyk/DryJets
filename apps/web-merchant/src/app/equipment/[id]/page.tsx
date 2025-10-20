@@ -60,7 +60,7 @@ function MetricCard({ icon: Icon, label, value, unit, trend, color = 'blue' }: a
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <div className="flex items-start justify-between mb-4">
-        <div className={`p-3 rounded-lg ${colors[color]}`}>
+        <div className={`p-3 rounded-lg ${colors[color as keyof typeof colors]}`}>
           <Icon className="w-6 h-6" />
         </div>
         {trend && (
