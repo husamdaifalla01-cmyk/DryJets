@@ -36,7 +36,12 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
   // Initialize Socket.io connection
   useEffect(() => {
     if (!token) {
-      disconnectSocket();
+      // Don't try to disconnect if we never connected
+      if (socketRef.current) {
+        disconnectSocket();
+      }
+      setSocket(null);
+      setIsConnected(false);
       return;
     }
 

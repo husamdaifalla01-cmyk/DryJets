@@ -256,3 +256,6 @@ export const theme = {
 };
 
 export type Theme = typeof theme;
+
+// For backwards compatibility with Phase 4 components
+export const tokens = theme;

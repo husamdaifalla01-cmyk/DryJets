@@ -18,12 +18,14 @@ import {
 interface AuthState {
   user: User | null;
   customer: Customer | null;
+  customerId: string | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
 
   setUser: (user: User) => void;
   setCustomer: (customer: Customer) => void;
+  setCustomerId: (customerId: string | null) => void;
   setToken: (token: string) => void;
   setIsLoading: (loading: boolean) => void;
   logout: () => void;
@@ -34,12 +36,14 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       customer: null,
+      customerId: null,
       token: null,
       isAuthenticated: false,
       isLoading: false,
 
       setUser: (user) => set({ user, isAuthenticated: true }),
-      setCustomer: (customer) => set({ customer }),
+      setCustomer: (customer) => set({ customer, customerId: customer?.id || null }),
+      setCustomerId: (customerId) => set({ customerId }),
       setToken: (token) => set({ token }),
       setIsLoading: (loading) => set({ isLoading: loading }),
 
@@ -47,6 +51,7 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: null,
           customer: null,
+          customerId: null,
           token: null,
           isAuthenticated: false,
         }),

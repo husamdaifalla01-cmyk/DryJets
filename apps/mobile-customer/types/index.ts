@@ -276,9 +276,12 @@ export interface Review {
   comment: string | null;
   photos: string[];
   tags: string[]; // ["Fast", "Affordable", "High Quality"]
+  wouldRecommend: boolean; // Phase 4 field
   merchantResponse: string | null;
+  merchantResponseDate: string | null; // Phase 4 field
   createdAt: string;
   updatedAt: string;
+  merchant?: Merchant; // Phase 4 field for detail view
 }
 
 // ============================================
@@ -294,9 +297,13 @@ export interface WardrobeItem {
   color: string | null;
   brand: string | null;
   imageUrl: string | null;
+  photos?: string[]; // Phase 4 field for multiple photos
   careInstructions: string | null;
   lastCleanedAt: string | null;
+  lastCleanedDate?: string | null; // Phase 4 alias for lastCleanedAt
   cleaningFrequency: number | null; // days
+  estimatedFrequency?: number | null; // Phase 4 field (frequency in days)
+  cleaningCount?: number; // Phase 4 field (total cleaning count)
   notes: string | null;
   createdAt: string;
   updatedAt: string;

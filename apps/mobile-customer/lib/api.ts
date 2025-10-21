@@ -153,6 +153,22 @@ export const ordersApi = {
       params: { customerId, ...params },
     }),
 
+  // Search orders with filters
+  search: (customerId: string, params?: {
+    query?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    minAmount?: number;
+    maxAmount?: number;
+    sort?: 'newest' | 'oldest' | 'highestPrice' | 'lowestPrice';
+    limit?: number;
+    page?: number;
+  }) =>
+    apiClient.client.get<ApiResponse<PaginatedResponse<Order>>>('/orders/search', {
+      params: { customerId, ...params },
+    }),
+
   // Update order status
   updateStatus: (orderId: string, status: string) =>
     apiClient.client.patch<ApiResponse<Order>>(`/orders/${orderId}/status`, { status }),
@@ -178,6 +194,23 @@ export const ordersApi = {
         estimatedArrival: string;
       }>
     >(`/orders/${orderId}/tracking`),
+
+  // Submit review for order
+  submitReview: (orderId: string, data: {
+    rating: number;
+    comment?: string;
+    wouldRecommend?: boolean;
+    tags?: string[];
+  }) =>
+    apiClient.client.post<ApiResponse<Review>>(`/orders/${orderId}/reviews`, data),
+
+  // Get review for order
+  getReview: (reviewId: string) =>
+    apiClient.client.get<ApiResponse<Review>>(`/reviews/${reviewId}`),
+
+  // Delete review
+  deleteReview: (reviewId: string) =>
+    apiClient.client.delete<ApiResponse<void>>(`/reviews/${reviewId}`),
 };
 
 // ============================================
