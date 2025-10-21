@@ -215,10 +215,12 @@ npm run test:e2e
 
 ## 📚 Documentation
 
-- [📖 Implementation Guide](./CONSUMER_APP_IMPLEMENTATION_GUIDE.md)
+- [📖 Implementation Guide](../../docs/03-mobile-customer/implementation-guide.md)
 - [✅ Features Checklist](./FEATURES_CHECKLIST.md)
-- [⚡ Quick Start Guide](./CONSUMER_APP_QUICK_START.md)
-- [📊 Completion Report](./CONSUMER_APP_COMPLETION_REPORT.md)
+- [⚡ Quick Start Guide](../../docs/03-mobile-customer/quick-start.md)
+- [📊 Completion Report](../../docs/07-project-status/consumer-app-completion.md)
+- [📋 All Mobile Customer Docs](../../docs/03-mobile-customer/) - Phase reports, guides, and more
+- [📚 Main Documentation](../../docs/) - Full project documentation
 
 ---
 

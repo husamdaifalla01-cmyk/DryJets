@@ -381,6 +381,22 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 - [ ] Advanced AI features
 - [ ] IoT integrations
 
+## 📚 Documentation
+
+Comprehensive documentation is organized in the [`docs/`](./docs/) directory:
+
+- **[Getting Started Guide](./GETTING_STARTED.md)** - Quick setup and installation
+- **[Contributing Guidelines](./CONTRIBUTING.md)** - How to contribute to the project
+- **[Documentation Index](./docs/README.md)** - Full documentation navigation
+
+### Quick Links:
+- [Architecture Overview](./docs/02-architecture/project-overview.md)
+- [Mobile Customer App](./docs/03-mobile-customer/)
+- [Merchant Portal](./docs/04-merchant-portal/)
+- [Backend API](./docs/05-backend-api/)
+- [Feature Guides](./docs/06-features/)
+- [Project Status](./docs/07-project-status/)
+
 ## License
 
 This project is proprietary and confidential.
