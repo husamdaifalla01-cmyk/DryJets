@@ -11,6 +11,9 @@ import { MerchantsModule } from './modules/merchants/merchants.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { EventsModule } from './modules/events/events.module';
 import { IotModule } from './modules/iot/iot.module';
+import { BusinessAccountsModule } from './modules/business-accounts/business-accounts.module';
+import { EnterpriseModule } from './modules/enterprise/enterprise.module';
+import { InvoicesModule } from './modules/invoices/invoices.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 
 @Module({
@@ -37,6 +40,9 @@ import { PrismaModule } from './common/prisma/prisma.module';
     UsersModule,
     OrdersModule,
     MerchantsModule,
+    BusinessAccountsModule,
+    EnterpriseModule,
+    InvoicesModule,
     // DriversModule,  // Temporarily disabled - has compilation errors
     // PaymentsModule,  // Temporarily disabled - has compilation errors
     // NotificationsModule,  // Temporarily disabled - has compilation errors
