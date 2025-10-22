@@ -21,7 +21,8 @@ class ErrorBoundary extends React.Component<{ children: ReactNode }, ErrorBounda
   }
 
   componentDidCatch(error: Error) {
-    console.error('RootLayout Error Boundary caught:', error);
+    // Silent error handling - avoid console mutation during initialization
+    // Error state is tracked and displayed to user via error UI
   }
 
   render() {

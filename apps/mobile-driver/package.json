@@ -2,11 +2,11 @@
   "name": "@dryjets/mobile-driver",
   "version": "1.0.0",
   "private": true,
-  "main": "expo-router/entry",
+  "main": "index.js",
   "scripts": {
     "dev": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "build": "expo export",
     "lint": "eslint .",
@@ -28,9 +28,10 @@
     "expo-status-bar": "~3.0.8",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-native": "0.81.4",
-    "react-native-gesture-handler": "^2.16.0",
+    "react-native": "0.81.5",
+    "react-native-gesture-handler": "~2.28.0",
     "react-native-maps": "1.20.1",
+    "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-web": "^0.21.0",
@@ -39,7 +40,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
-    "@types/react": "~18.2.45",
+    "@types/react": "~19.1.10",
     "eslint": "^8.57.0",
     "typescript": "^5.3.3"
   }

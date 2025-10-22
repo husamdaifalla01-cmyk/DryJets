@@ -5,10 +5,21 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "jsEngine": "jsc",
+    "developmentClient": {
+      "silentLaunch": true
+    },
+    "updates": {
+      "enabled": true,
+      "fallbackToCacheTimeout": 0
+    },
+    "experiments": {
+      "tsconfigPaths": true
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.dryjets.customer",
-      "jsEngine": "hermes",
+      "jsEngine": "jsc",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "DryJets needs your location to find nearby cleaners and track deliveries.",
         "NSCameraUsageDescription": "DryJets needs camera access to take photos of items.",

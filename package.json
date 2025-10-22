@@ -23,7 +23,13 @@
       "**/react-native-maps",
       "**/react-native-maps/**",
       "**/@stripe/stripe-react-native",
-      "**/@stripe/stripe-react-native/**"
+      "**/@stripe/stripe-react-native/**",
+      "**/react-native-reanimated",
+      "**/react-native-reanimated/**",
+      "**/react-native-gesture-handler",
+      "**/react-native-gesture-handler/**",
+      "**/react-native-worklets",
+      "**/react-native-worklets/**"
     ]
   },
   "scripts": {
