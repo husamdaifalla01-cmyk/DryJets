@@ -83,8 +83,80 @@ const pricingTiers = [
   },
 ];
 
+const businessPlans = [
+  {
+    id: 'starter',
+    name: 'Business Starter',
+    tagline: 'For small businesses',
+    monthlyPrice: '199',
+    annualPrice: '159',
+    period: 'per month',
+    description: 'Perfect for boutiques and small offices',
+    icon: BuildingOfficeIcon,
+    gradient: 'from-slate-600 to-slate-800',
+    popular: false,
+    features: [
+      { name: 'Up to 100 lbs/month', included: true },
+      { name: 'Dedicated pickup days', included: true },
+      { name: 'Priority processing', included: true },
+      { name: 'Invoice billing', included: true },
+      { name: 'Online portal access', included: true },
+      { name: 'Dedicated account manager', included: false },
+    ],
+    cta: 'Get Started',
+    ctaVariant: 'outline' as const,
+  },
+  {
+    id: 'professional',
+    name: 'Business Professional',
+    tagline: 'Most popular for businesses',
+    monthlyPrice: '499',
+    annualPrice: '399',
+    period: 'per month',
+    description: 'Ideal for hotels and gyms',
+    icon: RocketLaunchIcon,
+    gradient: 'from-slate-700 to-slate-900',
+    popular: true,
+    features: [
+      { name: 'Unlimited laundry', included: true },
+      { name: 'Daily pickup available', included: true },
+      { name: 'Same-day turnaround', included: true },
+      { name: 'Dedicated account manager', included: true },
+      { name: 'Custom reporting', included: true },
+      { name: 'Volume discounts', included: true },
+    ],
+    cta: 'Contact Sales',
+    ctaVariant: 'primary' as const,
+  },
+  {
+    id: 'enterprise-business',
+    name: 'Enterprise',
+    tagline: 'For large organizations',
+    monthlyPrice: 'Custom',
+    annualPrice: 'Custom',
+    period: 'pricing',
+    description: 'Tailored solutions for your needs',
+    icon: BuildingOfficeIcon,
+    gradient: 'from-brand-navy to-slate-900',
+    popular: false,
+    features: [
+      { name: 'Custom volume agreements', included: true },
+      { name: 'Multiple location support', included: true },
+      { name: 'API integration available', included: true },
+      { name: 'Dedicated support team', included: true },
+      { name: 'Custom SLA agreements', included: true },
+      { name: 'White-label options', included: true },
+    ],
+    cta: 'Schedule Demo',
+    ctaVariant: 'secondary' as const,
+  },
+];
+
 export function PricingPreview() {
   const [isAnnual, setIsAnnual] = useState(false);
+  const [planType, setPlanType] = useState<'customer' | 'business'>('customer');
+
+  const currentPlans = planType === 'customer' ? pricingTiers : businessPlans;
 
   return (
     <section className="py-20 md:py-24 bg-gradient-to-br from-white via-blue-50/30 to-white relative overflow-hidden">
@@ -101,16 +173,48 @@ export function PricingPreview() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="text-center mb-8"
         >
           <h2 className="text-fluid-4xl font-display font-bold text-brand-navy mb-4">
             Simple, <span className="bg-gradient-to-r from-brand-orange to-brand-primary bg-clip-text text-transparent">Transparent Pricing</span>
           </h2>
           <p className="text-fluid-lg text-gray-600 max-w-2xl mx-auto mb-8">
-            Choose the plan that fits your lifestyle. No hidden fees, cancel anytime.
+            {planType === 'customer'
+              ? 'Choose the plan that fits your lifestyle. No hidden fees, cancel anytime.'
+              : 'Enterprise-grade laundry solutions for businesses of all sizes.'}
           </p>
 
-          {/* Billing toggle */}
+          {/* Plan Type Toggle - Customer vs Business */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="flex items-center justify-center gap-3 mb-8"
+          >
+            <button
+              onClick={() => setPlanType('customer')}
+              className={`px-8 py-3 rounded-xl font-semibold transition-all ${
+                planType === 'customer'
+                  ? 'bg-gradient-to-r from-brand-primary to-blue-600 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              🧺 For Customers
+            </button>
+            <button
+              onClick={() => setPlanType('business')}
+              className={`px-8 py-3 rounded-xl font-semibold transition-all ${
+                planType === 'business'
+                  ? 'bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              🏢 For Businesses
+            </button>
+          </motion.div>
+
+          {/* Billing toggle (Monthly/Annual) - Only show for non-custom pricing */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -160,7 +264,7 @@ export function PricingPreview() {
 
         {/* Pricing cards */}
         <div className="grid md:grid-cols-3 gap-8 mb-16">
-          {pricingTiers.map((tier, index) => (
+          {currentPlans.map((tier, index) => (
             <motion.div
               key={tier.id}
               initial={{ opacity: 0, y: 30 }}
@@ -207,14 +311,23 @@ export function PricingPreview() {
                         transition={{ duration: 0.3 }}
                         className={`text-5xl font-display font-bold ${tier.popular ? 'text-white' : 'text-brand-navy'}`}
                       >
-                        ${isAnnual ? tier.annualPrice : tier.monthlyPrice}
+                        {tier.monthlyPrice === 'Custom'
+                          ? 'Custom'
+                          : `$${isAnnual ? tier.annualPrice : tier.monthlyPrice}`}
                       </motion.span>
                     </AnimatePresence>
-                    <span className={`text-lg ${tier.popular ? 'text-gray-400' : 'text-gray-600'}`}>
-                      /{tier.period.split(' ')[1]}
-                    </span>
+                    {tier.monthlyPrice !== 'Custom' && (
+                      <span className={`text-lg ${tier.popular ? 'text-gray-400' : 'text-gray-600'}`}>
+                        /{tier.period.split(' ')[1]}
+                      </span>
+                    )}
+                    {tier.monthlyPrice === 'Custom' && (
+                      <span className={`text-lg ${tier.popular ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {tier.period}
+                      </span>
+                    )}
                   </div>
-                  {isAnnual && (
+                  {isAnnual && tier.monthlyPrice !== 'Custom' && (
                     <motion.p
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}

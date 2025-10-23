@@ -41,6 +41,7 @@ const testimonials = [
     name: 'Sarah Mitchell',
     role: 'Marketing Director',
     avatar: 'SM',
+    imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80&auto=format&fit=crop',
     rating: 5,
     text: "DryJets has been a lifesaver! As a busy professional, I don't have time for laundry day. Their pickup and delivery service is seamless, and my clothes always come back looking brand new.",
     gradient: 'from-brand-primary to-sky-600',
@@ -50,6 +51,7 @@ const testimonials = [
     name: 'James Chen',
     role: 'Entrepreneur',
     avatar: 'JC',
+    imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80&auto=format&fit=crop',
     rating: 5,
     text: "I've tried several dry cleaning services, but DryJets stands out. The attention to detail is incredible, and their app makes scheduling so easy. My suits have never looked better!",
     gradient: 'from-brand-orange to-orange-600',
@@ -59,6 +61,7 @@ const testimonials = [
     name: 'Emily Rodriguez',
     role: 'Real Estate Agent',
     avatar: 'ER',
+    imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80&auto=format&fit=crop',
     rating: 5,
     text: "The convenience is unmatched. I can schedule pickups around my showings, and they've never missed a deadline. Plus, their eco-friendly approach aligns with my values.",
     gradient: 'from-brand-lavender to-purple-600',
@@ -68,6 +71,7 @@ const testimonials = [
     name: 'Michael Thompson',
     role: 'Doctor',
     avatar: 'MT',
+    imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80&auto=format&fit=crop',
     rating: 5,
     text: "Working long hours at the hospital, I barely have time to breathe. DryJets picks up my scrubs and clothes right from my doorstep. It's one less thing to worry about!",
     gradient: 'from-brand-green to-emerald-600',
@@ -77,6 +81,7 @@ const testimonials = [
     name: 'Lisa Park',
     role: 'Interior Designer',
     avatar: 'LP',
+    imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80&auto=format&fit=crop',
     rating: 5,
     text: "Their special care service for delicate fabrics is outstanding. I trust them with my designer pieces and client samples. The quality is consistently excellent!",
     gradient: 'from-brand-primary to-sky-600',
@@ -203,10 +208,12 @@ export function Testimonials() {
 
                   {/* Customer info */}
                   <div className="flex items-center gap-4">
-                    {/* Avatar */}
-                    <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${currentTestimonial.gradient} flex items-center justify-center text-white font-display font-bold text-xl shadow-medium`}>
-                      {currentTestimonial.avatar}
-                    </div>
+                    {/* Avatar - Real Portrait Photo */}
+                    <img
+                      src={currentTestimonial.imageUrl}
+                      alt={currentTestimonial.name}
+                      className="w-16 h-16 rounded-full object-cover shadow-medium ring-2 ring-white"
+                    />
 
                     <div>
                       <h4 className="text-lg font-display font-bold text-brand-navy">
