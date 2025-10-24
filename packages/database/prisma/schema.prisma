@@ -1355,3 +1355,166 @@ model MaintenanceAlert {
   @@index([severity, status])
   @@index([createdAt])
 }
+
+// ============================================
+// MARKETING & SEO SYSTEM
+// ============================================
+
+enum CampaignType {
+  AWARENESS
+  ENGAGEMENT
+  CONVERSION
+  RETENTION
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum BlogPostStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ContentAssetType {
+  IMAGE
+  VIDEO
+  COPY
+  CAPTION
+  SCRIPT
+}
+
+model Campaign {
+  id              String         @id @default(cuid())
+  name            String
+  type            CampaignType
+  status          CampaignStatus @default(DRAFT)
+  platforms       Json           // ['meta', 'google', 'linkedin']
+  budgetTotal     Decimal?       @db.Decimal(10, 2)
+  targetAudience  Json?          // Audience config
+  aiGenerated     Boolean        @default(true)
+  aiAgent         String?        // 'ava', 'mira', 'leo'
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relationships
+  contentAssets   ContentAsset[]
+
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model BlogPost {
+  id                String         @id @default(cuid())
+  title             String
+  slug              String         @unique
+  content           String         @db.Text
+  excerpt           String?        @db.Text
+  keywords          String[]       // SEO keywords
+  metaTitle         String?
+  metaDescription   String?
+  status            BlogPostStatus @default(DRAFT)
+  publishedAt       DateTime?
+  viewCount         Int            @default(0)
+  aiGenerated       Boolean        @default(true)
+  aiBrief           Json?          // Original AI generation brief
+  serpRank          Int?           // Current Google ranking
+  repurposedCount   Int            @default(0)
+  createdBy         String         @default("mira") // AI agent name
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  // Relationships
+  seoMetrics        SEOMetric[]
+  contentAssets     ContentAsset[]
+
+  @@index([status])
+  @@index([slug])
+  @@index([publishedAt])
+  @@index([createdAt])
+}
+
+model ContentAsset {
+  id                String           @id @default(cuid())
+  type              ContentAssetType
+  content           String?          @db.Text // Text content or file URL
+  platform          String?          // 'meta', 'tiktok', 'linkedin'
+  sourceBlogId      String?
+  campaignId        String?
+  performanceScore  Decimal?         @db.Decimal(3, 2) // 0.00 to 1.00
+  reuseCount        Int              @default(0)
+  aiGenerated       Boolean          @default(true)
+  metadata          Json?            // Platform-specific metadata
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // Relationships
+  sourceBlog        BlogPost?        @relation(fields: [sourceBlogId], references: [id], onDelete: SetNull)
+  campaign          Campaign?        @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@index([type])
+  @@index([platform])
+  @@index([performanceScore])
+  @@index([createdAt])
+}
+
+model SEOMetric {
+  id              String    @id @default(cuid())
+  blogPostId      String
+  date            DateTime  @db.Date
+  impressions     Int       @default(0)
+  clicks          Int       @default(0)
+  ctr             Decimal?  @db.Decimal(5, 2) // Click-through rate
+  avgPosition     Decimal?  @db.Decimal(4, 1) // SERP position
+  keywordsRanked  Int       @default(0)
+  createdAt       DateTime  @default(now())
+
+  // Relationships
+  blogPost        BlogPost  @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+
+  @@unique([blogPostId, date])
+  @@index([date])
+  @@index([createdAt])
+}
+
+model AIAgentLog {
+  id              String    @id @default(cuid())
+  agentName       String    // 'mira', 'leo', 'rin'
+  actionType      String    // 'GENERATE_BLOG', 'REPURPOSE_CONTENT'
+  inputData       Json?
+  outputData      Json?
+  modelUsed       String    // 'haiku', 'sonnet', 'pending'
+  tokensUsed      Int?
+  executionTimeMs Int?
+  success         Boolean   @default(true)
+  errorMessage    String?   @db.Text
+  createdAt       DateTime  @default(now())
+
+  @@index([agentName])
+  @@index([actionType])
+  @@index([createdAt])
+}
+
+model WorkflowRun {
+  id              String    @id @default(cuid())
+  workflowName    String    // 'blog-publisher', 'content-repurposer'
+  triggerType     String    // 'SCHEDULED', 'EVENT', 'MANUAL'
+  status          String    @default("RUNNING") // 'RUNNING', 'SUCCESS', 'FAILED'
+  stepsCompleted  Int       @default(0)
+  stepsTotal      Int?
+  executionLog    Json?
+  createdAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  @@index([workflowName])
+  @@index([status])
+  @@index([createdAt])
+}

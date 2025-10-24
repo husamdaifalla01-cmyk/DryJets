@@ -11,6 +11,9 @@ Welcome to the DryJets platform documentation! This directory contains all techn
 
 ### 📁 Documentation Structure
 
+#### [00-quick-start/](./00-quick-start/) - Quick Start Guides
+Fast-track guides to get started quickly with DryJets development and usage.
+
 #### [01-setup/](./01-setup/) - Setup & Configuration
 Guides for setting up your development environment and configuring services.
 
@@ -33,19 +36,29 @@ Detailed guides for specific features like IoT, self-service, and maintenance.
 Project status reports, MVP progress, and completion summaries.
 
 #### [08-reference/](./08-reference/) - Reference Materials
-Migration guides, AI prompts, and other reference documentation.
+Migration guides, AI prompts, feature maps, and other reference documentation.
 
 #### [09-archive/](./09-archive/) - Archived Documents
 Completed verification reports and historical documents.
+
+#### [10-troubleshooting/](./10-troubleshooting/) - Troubleshooting & Fixes
+Solutions to common issues, bug fixes, and problem resolution guides.
+
+#### [11-stages/](./11-stages/) - Development Stages
+Stage-by-stage implementation documentation from Stage 1 through Stage 13.
+
+#### [12-progress-reports/](./12-progress-reports/) - Progress Reports
+Detailed progress reports, session summaries, and comprehensive status updates.
 
 ---
 
 ## 🎯 Common Tasks
 
 ### Setting Up Local Development
-1. [Getting Started](../GETTING_STARTED.md)
-2. [Google Maps Setup](./01-setup/google-maps-setup.md)
-3. [Notifications Setup](./01-setup/notifications-setup.md)
+1. [Getting Started](./00-quick-start/GETTING_STARTED.md)
+2. [Quick Start - Public](./00-quick-start/QUICK_START_PUBLIC.md)
+3. [Google Maps Setup](./01-setup/google-maps-setup.md)
+4. [Notifications Setup](./01-setup/notifications-setup.md)
 
 ### Understanding the Architecture
 1. [Project Overview](./02-architecture/project-overview.md)
@@ -91,11 +104,13 @@ See [Status & Progress Reports](./07-project-status/) for detailed information.
 
 ## 🔍 Search Tips
 
-- **By Topic:** Browse the numbered directories (01-09)
+- **By Topic:** Browse the numbered directories (00-12)
+- **Quick Start:** Start at [00-quick-start/](./00-quick-start/)
 - **By App:** Look in app-specific folders (03, 04, 05)
-- **By Phase:** Check mobile-customer or backend-api folders
-- **By Feature:** Look in 06-features directory
-- **By Status:** Check 07-project-status for current state
+- **By Feature:** Look in [06-features/](./06-features/)
+- **By Status:** Check [07-project-status/](./07-project-status/) or [12-progress-reports/](./12-progress-reports/)
+- **By Stage:** Review [11-stages/](./11-stages/) for stage-based roadmap
+- **Troubleshooting:** See [10-troubleshooting/](./10-troubleshooting/)
 
 ---
 
@@ -103,11 +118,13 @@ See [Status & Progress Reports](./07-project-status/) for detailed information.
 
 When adding new documentation:
 
-1. Choose the appropriate directory (01-09)
-2. Use descriptive filenames (kebab-case.md)
+1. Choose the appropriate directory (00-12) based on content type
+2. Use descriptive filenames (kebab-case.md for guides, UPPERCASE.md for major docs)
 3. Add a link to this README if it's a major doc
-4. Keep formatting consistent (use examples as templates)
-5. Include code examples where relevant
+4. Update the directory's README.md with your new file
+5. Keep formatting consistent (use examples as templates)
+6. Include code examples where relevant
+7. See [REPO_STRUCTURE.md](../REPO_STRUCTURE.md) for naming conventions
 
 ---
 

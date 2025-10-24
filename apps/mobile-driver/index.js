@@ -104,8 +104,3 @@ const initializationTimeout = setTimeout(() => {
 // ============================================================================
 // This must be the last require in this file
 module.exports = require('expo-router/entry');
-
-// Cleanup timeout if needed
-process.on('exit', () => {
-  clearTimeout(initializationTimeout);
-});
