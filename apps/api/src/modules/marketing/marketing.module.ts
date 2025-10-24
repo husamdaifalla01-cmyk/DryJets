@@ -11,6 +11,7 @@ import { BudgetOptimizerService } from './services/budget-optimizer.service';
 import { LeoCreativeDirectorService } from './services/leo-creative-director.service';
 import { SocialSchedulerService } from './services/social-scheduler.service';
 import { SocialPlatformIntegrationService } from './services/social-platform-integration.service';
+import { EmailDesignerService } from './services/email-designer.service';
 
 @Module({
   imports: [PrismaModule],
@@ -26,6 +27,7 @@ import { SocialPlatformIntegrationService } from './services/social-platform-int
     LeoCreativeDirectorService,
     SocialSchedulerService,
     SocialPlatformIntegrationService,
+    EmailDesignerService,
   ],
   exports: [
     MarketingService,
@@ -37,6 +39,7 @@ import { SocialPlatformIntegrationService } from './services/social-platform-int
     LeoCreativeDirectorService,
     SocialSchedulerService,
     SocialPlatformIntegrationService,
+    EmailDesignerService,
   ],
 })
 export class MarketingModule {}

@@ -9,6 +9,7 @@ import { BudgetOptimizerService } from './services/budget-optimizer.service';
 import { LeoCreativeDirectorService } from './services/leo-creative-director.service';
 import { SocialSchedulerService } from './services/social-scheduler.service';
 import { SocialPlatformIntegrationService } from './services/social-platform-integration.service';
+import { EmailDesignerService } from './services/email-designer.service';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { CreateBlogPostDto } from './dto/create-blog-post.dto';
 import { LaunchCampaignDto, PauseCampaignDto, OptimizeCampaignDto } from './dto/launch-campaign.dto';
@@ -26,6 +27,7 @@ export class MarketingController {
     private readonly leoCreativeDirector: LeoCreativeDirectorService,
     private readonly socialScheduler: SocialSchedulerService,
     private readonly socialIntegration: SocialPlatformIntegrationService,
+    private readonly emailDesigner: EmailDesignerService,
   ) {}
 
   // ============================================
@@ -508,5 +510,115 @@ export class MarketingController {
   @Roles('ADMIN')
   async processScheduledPosts() {
     return this.socialScheduler.processScheduledPosts();
+  }
+
+  // ============================================
+  // EMAIL CAMPAIGN DESIGNER (Week 9)
+  // ============================================
+
+  @Post('email/create')
+  @Roles('ADMIN')
+  async createEmailCampaign(
+    @Body()
+    body: {
+      campaignId: string;
+      subject: string;
+      previewText?: string;
+      htmlContent: string;
+      templateId?: string;
+      segmentId?: string;
+    },
+  ) {
+    return this.emailDesigner.createEmailCampaign(body.campaignId, body);
+  }
+
+  @Get('email/:emailCampaignId')
+  async getEmailCampaign(@Param('emailCampaignId') emailCampaignId: string) {
+    return this.emailDesigner.getEmailCampaign(emailCampaignId);
+  }
+
+  @Patch('email/:emailCampaignId')
+  @Roles('ADMIN')
+  async updateEmailCampaign(
+    @Param('emailCampaignId') emailCampaignId: string,
+    @Body() body: any,
+  ) {
+    return this.emailDesigner.updateEmailCampaign(emailCampaignId, body);
+  }
+
+  @Get('email/templates/list')
+  async getEmailTemplates() {
+    return this.emailDesigner.getTemplates();
+  }
+
+  @Get('email/segments/list')
+  async getEmailSegments() {
+    return this.emailDesigner.getSegments();
+  }
+
+  @Post('email/segments/create')
+  @Roles('ADMIN')
+  async createEmailSegment(@Body() body: any) {
+    return this.emailDesigner.createSegment(body);
+  }
+
+  @Get('email/:emailCampaignId/preview')
+  async previewEmail(@Param('emailCampaignId') emailCampaignId: string) {
+    return this.emailDesigner.previewEmail(emailCampaignId);
+  }
+
+  @Post('email/:emailCampaignId/ab-test')
+  @Roles('ADMIN')
+  async setupABTest(@Param('emailCampaignId') emailCampaignId: string, @Body() body: any) {
+    return this.emailDesigner.setupABTest(emailCampaignId, body);
+  }
+
+  @Post('email/:emailCampaignId/send')
+  @Roles('ADMIN')
+  async sendEmailCampaign(
+    @Param('emailCampaignId') emailCampaignId: string,
+    @Body() body?: any,
+  ) {
+    return this.emailDesigner.sendEmailCampaign(emailCampaignId, body);
+  }
+
+  @Post('email/:emailCampaignId/schedule')
+  @Roles('ADMIN')
+  async scheduleEmailCampaign(
+    @Param('emailCampaignId') emailCampaignId: string,
+    @Body() body: { scheduledTime: string },
+  ) {
+    return this.emailDesigner.scheduleEmailCampaign(emailCampaignId, new Date(body.scheduledTime));
+  }
+
+  @Get('email/:emailCampaignId/metrics')
+  async getEmailMetrics(@Param('emailCampaignId') emailCampaignId: string) {
+    return this.emailDesigner.getCampaignMetrics(emailCampaignId);
+  }
+
+  @Get('email/unsubscribe/list')
+  async getUnsubscribeList(@Query('campaignId') campaignId?: string) {
+    return this.emailDesigner.getUnsubscribeList(campaignId);
+  }
+
+  @Get('email/bounced/list')
+  async getBouncedEmails(@Query('campaignId') campaignId?: string) {
+    return this.emailDesigner.getBouncedEmails(campaignId);
+  }
+
+  @Get('email/lists/all')
+  async getEmailLists() {
+    return this.emailDesigner.getEmailLists();
+  }
+
+  @Post('email/builder/build-from-blocks')
+  @Roles('ADMIN')
+  async buildEmailFromBlocks(@Body() body: { blocks: any[] }) {
+    return this.emailDesigner.buildEmailFromBlocks(body);
+  }
+
+  @Post('email/:emailCampaignId/validate')
+  async validateEmailCampaign(@Param('emailCampaignId') emailCampaignId: string) {
+    return this.emailDesigner.validateCampaign(emailCampaignId);
   }
 }
