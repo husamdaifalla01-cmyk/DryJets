@@ -9,6 +9,8 @@ import { MultiChannelCoordinatorService } from './services/multi-channel-coordin
 import { CampaignWorkflowService } from './services/campaign-workflow.service';
 import { BudgetOptimizerService } from './services/budget-optimizer.service';
 import { LeoCreativeDirectorService } from './services/leo-creative-director.service';
+import { SocialSchedulerService } from './services/social-scheduler.service';
+import { SocialPlatformIntegrationService } from './services/social-platform-integration.service';
 
 @Module({
   imports: [PrismaModule],
@@ -22,6 +24,8 @@ import { LeoCreativeDirectorService } from './services/leo-creative-director.ser
     CampaignWorkflowService,
     BudgetOptimizerService,
     LeoCreativeDirectorService,
+    SocialSchedulerService,
+    SocialPlatformIntegrationService,
   ],
   exports: [
     MarketingService,
@@ -31,6 +35,8 @@ import { LeoCreativeDirectorService } from './services/leo-creative-director.ser
     CampaignWorkflowService,
     BudgetOptimizerService,
     LeoCreativeDirectorService,
+    SocialSchedulerService,
+    SocialPlatformIntegrationService,
   ],
 })
 export class MarketingModule {}

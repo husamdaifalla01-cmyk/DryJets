@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Roles } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Roles } from '@nestjs/common';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { MarketingService } from './marketing.service';
 import { OrchestratorService } from './ai/orchestrator.service';
@@ -7,6 +7,8 @@ import { MultiChannelCoordinatorService } from './services/multi-channel-coordin
 import { CampaignWorkflowService } from './services/campaign-workflow.service';
 import { BudgetOptimizerService } from './services/budget-optimizer.service';
 import { LeoCreativeDirectorService } from './services/leo-creative-director.service';
+import { SocialSchedulerService } from './services/social-scheduler.service';
+import { SocialPlatformIntegrationService } from './services/social-platform-integration.service';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { CreateBlogPostDto } from './dto/create-blog-post.dto';
 import { LaunchCampaignDto, PauseCampaignDto, OptimizeCampaignDto } from './dto/launch-campaign.dto';
@@ -22,6 +24,8 @@ export class MarketingController {
     private readonly campaignWorkflowService: CampaignWorkflowService,
     private readonly budgetOptimizer: BudgetOptimizerService,
     private readonly leoCreativeDirector: LeoCreativeDirectorService,
+    private readonly socialScheduler: SocialSchedulerService,
+    private readonly socialIntegration: SocialPlatformIntegrationService,
   ) {}
 
   // ============================================
@@ -358,5 +362,151 @@ export class MarketingController {
       body.status,
       body.metadata,
     );
+  }
+
+  // ============================================
+  // SOCIAL MEDIA SCHEDULER (Week 8)
+  // ============================================
+
+  @Post('social/schedule')
+  @Roles('ADMIN')
+  async schedulePost(
+    @Body()
+    body: {
+      campaignId: string;
+      platform: string;
+      content: string;
+      scheduledTime: string;
+    },
+  ) {
+    return this.socialScheduler.schedulePost(body.campaignId, {
+      platform: body.platform,
+      content: body.content,
+      scheduledTime: body.scheduledTime,
+    });
+  }
+
+  @Post('social/schedule-multi-platform')
+  @Roles('ADMIN')
+  async scheduleMultiPlatform(
+    @Body()
+    body: {
+      campaignId: string;
+      content: string;
+      platforms?: string[];
+      startTime?: string;
+    },
+  ) {
+    return this.socialScheduler.scheduleMultiPlatform(body.campaignId, body);
+  }
+
+  @Get('social/queue/:campaignId')
+  async getSocialQueue(
+    @Param('campaignId') campaignId: string,
+    @Query('status') status?: string,
+  ) {
+    return this.socialScheduler.getQueue(campaignId, status);
+  }
+
+  @Post('social/:queueId/publish')
+  @Roles('ADMIN')
+  async publishPost(@Param('queueId') queueId: string) {
+    return this.socialScheduler.publishNow(queueId);
+  }
+
+  @Post('social/:queueId/reschedule')
+  @Roles('ADMIN')
+  async reschedulePost(
+    @Param('queueId') queueId: string,
+    @Body() body: { scheduledTime: string },
+  ) {
+    return this.socialScheduler.reschedulePost(queueId, new Date(body.scheduledTime));
+  }
+
+  @Post('social/:queueId/cancel')
+  @Roles('ADMIN')
+  async cancelPost(@Param('queueId') queueId: string) {
+    return this.socialScheduler.cancelPost(queueId);
+  }
+
+  @Get('social/:queueId/analytics')
+  async getPostAnalytics(@Param('queueId') queueId: string) {
+    return this.socialScheduler.getPostAnalytics(queueId);
+  }
+
+  @Get('social/platforms/recommendations')
+  async getPlatformRecommendations() {
+    return this.socialScheduler.getPlatformRecommendations();
+  }
+
+  @Post('social/campaigns/:campaignId/queue-from-content')
+  @Roles('ADMIN')
+  async createQueueFromContent(@Param('campaignId') campaignId: string) {
+    return this.socialScheduler.createQueueFromCampaignContent(campaignId);
+  }
+
+  // ============================================
+  // SOCIAL PLATFORM INTEGRATION
+  // ============================================
+
+  @Post('social/publish/:platform')
+  @Roles('ADMIN')
+  async publishToSocial(
+    @Param('platform') platform: string,
+    @Body() body: { content: string; metadata?: any },
+  ) {
+    return this.socialIntegration.publishToPlatform(platform, body.content, body.metadata);
+  }
+
+  @Get('social/platform/:platform/info')
+  async getPlatformInfo(@Param('platform') platform: string) {
+    return this.socialIntegration.getPlatformInfo(platform);
+  }
+
+  @Get('social/platform/:platform/rate-limits')
+  async getRateLimits(@Param('platform') platform: string) {
+    return this.socialIntegration.getRateLimits(platform);
+  }
+
+  @Post('social/platform/:platform/validate')
+  @Roles('ADMIN')
+  async validatePlatformCredentials(
+    @Param('platform') platform: string,
+    @Body() body: { credentials: any },
+  ) {
+    return this.socialIntegration.validateCredentials(platform, body.credentials);
+  }
+
+  @Delete('social/:platform/:postId')
+  @Roles('ADMIN')
+  async deletePlatformPost(
+    @Param('platform') platform: string,
+    @Param('postId') postId: string,
+  ) {
+    return this.socialIntegration.deletePost(platform, postId);
+  }
+
+  @Patch('social/:platform/:postId')
+  @Roles('ADMIN')
+  async editPlatformPost(
+    @Param('platform') platform: string,
+    @Param('postId') postId: string,
+    @Body() body: { content: string },
+  ) {
+    return this.socialIntegration.editPost(platform, postId, body.content);
+  }
+
+  @Get('social/:platform/:postId/metrics')
+  async getPlatformPostMetrics(
+    @Param('platform') platform: string,
+    @Param('postId') postId: string,
+  ) {
+    return this.socialIntegration.getPostMetrics(platform, postId);
+  }
+
+  @Post('social/process-scheduled')
+  @Roles('ADMIN')
+  async processScheduledPosts() {
+    return this.socialScheduler.processScheduledPosts();
   }
 }
