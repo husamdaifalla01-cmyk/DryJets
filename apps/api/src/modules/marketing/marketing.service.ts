@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../src/common/prisma/prisma.service';
+import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { CreateBlogPostDto } from './dto/create-blog-post.dto';
 
@@ -28,8 +28,9 @@ export class MarketingService {
    * List all campaigns with optional filters
    */
   async listCampaigns(status?: string) {
+    const validStatuses = ['DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED', 'ARCHIVED'];
     return this.prisma.campaign.findMany({
-      where: status ? { status } : {},
+      where: status && validStatuses.includes(status) ? { status: status as any } : {},
       orderBy: { createdAt: 'desc' },
       include: { contentAssets: true },
     });
@@ -49,9 +50,13 @@ export class MarketingService {
    * Update campaign status
    */
   async updateCampaignStatus(id: string, status: string) {
+    const validStatuses = ['DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED', 'ARCHIVED'];
+    if (!validStatuses.includes(status)) {
+      throw new Error(`Invalid status: ${status}`);
+    }
     return this.prisma.campaign.update({
       where: { id },
-      data: { status },
+      data: { status: status as any },
     });
   }
 
@@ -82,8 +87,9 @@ export class MarketingService {
    * List all blog posts with optional filters
    */
   async listBlogPosts(status?: string, take: number = 20) {
+    const validStatuses = ['DRAFT', 'PUBLISHED', 'ARCHIVED'];
     return this.prisma.blogPost.findMany({
-      where: status ? { status } : {},
+      where: status && validStatuses.includes(status) ? { status: status as any } : {},
       orderBy: { createdAt: 'desc' },
       take,
       include: { seoMetrics: true, contentAssets: true },

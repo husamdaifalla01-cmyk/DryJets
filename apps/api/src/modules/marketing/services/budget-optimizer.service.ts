@@ -178,19 +178,20 @@ export class BudgetOptimizerService {
 
     // Normalize to total budget
     const recommendations: any[] = [];
-    const totalBudget = campaign.budgetTotal || 0;
+    const totalBudget = Number(campaign.budgetTotal || 0);
 
     for (const allocation of campaign.budgetAllocations) {
       const weight = newAllocations[allocation.channel] || 1;
+      const currentAlloc = Number(allocation.allocatedBudget || 0);
       const newBudget = (weight / totalWeight) * totalBudget;
 
       recommendations.push({
         channel: allocation.channel,
-        currentAllocation: allocation.allocatedBudget,
+        currentAllocation: currentAlloc,
         recommendedAllocation: parseFloat(newBudget.toFixed(2)),
-        change: parseFloat((newBudget - allocation.allocatedBudget).toFixed(2)),
+        change: parseFloat((newBudget - currentAlloc).toFixed(2)),
         percentChange: parseFloat(
-          (((newBudget - allocation.allocatedBudget) / allocation.allocatedBudget) * 100).toFixed(
+          (((newBudget - currentAlloc) / currentAlloc) * 100).toFixed(
             2,
           ),
         ),

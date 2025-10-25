@@ -74,14 +74,15 @@ export class AvaOrchestratorService {
    * Build strategy generation prompt
    */
   private buildStrategyPrompt(campaign: any, context?: any): string {
+    const platforms = Array.isArray(campaign.platforms) ? campaign.platforms : [];
     return `
 You are Ava, an expert campaign orchestration strategist specializing in multi-channel marketing.
 
 Campaign Details:
 - Name: ${campaign.name}
 - Type: ${campaign.type}
-- Budget: $${campaign.totalBudget}
-- Platforms: ${campaign.platforms?.join(', ') || 'Not specified'}
+- Budget: $${Number(campaign.budgetTotal || 0)}
+- Platforms: ${platforms.join(', ') || 'Not specified'}
 - Target Audience: ${context?.targetAudience || 'Not specified'}
 - Objectives: ${context?.objectives?.join(', ') || 'Not specified'}
 
@@ -144,21 +145,22 @@ Ensure the strategy is data-driven, practical, and optimized for the campaign bu
 
     const campaign = await this.prisma.campaign.findUnique({
       where: { id: campaignId },
-      include: { metrics: true, budgetAllocations: true },
+      include: { campaignMetrics: true, budgetAllocations: true },
     });
 
     if (!campaign) {
       throw new Error('Campaign not found');
     }
 
-    const metrics = campaign.metrics || [];
+    const metrics = campaign.campaignMetrics || [];
+    const platforms = Array.isArray(campaign.platforms) ? campaign.platforms : [];
 
     // Calculate success indicators
     const successIndicators = {
       hasMetrics: metrics.length > 0,
-      hasBudget: campaign.totalBudget > 0,
-      hasMultipleChannels: (campaign.platforms || []).length > 1,
-      hasDefinedGoals: campaign.objectives?.length > 0,
+      hasBudget: Number(campaign.budgetTotal || 0) > 0,
+      hasMultipleChannels: platforms.length > 1,
+      hasDefinedGoals: campaign.aiAgent !== null,
     };
 
     // Calculate success score based on available data
@@ -194,8 +196,8 @@ Ensure the strategy is data-driven, practical, and optimized for the campaign bu
 As a campaign strategist, analyze this campaign data and predict success:
 - Campaign: ${campaign.name}
 - Type: ${campaign.type}
-- Budget: $${campaign.totalBudget}
-- Platforms: ${campaign.platforms?.join(', ')}
+- Budget: $${Number(campaign.budgetTotal || 0)}
+- Platforms: ${Array.isArray(campaign.platforms) ? campaign.platforms.join(', ') : 'Not specified'}
 - Metrics Records: ${metrics.length}
 - Success Indicators: ${JSON.stringify(successIndicators)}
 
@@ -235,14 +237,14 @@ Provide a JSON response with:
 
     const campaign = await this.prisma.campaign.findUnique({
       where: { id: campaignId },
-      include: { metrics: true, budgetAllocations: true },
+      include: { campaignMetrics: true, budgetAllocations: true },
     });
 
     if (!campaign) {
       throw new Error('Campaign not found');
     }
 
-    const channelMetrics = this.aggregateChannelMetrics(campaign.metrics || []);
+    const channelMetrics = this.aggregateChannelMetrics(campaign.campaignMetrics || []);
 
     const recommendations = {
       campaignId,
@@ -274,14 +276,14 @@ Provide a JSON response with:
           clicks: 0,
           conversions: 0,
           spend: 0,
-          engagement: 0,
+          revenue: 0,
         };
       }
       aggregated[channel].impressions += metric.impressions || 0;
       aggregated[channel].clicks += metric.clicks || 0;
       aggregated[channel].conversions += metric.conversions || 0;
-      aggregated[channel].spend += metric.spend || 0;
-      aggregated[channel].engagement += metric.engagements || 0;
+      aggregated[channel].spend += Number(metric.spend) || 0;
+      aggregated[channel].revenue += Number(metric.revenue) || 0;
     });
 
     return aggregated;
@@ -448,14 +450,14 @@ Provide a JSON response with:
 
     const campaign = await this.prisma.campaign.findUnique({
       where: { id: campaignId },
-      include: { metrics: true },
+      include: { campaignMetrics: true },
     });
 
     if (!campaign) {
       throw new Error('Campaign not found');
     }
 
-    const metrics = campaign.metrics || [];
+    const metrics = campaign.campaignMetrics || [];
     const isUnderperforming = this.isUnderperforming(metrics);
 
     if (!isUnderperforming) {
@@ -467,6 +469,8 @@ Provide a JSON response with:
       };
     }
 
+    const platforms = Array.isArray(campaign.platforms) ? (campaign.platforms as string[]).join(', ') : '';
+
     const message = await this.anthropic.messages.create({
       model: 'claude-3-5-haiku-20241022',
       max_tokens: 1024,
@@ -475,8 +479,8 @@ Provide a JSON response with:
           role: 'user',
           content: `
 A marketing campaign is underperforming. Campaign name: ${campaign.name}
-Budget: $${campaign.totalBudget}
-Platforms: ${campaign.platforms?.join(', ')}
+Budget: $${Number(campaign.budgetTotal)}
+Platforms: ${platforms}
 
 Generate emergency recovery recommendations as JSON:
 {

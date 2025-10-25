@@ -1679,3 +1679,301 @@ model RepurposedContent {
   @@index([format])
   @@index([createdAt])
 }
+
+// ============================================
+// MARKETING PLATFORM - WORKFLOW & CAMPAIGNS
+// ============================================
+
+enum MultiPlatformWorkflowType {
+  AUTONOMOUS
+  CUSTOM_CAMPAIGN
+}
+
+enum MultiPlatformWorkflowStatus {
+  CONFIGURING
+  GENERATING
+  REVIEW
+  PUBLISHING
+  COMPLETED
+  FAILED
+}
+
+enum ContentType {
+  BLOG
+  SOCIAL_POST
+  VIDEO
+  IMAGE
+  THREAD
+  STORY
+}
+
+enum ContentStatus {
+  GENERATED
+  REVIEW
+  APPROVED
+  REJECTED
+  SCHEDULED
+  PUBLISHED
+  FAILED
+}
+
+enum AIAgent {
+  MIRA
+  LEO
+  AVA
+  RIN
+}
+
+model MultiPlatformWorkflow {
+  id              String                        @id @default(cuid())
+  name            String
+  type            MultiPlatformWorkflowType
+  status          MultiPlatformWorkflowStatus   @default(CONFIGURING)
+
+  // Custom Campaign Input
+  customInput     Json? // { freeText?: string, structured?: {...} }
+
+  // Platform Configuration
+  platformConfig  Json // { platforms: [...], presetUsed?: string }
+
+  // Cost Tracking
+  estimatedCosts  Json? // Cost breakdown
+  actualCosts     Json? // Actual spending
+
+  // Metrics
+  metrics         Json? // Performance metrics
+
+  createdAt       DateTime            @default(now())
+  launchedAt      DateTime?
+  completedAt     DateTime?
+  createdBy       String
+
+  // Relationships
+  contentPieces   PublishedContent[]
+  costLogs        PublishingAPILog[]
+  suggestions     PublishingSuggestion[]
+  warnings        PublishingWarning[]
+  performance     MultiPlatformWorkflowPerformance?
+
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@index([createdBy])
+}
+
+model PublishingPlatform {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique // 'facebook', 'twitter', etc.
+  type              String   // 'social', 'blog', 'video', 'community', 'review'
+  enabled           Boolean  @default(true)
+
+  // API Configuration
+  apiConfig         Json? // { provider, endpoint, rateLimit, costPerRequest }
+
+  // Content Specifications
+  contentSpecs      Json? // { maxLength, supportsImages, etc. }
+
+  // Targeting Capabilities
+  targetingOptions  Json? // { geographic, demographic, interests, behavioral }
+
+  // Performance Data
+  avgEngagementRate Decimal?  @db.Decimal(5, 4)
+  avgReach          Int?
+  bestContentTypes  String[]
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relationships
+  presets           PublishingPreset[]
+  contentPieces     PublishedContent[]
+
+  @@index([slug])
+  @@index([type])
+  @@index([enabled])
+}
+
+model PublishingPreset {
+  id              String    @id @default(cuid())
+  name            String
+  description     String?
+  isSystemPreset  Boolean   @default(false)
+  createdBy       String?
+
+  // Platform Configuration
+  configuration   Json // { platforms: [...] }
+
+  usageCount      Int       @default(0)
+  lastUsedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relationships
+  platforms       PublishingPlatform[]
+
+  @@index([isSystemPreset])
+  @@index([createdBy])
+  @@index([createdAt])
+}
+
+model PublishedContent {
+  id              String        @id @default(cuid())
+  workflowId      String
+
+  type            ContentType
+  platformId      String
+  pillar          String
+
+  status          ContentStatus @default(GENERATED)
+
+  // Content Data
+  content         Json // { title, body, media, hashtags, mentions, links }
+
+  // SEO Data
+  seoData         Json? // { keywords, metaTitle, metaDescription, slug, schema }
+
+  // Geography
+  geography       Json // { level, location, coordinates }
+
+  // Targeting
+  targeting       Json? // { demographics, interests, behaviors }
+
+  // Costs
+  generationCost  Decimal   @default(0) @db.Decimal(10, 4)
+  publishingCost  Decimal   @default(0) @db.Decimal(10, 4)
+  totalCost       Decimal   @default(0) @db.Decimal(10, 4)
+
+  // Scheduling
+  optimalPublishTime DateTime?
+  scheduledPublishTime DateTime?
+  publishedAt     DateTime?
+
+  // Performance
+  performance     Json? // { impressions, reach, clicks, engagement, conversions, viralScore, roi }
+
+  // Metadata
+  aiGenerated     Boolean   @default(true)
+  humanEdited     Boolean   @default(false)
+  generatedBy     AIAgent   @default(MIRA)
+  reviewedBy      String?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relationships
+  workflow        MultiPlatformWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  platform        PublishingPlatform    @relation(fields: [platformId], references: [id])
+
+  @@index([workflowId])
+  @@index([platformId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model PublishingAPILog {
+  id              String    @id @default(cuid())
+  workflowId      String
+  service         String // 'anthropic', 'twitter', 'linkedin', etc.
+  operation       String
+  tokensUsed      Int?
+  requestsUsed    Int?
+  cost            Decimal   @db.Decimal(10, 4)
+  timestamp       DateTime  @default(now())
+
+  // Relationships
+  workflow        MultiPlatformWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([service])
+  @@index([timestamp])
+}
+
+model PublishingSuggestion {
+  id                    String    @id @default(cuid())
+  workflowId            String
+  suggestedPlatformId   String
+  reason                String    @db.Text
+  confidence            Int // 0-100
+  accepted              Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+
+  // Relationships
+  workflow              MultiPlatformWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([createdAt])
+}
+
+model PublishingWarning {
+  id                String    @id @default(cuid())
+  workflowId        String
+  platformId        String
+  warningType       String // 'mismatch', 'low_roi', 'rate_limit', 'cost_alert'
+  message           String    @db.Text
+  severity          String // 'info', 'warning', 'critical'
+  acknowledged      Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+
+  // Relationships
+  workflow          MultiPlatformWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+model TrendData {
+  id                String    @id @default(cuid())
+  source            String // 'google', 'twitter', 'reddit', 'tiktok', 'news', 'youtube'
+  keyword           String
+  volume            Int
+  growth            Decimal   @db.Decimal(5, 2) // percentage
+  competition       Int // 0-100
+
+  // Geography
+  geography         Json // { level, location }
+
+  relevanceScore    Int // 0-100
+  pillar            String[]
+
+  relatedKeywords   String[]
+  topContent        Json? // [{ title, url, engagement }]
+
+  expiresAt         DateTime
+  capturedAt        DateTime  @default(now())
+
+  @@index([source])
+  @@index([keyword])
+  @@index([capturedAt])
+}
+
+model MultiPlatformWorkflowPerformance {
+  id                String    @id @default(cuid())
+  workflowId        String    @unique
+
+  period            String // 'hour', 'day', 'week', 'month'
+  periodStart       DateTime
+  periodEnd         DateTime
+
+  // Metrics
+  metrics           Json // Comprehensive metrics data
+
+  // Costs
+  costs             Json // Cost breakdown
+
+  // ROI
+  roi               Json // ROI metrics
+
+  // Top Content
+  topContent        Json? // [{ contentId, platform, reach, engagement }]
+
+  createdAt         DateTime  @default(now())
+
+  // Relationships
+  workflow          MultiPlatformWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([createdAt])
+}

@@ -61,7 +61,7 @@ export class CampaignOrchestrationService {
     // Allocate budget across channels
     await this.allocateBudget(
       campaignId,
-      campaign.budgetTotal,
+      Number(campaign.budgetTotal),
       launchDto.channelAllocations,
     );
 
@@ -338,13 +338,14 @@ export class CampaignOrchestrationService {
               100
             : 0;
 
+        const currentBudgetNum = Number(allocation.allocatedBudget);
         recommendations.push({
           channel: allocation.channel,
-          currentBudget: allocation.allocatedBudget,
+          currentBudget: currentBudgetNum,
           recommendedBudget:
             channelROI > (optimizeDto.targetROI || 100)
-              ? allocation.allocatedBudget * 1.2
-              : allocation.allocatedBudget * 0.9,
+              ? currentBudgetNum * 1.2
+              : currentBudgetNum * 0.9,
           reason: `Channel ROI: ${channelROI.toFixed(2)}%`,
         });
       }

@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Roles } from '@nestjs/common';
-import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Permissions, RequireAllPermissions, Permission } from '../../decorators/permissions.decorator';
 import { MarketingService } from './marketing.service';
 import { OrchestratorService } from './ai/orchestrator.service';
 import { CampaignOrchestrationService } from './services/campaign-orchestration.service';
@@ -15,6 +16,11 @@ import { AvaOrchestratorService } from './services/ava-orchestrator.service';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { CreateBlogPostDto } from './dto/create-blog-post.dto';
 import { LaunchCampaignDto, PauseCampaignDto, OptimizeCampaignDto } from './dto/launch-campaign.dto';
+import { MultiPlatformWorkflowOrchestrator } from './services/multi-platform-workflow-orchestrator.service';
+import { PlatformIntelligence } from './services/platform-intelligence.service';
+import { CostEstimator } from './services/cost-estimator.service';
+import { PublishingPlatformService } from './services/publishing-platform.service';
+import { WorkflowService } from './services/workflow.service';
 
 @Controller('marketing')
 @UseGuards(JwtAuthGuard)
@@ -32,6 +38,11 @@ export class MarketingController {
     private readonly emailDesigner: EmailDesignerService,
     private readonly analytics: AnalyticsService,
     private readonly avaOrchestrator: AvaOrchestratorService,
+    private readonly workflowOrchestrator: MultiPlatformWorkflowOrchestrator,
+    private readonly platformIntelligence: PlatformIntelligence,
+    private readonly costEstimator: CostEstimator,
+    private readonly publishingPlatformService: PublishingPlatformService,
+    private readonly workflowService: WorkflowService,
   ) {}
 
   // ============================================
@@ -39,7 +50,7 @@ export class MarketingController {
   // ============================================
 
   @Post('campaigns')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async createCampaign(@Body() createCampaignDto: CreateCampaignDto) {
     return this.marketingService.createCampaign(createCampaignDto);
   }
@@ -55,7 +66,7 @@ export class MarketingController {
   }
 
   @Patch('campaigns/:id/status')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async updateCampaignStatus(@Param('id') id: string, @Body() body: { status: string }) {
     return this.marketingService.updateCampaignStatus(id, body.status);
   }
@@ -65,14 +76,14 @@ export class MarketingController {
   // ============================================
 
   @Post('blog/generate')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async generateBlog(@Body() createBlogPostDto: CreateBlogPostDto) {
     // Route to Haiku orchestrator which will call Sonnet for generation
     return this.orchestratorService.routeToAgent('mira', 'GENERATE_BLOG', createBlogPostDto);
   }
 
   @Post('blog')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async createBlogPost(@Body() createBlogPostDto: CreateBlogPostDto) {
     return this.marketingService.createBlogPost(createBlogPostDto);
   }
@@ -88,13 +99,13 @@ export class MarketingController {
   }
 
   @Patch('blog/:id/content')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async updateBlogPostContent(@Param('id') id: string, @Body() updates: CreateBlogPostDto) {
     return this.marketingService.updateBlogPostContent(id, updates);
   }
 
   @Patch('blog/:id/status')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async updateBlogPostStatus(@Param('id') id: string, @Body() body: { status: string }) {
     return this.marketingService.updateBlogPostStatus(id, body.status);
   }
@@ -104,7 +115,7 @@ export class MarketingController {
   // ============================================
 
   @Post('content/repurpose')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async repurposeContent(@Body() body: { blogPostId: string; platforms?: string[] }) {
     // Route to Leo creative director agent
     return this.orchestratorService.routeToAgent('leo', 'REPURPOSE_CONTENT', body);
@@ -120,7 +131,7 @@ export class MarketingController {
   }
 
   @Patch('analytics/seo/:blogPostId')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async updateSEOMetric(
     @Param('blogPostId') blogPostId: string,
     @Body() data: { date: string; impressions?: number; clicks?: number; ctr?: number; avgPosition?: number; keywordsRanked?: number },
@@ -136,7 +147,7 @@ export class MarketingController {
   }
 
   @Get('analytics/insights')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async getAnalyticsInsights() {
     // Route to Rin analytics agent
     return this.orchestratorService.routeToAgent('rin', 'ANALYZE_CAMPAIGNS', {});
@@ -165,7 +176,7 @@ export class MarketingController {
   }
 
   @Post('workflows/:name/trigger')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async triggerWorkflow(
     @Param('name') name: string,
     @Body() body: { triggerType?: string; data?: any },
@@ -185,7 +196,7 @@ export class MarketingController {
   // ============================================
 
   @Post('campaigns/:id/launch')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async launchCampaign(
     @Param('id') campaignId: string,
     @Body() launchDto: LaunchCampaignDto,
@@ -194,19 +205,19 @@ export class MarketingController {
   }
 
   @Post('campaigns/:id/pause')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async pauseCampaign(@Param('id') campaignId: string, @Body() pauseDto: PauseCampaignDto) {
     return this.campaignOrchestrationService.pauseCampaign(campaignId, pauseDto);
   }
 
   @Post('campaigns/:id/resume')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async resumeCampaign(@Param('id') campaignId: string) {
     return this.campaignOrchestrationService.resumeCampaign(campaignId);
   }
 
   @Post('campaigns/:id/complete')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async completeCampaign(@Param('id') campaignId: string) {
     return this.campaignOrchestrationService.completeCampaign(campaignId);
   }
@@ -226,7 +237,7 @@ export class MarketingController {
   // ============================================
 
   @Post('campaigns/:id/coordinate')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async coordinateChannels(@Param('id') campaignId: string) {
     return this.multiChannelCoordinator.coordinateChannels(campaignId);
   }
@@ -237,7 +248,7 @@ export class MarketingController {
   }
 
   @Post('campaigns/:id/rebalance-budget')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async rebalanceBudget(@Param('id') campaignId: string) {
     return this.multiChannelCoordinator.rebalanceBudget(campaignId);
   }
@@ -247,7 +258,7 @@ export class MarketingController {
   // ============================================
 
   @Post('campaigns/:id/execute-workflow')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async executeWorkflow(@Param('id') campaignId: string) {
     return this.campaignWorkflowService.executeNextStep(campaignId);
   }
@@ -258,7 +269,7 @@ export class MarketingController {
   }
 
   @Post('campaigns/:id/workflow/:step/retry')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async retryWorkflowStep(@Param('id') campaignId: string, @Param('step') step: string) {
     return this.campaignWorkflowService.retryFailedStep(campaignId, parseInt(step));
   }
@@ -283,7 +294,7 @@ export class MarketingController {
   }
 
   @Post('campaigns/:id/budget-reallocation')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async applyBudgetReallocation(
     @Param('id') campaignId: string,
     @Body() body: { allocations: Array<{ channel: string; amount: number }> },
@@ -300,7 +311,7 @@ export class MarketingController {
   }
 
   @Post('campaigns/:id/optimize')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async optimizeCampaign(@Param('id') campaignId: string, @Body() optimizeDto: OptimizeCampaignDto) {
     return this.campaignOrchestrationService.optimizeCampaign(campaignId, optimizeDto);
   }
@@ -310,7 +321,7 @@ export class MarketingController {
   // ============================================
 
   @Post('content/repurpose/:blogPostId')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async repurposeBlogPost(
     @Param('blogPostId') blogPostId: string,
     @Body() body: { platforms?: string[]; campaignId?: string },
@@ -328,7 +339,7 @@ export class MarketingController {
   }
 
   @Post('content/variations')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async generateVariations(
     @Body()
     body: { content: string; count?: number; platform?: string },
@@ -341,7 +352,7 @@ export class MarketingController {
   }
 
   @Post('content/optimize-length')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async optimizeContentLength(
     @Body() body: { content: string; maxLength: number; platform?: string },
   ) {
@@ -358,7 +369,7 @@ export class MarketingController {
   }
 
   @Patch('content/repurposed/:contentId/status')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async updateRepurposedContentStatus(
     @Param('contentId') contentId: string,
     @Body() body: { status: string; metadata?: any },
@@ -375,7 +386,7 @@ export class MarketingController {
   // ============================================
 
   @Post('social/schedule')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async schedulePost(
     @Body()
     body: {
@@ -393,7 +404,7 @@ export class MarketingController {
   }
 
   @Post('social/schedule-multi-platform')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async scheduleMultiPlatform(
     @Body()
     body: {
@@ -415,13 +426,13 @@ export class MarketingController {
   }
 
   @Post('social/:queueId/publish')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async publishPost(@Param('queueId') queueId: string) {
     return this.socialScheduler.publishNow(queueId);
   }
 
   @Post('social/:queueId/reschedule')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async reschedulePost(
     @Param('queueId') queueId: string,
     @Body() body: { scheduledTime: string },
@@ -430,7 +441,7 @@ export class MarketingController {
   }
 
   @Post('social/:queueId/cancel')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async cancelPost(@Param('queueId') queueId: string) {
     return this.socialScheduler.cancelPost(queueId);
   }
@@ -441,12 +452,12 @@ export class MarketingController {
   }
 
   @Get('social/platforms/recommendations')
-  async getPlatformRecommendations() {
+  async getSocialPlatformRecommendations() {
     return this.socialScheduler.getPlatformRecommendations();
   }
 
   @Post('social/campaigns/:campaignId/queue-from-content')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async createQueueFromContent(@Param('campaignId') campaignId: string) {
     return this.socialScheduler.createQueueFromCampaignContent(campaignId);
   }
@@ -456,7 +467,7 @@ export class MarketingController {
   // ============================================
 
   @Post('social/publish/:platform')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async publishToSocial(
     @Param('platform') platform: string,
     @Body() body: { content: string; metadata?: any },
@@ -475,7 +486,7 @@ export class MarketingController {
   }
 
   @Post('social/platform/:platform/validate')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async validatePlatformCredentials(
     @Param('platform') platform: string,
     @Body() body: { credentials: any },
@@ -484,7 +495,7 @@ export class MarketingController {
   }
 
   @Delete('social/:platform/:postId')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async deletePlatformPost(
     @Param('platform') platform: string,
     @Param('postId') postId: string,
@@ -493,7 +504,7 @@ export class MarketingController {
   }
 
   @Patch('social/:platform/:postId')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async editPlatformPost(
     @Param('platform') platform: string,
     @Param('postId') postId: string,
@@ -511,7 +522,7 @@ export class MarketingController {
   }
 
   @Post('social/process-scheduled')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async processScheduledPosts() {
     return this.socialScheduler.processScheduledPosts();
   }
@@ -521,7 +532,7 @@ export class MarketingController {
   // ============================================
 
   @Post('email/create')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async createEmailCampaign(
     @Body()
     body: {
@@ -542,7 +553,7 @@ export class MarketingController {
   }
 
   @Patch('email/:emailCampaignId')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async updateEmailCampaign(
     @Param('emailCampaignId') emailCampaignId: string,
     @Body() body: any,
@@ -561,7 +572,7 @@ export class MarketingController {
   }
 
   @Post('email/segments/create')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async createEmailSegment(@Body() body: any) {
     return this.emailDesigner.createSegment(body);
   }
@@ -572,13 +583,13 @@ export class MarketingController {
   }
 
   @Post('email/:emailCampaignId/ab-test')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async setupABTest(@Param('emailCampaignId') emailCampaignId: string, @Body() body: any) {
     return this.emailDesigner.setupABTest(emailCampaignId, body);
   }
 
   @Post('email/:emailCampaignId/send')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async sendEmailCampaign(
     @Param('emailCampaignId') emailCampaignId: string,
     @Body() body?: any,
@@ -587,7 +598,7 @@ export class MarketingController {
   }
 
   @Post('email/:emailCampaignId/schedule')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async scheduleEmailCampaign(
     @Param('emailCampaignId') emailCampaignId: string,
     @Body() body: { scheduledTime: string },
@@ -616,7 +627,7 @@ export class MarketingController {
   }
 
   @Post('email/builder/build-from-blocks')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async buildEmailFromBlocks(@Body() body: { blocks: any[] }) {
     return this.emailDesigner.buildEmailFromBlocks(body);
   }
@@ -702,7 +713,7 @@ export class MarketingController {
   // ============================================
 
   @Post('orchestrator/campaigns/:id/generate-strategy')
-  @Roles('ADMIN')
+  @Permissions(Permission.MANAGE_SETTINGS)
   async generateCampaignStrategy(
     @Param('id') campaignId: string,
     @Body() body?: { targetAudience?: string; budget?: number; objectives?: string[] },
@@ -728,5 +739,267 @@ export class MarketingController {
   @Get('orchestrator/campaigns/:id/dashboard')
   async getOrchestrationDashboard(@Param('id') campaignId: string) {
     return this.avaOrchestrator.getOrchestrationDashboard(campaignId);
+  }
+
+  // ============================================
+  // MULTI-PLATFORM WORKFLOW (World Domination)
+  // ============================================
+
+  @Post('workflows')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async createWorkflow(
+    @Body()
+    body: {
+      name: string;
+      type: 'AUTONOMOUS' | 'CUSTOM_CAMPAIGN';
+      customInput?: any;
+      selectedPlatforms: string[];
+      presetId?: string;
+      createdBy: string;
+    },
+  ) {
+    return this.workflowOrchestrator.createWorkflow(body);
+  }
+
+  @Post('workflows/:id/generate')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async generateWorkflowContent(@Param('id') workflowId: string) {
+    return this.workflowOrchestrator.generateContent(workflowId);
+  }
+
+  @Post('workflows/:id/review')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async reviewWorkflowContent(
+    @Param('id') workflowId: string,
+    @Body() body: { approvedIds: string[]; rejectedIds: string[] },
+  ) {
+    return this.workflowOrchestrator.reviewContent(
+      workflowId,
+      body.approvedIds,
+      body.rejectedIds,
+    );
+  }
+
+  @Post('workflows/:id/publish')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async publishWorkflowContent(@Param('id') workflowId: string) {
+    return this.workflowOrchestrator.publishContent(workflowId);
+  }
+
+  @Get('workflows/:id/details')
+  async getMultiPlatformWorkflowDetails(@Param('id') workflowId: string) {
+    return this.workflowOrchestrator.getWorkflowStatus(workflowId);
+  }
+
+  // ============================================
+  // AUTONOMOUS WORKFLOW ENDPOINTS
+  // ============================================
+
+  @Post('workflows/autonomous/analyze-trends')
+  async analyzeTrends(
+    @Body()
+    body: {
+      topic: string;
+      industry: string;
+      description: string;
+    },
+  ) {
+    return this.workflowService.analyzeTrends(body);
+  }
+
+  @Post('workflows/autonomous/submit-review')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async submitAutonomousForReview(
+    @Body()
+    body: {
+      name: string;
+      customInput: any;
+      selectedPlatforms: string[];
+      generatedContent: any[];
+      budget: number;
+      createdBy: string;
+    },
+  ) {
+    return this.workflowService.createWorkflow({
+      name: body.name,
+      type: 'AUTONOMOUS',
+      customInput: body.customInput,
+      selectedPlatforms: body.selectedPlatforms,
+      generatedContent: body.generatedContent,
+      budget: body.budget,
+      createdBy: body.createdBy,
+    });
+  }
+
+  // ============================================
+  // CUSTOM CAMPAIGN WORKFLOW ENDPOINTS
+  // ============================================
+
+  @Post('workflows/custom/generate-plan')
+  async generateStrategyPlan(
+    @Body()
+    body: {
+      strategy: string;
+      platforms: string[];
+      budget: number;
+    },
+  ) {
+    return this.workflowService.generateStrategyPlan(body);
+  }
+
+  // ============================================
+  // PLATFORM INTELLIGENCE
+  // ============================================
+
+  @Post('platforms/analyze')
+  async analyzePlatforms(
+    @Body()
+    body: {
+      contentTopic: string;
+      contentType: string;
+      targetAudience: string;
+      goals: string[];
+    },
+  ) {
+    return this.platformIntelligence.analyzeAndRecommend(body);
+  }
+
+  @Post('platforms/check-warnings')
+  async checkPlatformWarnings(
+    @Body()
+    body: {
+      platforms: string[];
+      contentType: string;
+      targetAudience: string;
+    },
+  ) {
+    return this.platformIntelligence.checkPlatformWarnings(body);
+  }
+
+  @Get('platforms/:slug/metrics')
+  async getPlatformMetrics(@Param('slug') slug: string) {
+    return this.platformIntelligence.getPlatformMetrics(slug);
+  }
+
+  @Get('trends')
+  async getTrendInsights(
+    @Query('industry') industry: string,
+    @Query('geography') geography: string = 'global',
+    @Query('timeframe') timeframe: 'week' | 'month' | 'quarter' = 'month',
+  ) {
+    return this.platformIntelligence.getTrendInsights({
+      industry,
+      geography,
+      timeframe,
+    });
+  }
+
+  @Post('campaigns/optimize-insights')
+  async getOptimizationInsights(
+    @Body()
+    body: {
+      currentMetrics: {
+        impressions: number;
+        engagement: number;
+        conversions: number;
+        spend: number;
+      };
+      platforms: string[];
+      targetAudience: string;
+    },
+  ) {
+    return this.platformIntelligence.generateOptimizationInsights(body);
+  }
+
+  // ============================================
+  // COST ESTIMATION & TRACKING
+  // ============================================
+
+  @Post('costs/estimate')
+  async estimateCosts(
+    @Body()
+    body: {
+      platforms: string[];
+      contentPieces: number;
+      estimatedReach: number;
+      paidBoost: boolean;
+      dailyBudget?: number;
+    },
+  ) {
+    return this.costEstimator.estimateCampaignCosts(body);
+  }
+
+  @Get('costs/efficiency-ranking')
+  async getPlatformEfficiencyRanking() {
+    return this.costEstimator.getPlatformEfficiencyRanking();
+  }
+
+  @Get('workflows/:id/costs')
+  async getWorkflowCosts(@Param('id') workflowId: string) {
+    return this.costEstimator.getWorkflowCostBreakdown(workflowId);
+  }
+
+  @Post('costs/project-roi')
+  async projectROI(
+    @Body()
+    body: {
+      totalCost: number;
+      estimatedReach: number;
+      conversionRate: number;
+      averageOrderValue: number;
+    },
+  ) {
+    return this.costEstimator.projectCampaignROI(body);
+  }
+
+  // ============================================
+  // PUBLISHING PLATFORMS
+  // ============================================
+
+  @Get('publishing-platforms')
+  async getAllPlatforms() {
+    return this.publishingPlatformService.getAllPlatforms();
+  }
+
+  @Get('publishing-platforms/:slug')
+  async getPlatformBySlug(@Param('slug') slug: string) {
+    return this.publishingPlatformService.getPlatformBySlug(slug);
+  }
+
+  @Get('publishing-platforms/:id/recommendations')
+  async getRecommendedPlatforms(@Param('id') contentType: string) {
+    return this.publishingPlatformService.getRecommendedPlatforms(
+      contentType,
+    );
+  }
+
+  @Post('platform-presets')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async createPreset(
+    @Body()
+    body: {
+      name: string;
+      description?: string;
+      platforms: string[];
+      createdBy: string;
+    },
+  ) {
+    return this.publishingPlatformService.createPreset(body);
+  }
+
+  @Get('platform-presets')
+  async getAllPresets(@Query('systemOnly') systemOnly: boolean = false) {
+    return this.publishingPlatformService.getPresets(systemOnly);
+  }
+
+  @Get('platform-presets/:id')
+  async getPresetById(@Param('id') id: string) {
+    return this.publishingPlatformService.getPresetById(id);
+  }
+
+  @Delete('platform-presets/:id')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async deletePreset(@Param('id') id: string) {
+    return this.publishingPlatformService.deletePreset(id);
   }
 }

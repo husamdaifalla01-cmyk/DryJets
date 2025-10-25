@@ -154,7 +154,7 @@ export class SocialPlatformIntegrationService {
   /**
    * Publish to a single platform
    */
-  private async publishToPlatform(
+  async publishToPlatform(
     platform: string,
     content: string,
     metadata?: any,

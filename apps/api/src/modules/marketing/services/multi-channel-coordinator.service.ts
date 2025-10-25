@@ -300,7 +300,7 @@ export class MultiChannelCoordinatorService {
     });
 
     // Rebalance budget based on performance
-    const totalBudget = campaign.budgetTotal || 0;
+    const totalBudget = Number(campaign.budgetTotal || 0);
     const updates: any[] = [];
 
     for (const allocation of campaign.budgetAllocations) {

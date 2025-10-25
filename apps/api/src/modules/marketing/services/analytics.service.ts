@@ -27,9 +27,9 @@ export class AnalyticsService {
     const campaign = await this.prisma.campaign.findUnique({
       where: { id: campaignId },
       include: {
-        metrics: true,
+        campaignMetrics: true,
         budgetAllocations: true,
-        workflows: true,
+        campaignWorkflows: true,
       },
     });
 
@@ -58,10 +58,10 @@ export class AnalyticsService {
         name: campaign.name,
         status: campaign.status,
         type: campaign.type,
-        startDate: campaign.startDate,
-        endDate: campaign.endDate,
+        createdAt: campaign.createdAt,
+        updatedAt: campaign.updatedAt,
         platforms: campaign.platforms,
-        totalBudget: campaign.totalBudget,
+        budgetTotal: campaign.budgetTotal,
       },
       keyMetrics,
       channelMetrics,
@@ -85,28 +85,27 @@ export class AnalyticsService {
 
     if (metrics.length === 0) {
       return {
-        email: { impressions: 0, clicks: 0, conversions: 0, spend: 0 },
-        social: { impressions: 0, engagements: 0, reach: 0, spend: 0 },
-        ads: { impressions: 0, clicks: 0, conversions: 0, spend: 0 },
+        email: { impressions: 0, clicks: 0, conversions: 0, spend: 0, revenue: 0 },
+        social: { impressions: 0, clicks: 0, conversions: 0, spend: 0, revenue: 0 },
+        ads: { impressions: 0, clicks: 0, conversions: 0, spend: 0, revenue: 0 },
       };
     }
 
     // Aggregate metrics by channel
     const channelAggregation: Record<string, any> = {
-      email: { impressions: 0, clicks: 0, conversions: 0, spend: 0, clickRate: 0, conversionRate: 0 },
-      social: { impressions: 0, engagements: 0, reach: 0, spend: 0, engagementRate: 0 },
-      ads: { impressions: 0, clicks: 0, conversions: 0, spend: 0, clickRate: 0, conversionRate: 0 },
+      email: { impressions: 0, clicks: 0, conversions: 0, spend: 0, revenue: 0, clickRate: 0, conversionRate: 0 },
+      social: { impressions: 0, clicks: 0, conversions: 0, spend: 0, revenue: 0, clickRate: 0, conversionRate: 0 },
+      ads: { impressions: 0, clicks: 0, conversions: 0, spend: 0, revenue: 0, clickRate: 0, conversionRate: 0 },
     };
 
     metrics.forEach((metric) => {
-      const channel = metric.channel.toLowerCase();
+      const channel = metric.channel?.toLowerCase() || 'social';
       if (channelAggregation[channel]) {
         channelAggregation[channel].impressions += metric.impressions || 0;
         channelAggregation[channel].clicks += metric.clicks || 0;
         channelAggregation[channel].conversions += metric.conversions || 0;
-        channelAggregation[channel].spend += metric.spend || 0;
-        channelAggregation[channel].engagements += metric.engagements || 0;
-        channelAggregation[channel].reach += metric.reach || 0;
+        channelAggregation[channel].spend += Number(metric.spend) || 0;
+        channelAggregation[channel].revenue += Number(metric.revenue) || 0;
       }
     });
 
@@ -142,7 +141,7 @@ export class AnalyticsService {
 
     if (!campaign || metrics.length === 0) {
       return {
-        totalSpend: campaign?.totalBudget || 0,
+        totalSpend: campaign?.budgetTotal ? Number(campaign.budgetTotal) : 0,
         estimatedRevenue: 0,
         roi: 0,
         roiPercentage: '0%',
@@ -156,7 +155,7 @@ export class AnalyticsService {
 
     channels.forEach((channel) => {
       const channelMetrics = metrics.filter((m) => m.channel === channel);
-      const spend = channelMetrics.reduce((sum, m) => sum + (m.spend || 0), 0);
+      const spend = channelMetrics.reduce((sum, m) => sum + Number(m.spend || 0), 0);
       const conversions = channelMetrics.reduce((sum, m) => sum + (m.conversions || 0), 0);
 
       // Estimate revenue (assuming average order value of $100)
@@ -223,14 +222,14 @@ export class AnalyticsService {
           clicks: 0,
           conversions: 0,
           spend: 0,
-          engagement: 0,
+          revenue: 0,
         };
       }
       trendData[dateStr].impressions += metric.impressions || 0;
       trendData[dateStr].clicks += metric.clicks || 0;
       trendData[dateStr].conversions += metric.conversions || 0;
-      trendData[dateStr].spend += metric.spend || 0;
-      trendData[dateStr].engagement += metric.engagements || 0;
+      trendData[dateStr].spend += Number(metric.spend) || 0;
+      trendData[dateStr].revenue += Number(metric.revenue) || 0;
     });
 
     return {
@@ -272,14 +271,14 @@ export class AnalyticsService {
           clicks: 0,
           conversions: 0,
           spend: 0,
-          engagement: 0,
+          revenue: 0,
         };
       }
       channels[channel].impressions += metric.impressions || 0;
       channels[channel].clicks += metric.clicks || 0;
       channels[channel].conversions += metric.conversions || 0;
-      channels[channel].spend += metric.spend || 0;
-      channels[channel].engagement += metric.engagements || 0;
+      channels[channel].spend += Number(metric.spend) || 0;
+      channels[channel].revenue += Number(metric.revenue) || 0;
     });
 
     // Calculate performance scores
@@ -308,15 +307,19 @@ export class AnalyticsService {
    * Calculate key performance indicators
    */
   private calculateKeyMetrics(campaign: any, channelMetrics: any, roiAnalysis: any): any {
+    const totalClicks: number = Object.values(channelMetrics).reduce((sum: number, c: any) => sum + (c.clicks || 0), 0) as number;
     return {
-      totalImpressions: Object.values(channelMetrics).reduce((sum: number, c: any) => sum + (c.impressions || 0), 0),
-      totalClicks: Object.values(channelMetrics).reduce((sum: number, c: any) => sum + (c.clicks || 0), 0),
-      totalConversions: Object.values(channelMetrics).reduce((sum: number, c: any) => sum + (c.conversions || 0), 0),
-      totalEngagements: Object.values(channelMetrics).reduce((sum: number, c: any) => sum + (c.engagements || 0), 0),
+      totalImpressions: Object.values(channelMetrics).reduce((sum: number, c: any) => sum + (c.impressions || 0), 0) as number,
+      totalClicks,
+      totalConversions: Object.values(channelMetrics).reduce((sum: number, c: any) => sum + (c.conversions || 0), 0) as number,
       totalSpend: roiAnalysis.totalSpend,
       roi: roiAnalysis.totalROI,
       roiPercentage: roiAnalysis.totalROIPercentage,
-      averageCPC: (roiAnalysis.totalSpend / (Object.values(channelMetrics).reduce((sum: number, c: any) => sum + (c.clicks || 0), 0) || 1)).toFixed(2),
+      averageCPC: (() => {
+        const spend = Number(roiAnalysis.totalSpend);
+        const clicks: number = (totalClicks as number) || 1;
+        return Math.round((spend / clicks) * 100) / 100;
+      })(),
       status: campaign.status,
       progress: this.calculateCampaignProgress(campaign),
     };
@@ -328,9 +331,9 @@ export class AnalyticsService {
   private calculateCampaignProgress(campaign: any): number {
     if (campaign.status === 'COMPLETED') return 100;
     if (campaign.status === 'ACTIVE') return 60;
-    if (campaign.status === 'LAUNCHED') return 40;
-    if (campaign.status === 'DRAFT') return 10;
     if (campaign.status === 'PAUSED') return 50;
+    if (campaign.status === 'DRAFT') return 10;
+    if (campaign.status === 'ARCHIVED') return 0;
     return 0;
   }
 
@@ -399,7 +402,7 @@ export class AnalyticsService {
       campaign: {
         name: campaign.name,
         status: campaign.status,
-        duration: `${campaign.startDate.toLocaleDateString()} - ${campaign.endDate?.toLocaleDateString() || 'Ongoing'}`,
+        duration: `${campaign.createdAt.toLocaleDateString()} - ${campaign.updatedAt?.toLocaleDateString() || 'Ongoing'}`,
       },
       keyMetrics: {
         totalImpressions: metrics.reduce((sum, m) => sum + (m.impressions || 0), 0),
@@ -631,7 +634,7 @@ export class AnalyticsService {
     this.logger.log('[Analytics] Fetching all campaigns analytics summary');
 
     const campaigns = await this.prisma.campaign.findMany({
-      include: { metrics: true },
+      include: { campaignMetrics: true },
     });
 
     const summary = await Promise.all(
@@ -645,14 +648,14 @@ export class AnalyticsService {
           totalSpend: roiAnalysis.totalSpend,
           roi: roiAnalysis.totalROI,
           roiPercentage: roiAnalysis.totalROIPercentage,
-          metricsCount: campaign.metrics.length,
+          metricsCount: campaign.campaignMetrics.length,
         };
       }),
     );
 
     return {
       totalCampaigns: campaigns.length,
-      activeCampaigns: campaigns.filter((c) => c.status === 'ACTIVE' || c.status === 'LAUNCHED').length,
+      activeCampaigns: campaigns.filter((c) => c.status === 'ACTIVE' || false).length,
       completedCampaigns: campaigns.filter((c) => c.status === 'COMPLETED').length,
       campaigns: summary,
     };
