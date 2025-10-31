@@ -11,17 +11,29 @@ import {
   LogOut,
   ChevronDown,
   Menu,
+  GitBranch,
+  Brain,
+  Cpu,
+  Shield,
+  DollarSign,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/auth/use-auth'
 import { useState } from 'react'
 
+import { Users, Target } from 'lucide-react'
+
 const navigationItems = [
   {
-    label: 'Dashboard',
-    href: '/',
-    icon: BarChart3,
+    label: 'Mission Control',
+    href: '/mission-control',
+    icon: Zap,
+  },
+  {
+    label: 'Profiles',
+    href: '/profiles',
+    icon: Users,
   },
   {
     label: 'Blogs',
@@ -30,7 +42,6 @@ const navigationItems = [
     submenu: [
       { label: 'All Posts', href: '/blogs' },
       { label: 'Generate New', href: '/blogs/generate' },
-      { label: 'Pending Review', href: '/blogs?status=PENDING_REVIEW' },
     ],
   },
   {
@@ -46,12 +57,42 @@ const navigationItems = [
   {
     label: 'Content',
     href: '/content',
-    icon: Zap,
+    icon: Target,
     submenu: [
       { label: 'Content Assets', href: '/content' },
       { label: 'Repurpose Content', href: '/content/repurpose' },
-      { label: 'By Platform', href: '/content/by-platform' },
     ],
+  },
+  {
+    label: 'Workflows',
+    href: '/workflows',
+    icon: GitBranch,
+  },
+  {
+    label: 'Intelligence',
+    href: '/intelligence',
+    icon: Brain,
+  },
+  {
+    label: 'ML Lab',
+    href: '/ml-lab',
+    icon: Cpu,
+  },
+  {
+    label: 'Offer-Lab',
+    href: '/offer-lab',
+    icon: DollarSign,
+    submenu: [
+      { label: 'Dashboard', href: '/offer-lab' },
+      { label: 'Offers', href: '/offer-lab/offers' },
+      { label: 'Funnels', href: '/offer-lab/funnels' },
+      { label: 'Leads', href: '/offer-lab/leads' },
+    ],
+  },
+  {
+    label: 'Admin',
+    href: '/admin/dashboard',
+    icon: Shield,
   },
   {
     label: 'Analytics',
@@ -94,18 +135,20 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'w-64 border-r border-border bg-card transition-transform duration-300 lg:static lg:translate-x-0 fixed h-full z-40 overflow-y-auto',
+          'w-64 border-r border-border-default bg-bg-surface transition-transform duration-300 lg:static lg:translate-x-0 fixed h-full z-40 overflow-y-auto',
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="p-6">
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+        <div className="p-6 border-b border-border-subtle">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-light rounded-lg flex items-center justify-center font-bold text-white shadow-sm group-hover:shadow-md transition-shadow">
               DJ
             </div>
-            <span>DryJets</span>
+            <div>
+              <span className="font-bold text-lg text-gradient-primary">DRYJETS</span>
+              <p className="text-xs text-text-tertiary">Marketing Engine</p>
+            </div>
           </Link>
-          <p className="text-xs text-muted-foreground mt-1">Marketing AI</p>
         </div>
 
         {/* Navigation */}
@@ -121,23 +164,23 @@ export function Sidebar() {
                     href={item.href}
                     onClick={() => setIsMobileOpen(false)}
                     className={cn(
-                      'flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                      'flex-1 flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all rounded-lg',
                       isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
                     )}
                   >
-                    <item.icon className="h-4 w-4" />
+                    <item.icon className="h-5 w-5" />
                     <span>{item.label}</span>
                   </Link>
                   {item.submenu && (
                     <button
                       onClick={() => toggleSubmenu(item.label)}
-                      className="p-2 hover:bg-muted rounded-lg transition-colors"
+                      className="p-2 hover:bg-bg-elevated rounded-lg transition-colors"
                     >
                       <ChevronDown
                         className={cn(
-                          'h-4 w-4 transition-transform',
+                          'h-4 w-4 transition-transform text-text-tertiary',
                           isExpanded && 'rotate-180'
                         )}
                       />
@@ -154,10 +197,10 @@ export function Sidebar() {
                         href={subitem.href}
                         onClick={() => setIsMobileOpen(false)}
                         className={cn(
-                          'block px-3 py-2 rounded-lg text-xs font-medium transition-colors',
+                          'block px-3 py-2 text-sm font-medium transition-colors rounded-lg',
                           pathname === subitem.href
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                            ? 'text-primary bg-primary/5'
+                            : 'text-text-tertiary hover:text-text-primary hover:bg-bg-hover'
                         )}
                       >
                         {subitem.label}
@@ -171,18 +214,17 @@ export function Sidebar() {
         </nav>
 
         {/* Logout Button */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
-          <Button
-            variant="ghost"
-            className="w-full justify-start"
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border-subtle bg-bg-surface">
+          <button
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all rounded-lg text-text-secondary hover:text-accent-error hover:bg-bg-elevated"
             onClick={() => {
               logout()
               setIsMobileOpen(false)
             }}
           >
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
+            <LogOut className="h-5 w-5" />
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
 
