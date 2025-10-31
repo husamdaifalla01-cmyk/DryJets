@@ -7,9 +7,10 @@ import { DashboardHeader } from '@/components/dashboard/header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { apiClient } from '@/lib/api-client'
-import { ArrowLeft, Edit2, Share2, Copy, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Edit2, Share2, Copy, Send } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { useState } from 'react'
+import { PublishContentDialog } from '@/components/content/PublishContentDialog'
 
 const statusColors = {
   DRAFT: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
@@ -24,11 +25,14 @@ export default function BlogDetailPage() {
   const router = useRouter()
   const blogId = params.id as string
   const [copied, setCopied] = useState(false)
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false)
 
-  const { data: blog, isLoading } = useQuery({
+  const { data: blogData, isLoading } = useQuery({
     queryKey: ['blog', blogId],
     queryFn: () => apiClient.getBlog(blogId),
   })
+
+  const blog = blogData?.data
 
   if (isLoading) {
     return (
@@ -230,8 +234,16 @@ export default function BlogDetailPage() {
 
           {/* Actions */}
           <div className="bg-card border border-border rounded-lg p-6 space-y-3">
+            <Button
+              className="w-full"
+              onClick={() => setPublishDialogOpen(true)}
+              disabled={blog.status === 'PUBLISHED'}
+            >
+              <Send className="h-4 w-4 mr-2" />
+              {blog.status === 'PUBLISHED' ? 'Already Published' : 'Publish to Platforms'}
+            </Button>
             <Link href={`/blogs/${blog.id}/edit`} className="block">
-              <Button className="w-full" variant="default">
+              <Button className="w-full" variant="outline">
                 <Edit2 className="h-4 w-4 mr-2" />
                 Edit Post
               </Button>
@@ -252,6 +264,31 @@ export default function BlogDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Publish Content Dialog */}
+      {blog && (
+        <PublishContentDialog
+          content={{
+            id: blog.id,
+            profileId: blog.profileId || '',
+            type: 'blog',
+            title: blog.title,
+            body: blog.content || '',
+            excerpt: blog.excerpt,
+            status: blog.status.toLowerCase().replace('_', '-') as any,
+            targetPlatforms: ['medium', 'substack'],
+            tags: blog.keywords || [],
+            createdAt: blog.createdAt,
+            updatedAt: blog.createdAt,
+          }}
+          isOpen={publishDialogOpen}
+          onClose={() => setPublishDialogOpen(false)}
+          onSuccess={() => {
+            setPublishDialogOpen(false)
+            router.refresh()
+          }}
+        />
+      )}
     </div>
   )
 }

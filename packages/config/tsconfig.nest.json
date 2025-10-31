@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "DryJets NestJS TypeScript Config",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // Target Node.js environment
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+
+    // NestJS requires decorators
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false,
+
+    // Emit configuration
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+
+    // Type Checking (can be overridden per project)
+    "strict": false,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+
+    // Module Resolution
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": false,
+
+    // Node.js specific
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // Paths (can be extended per project)
+    "baseUrl": "./",
+    "paths": {}
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test", "**/*.spec.ts", "**/*.test.ts"]
+}

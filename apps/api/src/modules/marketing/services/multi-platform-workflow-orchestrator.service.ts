@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { Anthropic } from '@anthropic-ai/sdk';
-import { MultiPlatformWorkflow, PublishedContent } from '@prisma/client';
+import { MultiPlatformWorkflow, PublishedContent } from '@dryjets/database';
 
 @Injectable()
 export class MultiPlatformWorkflowOrchestrator {

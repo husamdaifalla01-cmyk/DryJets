@@ -17,6 +17,10 @@ import { OfferOrchestratorService } from '../services/offer-lab/offer-orchestrat
 import { FunnelGeneratorService } from '../services/offer-lab/funnel-generator.service';
 import { LeadMagnetGeneratorService } from '../services/offer-lab/lead-magnet-generator.service';
 import { OfferSyncProcessor } from '../jobs/offer-sync.processor';
+import { AdMetricsSyncProcessor } from '../jobs/ad-metrics-sync.processor';
+import { TrafficOrchestratorService } from '../services/offer-lab/traffic/traffic-orchestrator.service';
+import { ConversionTrackerService } from '../services/offer-lab/traffic/conversion-tracker.service';
+import { EncryptionService } from '../services/offer-lab/encryption.service';
 import {
   SyncOffersDto,
   QueryOffersDto,
@@ -29,6 +33,11 @@ import {
   CaptureLeadDto,
   QueryLeadsDto,
   GenerateLeadMagnetDto,
+  CreateTrafficConnectionDto,
+  LaunchCampaignDto,
+  QueryCampaignsDto,
+  PauseCampaignDto,
+  PostbackDto,
 } from '../dto/offer-lab.dto';
 
 /**
@@ -43,6 +52,11 @@ import {
  * - Lead capture and management (2 endpoints)
  * - Lead magnet generation (1 endpoint)
  * - Scraper logs (1 endpoint)
+ *
+ * Phase 2 endpoints (6 total):
+ * - Traffic connections (2 endpoints)
+ * - Campaign management (3 endpoints)
+ * - Conversion tracking (1 endpoint)
  */
 
 @Controller('marketing/offer-lab')
@@ -54,6 +68,10 @@ export class OfferLabController {
     private readonly funnelGenerator: FunnelGeneratorService,
     private readonly leadMagnetGenerator: LeadMagnetGeneratorService,
     private readonly offerSyncProcessor: OfferSyncProcessor,
+    private readonly trafficOrchestrator: TrafficOrchestratorService,
+    private readonly conversionTracker: ConversionTrackerService,
+    private readonly encryptionService: EncryptionService,
+    private readonly adMetricsSyncProcessor: AdMetricsSyncProcessor,
   ) {}
 
   // ========================================
@@ -554,5 +572,198 @@ export class OfferLabController {
     });
 
     return { logs };
+  }
+
+  // ========================================
+  // PHASE 2: TRAFFIC CONNECTIONS
+  // ========================================
+
+  /**
+   * Create traffic network connection
+   * POST /marketing/offer-lab/traffic/connections
+   */
+  @Post('traffic/connections')
+  @HttpCode(HttpStatus.CREATED)
+  async createConnection(@Body() dto: CreateTrafficConnectionDto) {
+    // Encrypt API key before storing
+    const encryptedApiKey = this.encryptionService.encrypt(dto.apiKey);
+
+    const connection = await this.prisma.trafficConnection.create({
+      data: {
+        network: dto.network,
+        apiKey: encryptedApiKey,
+        isSandbox: dto.isSandbox || false,
+      },
+    });
+
+    return {
+      success: true,
+      connection: {
+        ...connection,
+        apiKey: '***ENCRYPTED***', // Don't return plaintext key
+      },
+      message: 'Traffic connection created successfully',
+    };
+  }
+
+  /**
+   * List traffic connections
+   * GET /marketing/offer-lab/traffic/connections
+   */
+  @Get('traffic/connections')
+  async listConnections() {
+    const connections = await this.prisma.trafficConnection.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: {
+          select: { campaigns: true },
+        },
+      },
+    });
+
+    return {
+      connections: connections.map((c) => ({
+        ...c,
+        apiKey: '***ENCRYPTED***', // Don't expose encrypted keys
+      })),
+    };
+  }
+
+  // ========================================
+  // PHASE 2: CAMPAIGN MANAGEMENT
+  // ========================================
+
+  /**
+   * Launch traffic campaign
+   * POST /marketing/offer-lab/campaigns/launch
+   */
+  @Post('campaigns/launch')
+  @HttpCode(HttpStatus.CREATED)
+  async launchCampaign(@Body() dto: LaunchCampaignDto) {
+    const result = await this.trafficOrchestrator.launchCampaign({
+      offerId: dto.offerId,
+      funnelId: dto.funnelId,
+      connectionId: dto.connectionId,
+      targetGeos: dto.targetGeos,
+      dailyBudget: dto.dailyBudget,
+      targetDevices: dto.targetDevices,
+    });
+
+    if (!result.success) {
+      throw new Error(result.errors?.join(', ') || 'Campaign launch failed');
+    }
+
+    return result;
+  }
+
+  /**
+   * List campaigns with filters
+   * GET /marketing/offer-lab/campaigns
+   */
+  @Get('campaigns')
+  async listCampaigns(@Query() query: QueryCampaignsDto) {
+    const {
+      status,
+      offerId,
+      connectionId,
+      page = 1,
+      pageSize = 20,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = query;
+
+    const where: any = {};
+
+    if (status) where.status = status;
+    if (offerId) where.offerId = offerId;
+    if (connectionId) where.connectionId = connectionId;
+
+    const total = await this.prisma.adCampaign.count({ where });
+
+    const campaigns = await this.prisma.adCampaign.findMany({
+      where,
+      include: {
+        offer: {
+          select: {
+            id: true,
+            title: true,
+            network: true,
+            payout: true,
+          },
+        },
+        funnel: {
+          select: {
+            id: true,
+            headline: true,
+          },
+        },
+        connection: {
+          select: {
+            id: true,
+            network: true,
+          },
+        },
+        metrics: {
+          orderBy: { recordedAt: 'desc' },
+          take: 1,
+        },
+      },
+      orderBy: { [sortBy]: sortOrder },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+
+    return {
+      campaigns,
+      pagination: {
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+        hasMore: page * pageSize < total,
+      },
+    };
+  }
+
+  /**
+   * Pause campaign manually
+   * PATCH /marketing/offer-lab/campaigns/:id/pause
+   */
+  @Patch('campaigns/:id/pause')
+  async pauseCampaign(@Param('id') id: string, @Body() dto: PauseCampaignDto) {
+    const success = await this.trafficOrchestrator.pauseCampaign(id, dto.reason);
+
+    if (!success) {
+      throw new Error('Failed to pause campaign');
+    }
+
+    return {
+      success: true,
+      message: `Campaign paused: ${dto.reason}`,
+    };
+  }
+
+  // ========================================
+  // PHASE 2: CONVERSION TRACKING
+  // ========================================
+
+  /**
+   * Postback handler (public endpoint - no auth)
+   * POST /marketing/offer-lab/postback
+   */
+  @Post('postback')
+  @HttpCode(HttpStatus.OK)
+  async handlePostback(@Query() query: PostbackDto) {
+    const result = await this.conversionTracker.processPostback({
+      campaignId: query.campaign_id,
+      clickId: query.click_id,
+      leadId: query.lead_id,
+      payout: query.payout,
+      status: query.status,
+      transactionId: query.transaction_id,
+      offerId: query.offer_id,
+    });
+
+    return result;
   }
 }

@@ -40,12 +40,15 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "clean": "turbo run clean && rm -rf node_modules",
-    "type-check": "turbo run type-check"
+    "type-check": "turbo run type-check",
+    "validate:architecture": "tsx scripts/validate-architecture.ts"
   },
   "devDependencies": {
     "@turbo/gen": "^2.0.0",
     "eslint": "^8.57.0",
+    "glob": "^10.3.0",
     "prettier": "^3.3.0",
+    "tsx": "^4.7.0",
     "turbo": "^2.0.0",
     "typescript": "^5.5.0"
   },
@@ -54,6 +57,10 @@
     "npm": ">=10.0.0"
   },
   "packageManager": "npm@10.8.1",
+  "overrides": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -61,6 +68,10 @@
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-progress": "^1.1.7",
     "@radix-ui/react-select": "^2.2.6",
-    "@radix-ui/react-tabs": "^1.1.13"
+    "@radix-ui/react-tabs": "^1.1.13",
+    "bullmq": "^5.61.2",
+    "googleapis": "^164.1.0",
+    "ioredis": "^5.8.2",
+    "pnpm": "^10.20.0"
   }
 }

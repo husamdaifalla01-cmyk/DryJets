@@ -21,6 +21,15 @@ import { PlatformIntelligence } from './services/platform-intelligence.service';
 import { CostEstimator } from './services/cost-estimator.service';
 import { PublishingPlatformService } from './services/publishing-platform.service';
 import { WorkflowService } from './services/workflow.service';
+import { KeywordUniverseService } from './services/seo/keyword-universe.service';
+import { ProgrammaticPageService } from './services/seo/programmatic-page.service';
+import { SerpIntelligenceService } from './services/seo/serp-intelligence.service';
+import { SnippetHijackerService } from './services/seo/snippet-hijacker.service';
+import { SchemaAutomationService } from './services/seo/schema-automation.service';
+import { HAROAutomationService } from './services/link-building/haro-automation.service';
+import { BrokenLinkService } from './services/link-building/broken-link.service';
+import { PartnershipNetworkService } from './services/link-building/partnership-network.service';
+import { ResourcePageService } from './services/link-building/resource-page.service';
 
 @Controller('marketing')
 @UseGuards(JwtAuthGuard)
@@ -43,6 +52,15 @@ export class MarketingController {
     private readonly costEstimator: CostEstimator,
     private readonly publishingPlatformService: PublishingPlatformService,
     private readonly workflowService: WorkflowService,
+    private readonly keywordUniverse: KeywordUniverseService,
+    private readonly programmaticPage: ProgrammaticPageService,
+    private readonly serpIntelligence: SerpIntelligenceService,
+    private readonly snippetHijacker: SnippetHijackerService,
+    private readonly schemaAutomation: SchemaAutomationService,
+    private readonly haroAutomation: HAROAutomationService,
+    private readonly brokenLink: BrokenLinkService,
+    private readonly partnershipNetwork: PartnershipNetworkService,
+    private readonly resourcePage: ResourcePageService,
   ) {}
 
   // ============================================
@@ -1001,5 +1019,386 @@ export class MarketingController {
   @Permissions(Permission.MANAGE_SETTINGS)
   async deletePreset(@Param('id') id: string) {
     return this.publishingPlatformService.deletePreset(id);
+  }
+
+  // ============================================
+  // SEO EMPIRE - KEYWORD UNIVERSE
+  // ============================================
+
+  @Post('seo/keywords/discover')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async discoverKeywords(@Body() body: { seedKeyword: string }) {
+    return this.keywordUniverse.discoverKeywords(body.seedKeyword);
+  }
+
+  @Post('seo/keywords/build-universe')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async buildKeywordUniverse(@Body() body: { seedKeywords: string[] }) {
+    await this.keywordUniverse.buildKeywordUniverse(body.seedKeywords);
+    return { success: true, message: 'Keyword universe building started' };
+  }
+
+  @Get('seo/keywords/top')
+  async getTopKeywords(@Query('limit') limit: number = 100) {
+    return this.keywordUniverse.getTopKeywords(limit);
+  }
+
+  @Get('seo/keywords/stats')
+  async getKeywordStats() {
+    return this.keywordUniverse.getKeywordStats();
+  }
+
+  @Get('seo/keywords/by-category/:category')
+  async getKeywordsByCategory(@Param('category') category: string) {
+    return this.keywordUniverse.getKeywordsByCategory(category);
+  }
+
+  // ============================================
+  // SEO EMPIRE - PROGRAMMATIC PAGES
+  // ============================================
+
+  @Post('seo/pages/generate')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async generatePage(
+    @Body()
+    body: {
+      keywordId: string;
+      pageType: string;
+      additionalContext?: any;
+    },
+  ) {
+    return this.programmaticPage.generatePage(body as any);
+  }
+
+  @Post('seo/pages/bulk-generate')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async bulkGeneratePages(@Body() body?: { count?: number }) {
+    const count = await this.programmaticPage.bulkGeneratePages(body?.count || 100);
+    return { generated: count, message: `Generated ${count} pages` };
+  }
+
+  @Get('seo/pages')
+  async getAllPages(@Query('limit') limit: number = 100) {
+    return this.programmaticPage.getAllPages(limit);
+  }
+
+  @Get('seo/pages/by-type/:type')
+  async getPagesByType(@Param('type') type: string, @Query('limit') limit: number = 50) {
+    return this.programmaticPage.getPagesByType(type, limit);
+  }
+
+  @Get('seo/pages/stats')
+  async getPageStats() {
+    return this.programmaticPage.getPerformanceStats();
+  }
+
+  @Post('seo/pages/:id/publish')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async publishPage(@Param('id') id: string) {
+    return this.programmaticPage.publishPage(id);
+  }
+
+  // ============================================
+  // SEO EMPIRE - SERP INTELLIGENCE
+  // ============================================
+
+  @Post('seo/serp/track-keyword/:id')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async trackKeywordRanking(@Param('id') keywordId: string) {
+    await this.serpIntelligence.trackKeywordRanking(keywordId);
+    return { success: true };
+  }
+
+  @Post('seo/serp/track-all')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async trackAllKeywords(@Body() body?: { limit?: number }) {
+    await this.serpIntelligence.trackAllKeywords(body?.limit || 1000);
+    return { success: true };
+  }
+
+  @Get('seo/serp/improvements')
+  async getRankingImprovements(@Query('limit') limit: number = 50) {
+    return this.serpIntelligence.getRankingImprovements(limit);
+  }
+
+  @Get('seo/serp/losses')
+  async getRankingLosses(@Query('limit') limit: number = 50) {
+    return this.serpIntelligence.getRankingLosses(limit);
+  }
+
+  @Get('seo/serp/analyze/:id')
+  async analyzeSERP(@Param('id') keywordId: string) {
+    return this.serpIntelligence.analyzeSERP(keywordId);
+  }
+
+  @Get('seo/serp/volatility')
+  async getSerpVolatility() {
+    return this.serpIntelligence.getSerpVolatility();
+  }
+
+  @Get('seo/serp/daily-summary')
+  async getDailyRankingSummary() {
+    return this.serpIntelligence.getDailyRankingSummary();
+  }
+
+  @Get('seo/serp/competitor/:domain')
+  async getCompetitorAnalysis(@Param('domain') domain: string) {
+    return this.serpIntelligence.getCompetitorAnalysis(domain);
+  }
+
+  // ============================================
+  // SEO EMPIRE - FEATURED SNIPPETS
+  // ============================================
+
+  @Get('seo/snippets/opportunities')
+  async getSnippetOpportunities(@Query('limit') limit: number = 100) {
+    return this.snippetHijacker.identifyOpportunities(limit);
+  }
+
+  @Post('seo/snippets/generate/:keywordId')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async generateSnippetContent(@Param('keywordId') keywordId: string) {
+    return this.snippetHijacker.generateSnippetContent(keywordId);
+  }
+
+  @Post('seo/snippets/optimize/:pageId')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async optimizeForSnippet(@Param('pageId') pageId: string) {
+    return this.snippetHijacker.optimizeContentForSnippet(pageId);
+  }
+
+  @Post('seo/snippets/bulk-optimize')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async bulkOptimizeSnippets(@Body() body?: { limit?: number }) {
+    return this.snippetHijacker.bulkOptimizeForSnippets(body?.limit || 50);
+  }
+
+  @Get('seo/snippets/wins')
+  async getSnippetWins() {
+    return this.snippetHijacker.trackSnippetWins();
+  }
+
+  @Get('seo/snippets/recommendations/:keywordId')
+  async getSnippetRecommendations(@Param('keywordId') keywordId: string) {
+    return this.snippetHijacker.getSnippetRecommendations(keywordId);
+  }
+
+  // ============================================
+  // SEO EMPIRE - SCHEMA MARKUP
+  // ============================================
+
+  @Post('seo/schema/auto-generate/:pageId')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async autoGenerateSchema(@Param('pageId') pageId: string) {
+    return this.schemaAutomation.autoGenerateSchema(pageId);
+  }
+
+  @Post('seo/schema/bulk-generate')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async bulkGenerateSchema(@Body() body?: { limit?: number }) {
+    return this.schemaAutomation.bulkGenerateSchema(body?.limit || 100);
+  }
+
+  @Get('seo/schema/stats')
+  async getSchemaStats() {
+    return this.schemaAutomation.getSchemaStats();
+  }
+
+  @Post('seo/schema/validate')
+  async validateSchema(@Body() body: { schema: any }) {
+    return this.schemaAutomation.validateSchema(body.schema);
+  }
+
+  // ============================================
+  // LINK BUILDING - HARO AUTOMATION
+  // ============================================
+
+  @Post('link-building/haro/process')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async processHAROOpportunities() {
+    return this.haroAutomation.processNewOpportunities();
+  }
+
+  @Post('link-building/haro/auto-respond')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async autoRespondHARO(@Body() body?: { minRelevance?: number }) {
+    return this.haroAutomation.autoRespondToQueries(body?.minRelevance || 70);
+  }
+
+  @Get('link-building/haro/pending')
+  async getPendingHARO(@Query('limit') limit?: string) {
+    return this.haroAutomation.getPendingResponses(limit ? parseInt(limit) : 50);
+  }
+
+  @Get('link-building/haro/high-value')
+  async getHighValueHARO(@Query('minDA') minDA?: string, @Query('minRelevance') minRelevance?: string) {
+    return this.haroAutomation.getHighValueOpportunities(
+      minDA ? parseInt(minDA) : 80,
+      minRelevance ? parseInt(minRelevance) : 70,
+    );
+  }
+
+  @Post('link-building/haro/:id/publish')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async markHAROPublished(@Param('id') id: string, @Body() body: { publishedUrl: string; hasBacklink?: boolean }) {
+    return this.haroAutomation.markAsPublished(id, body.publishedUrl, body.hasBacklink ?? true);
+  }
+
+  @Get('link-building/haro/stats')
+  async getHAROStats() {
+    return this.haroAutomation.getPerformanceStats();
+  }
+
+  // ============================================
+  // LINK BUILDING - BROKEN LINKS
+  // ============================================
+
+  @Post('link-building/broken-links/import-domains')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async importBrokenLinkDomains(@Body() body: { domains: string[] }) {
+    return this.brokenLink.importTargetDomains(body.domains);
+  }
+
+  @Post('link-building/broken-links/process')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async processBrokenLinks(@Body() body: { domains: string[] }) {
+    return this.brokenLink.processOpportunities(body.domains);
+  }
+
+  @Post('link-building/broken-links/send-outreach')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async sendBrokenLinkOutreach(@Body() body?: { limit?: number }) {
+    return this.brokenLink.sendOutreachEmails(body?.limit || 20);
+  }
+
+  @Post('link-building/broken-links/follow-ups')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async sendBrokenLinkFollowUps(@Body() body?: { maxFollowUps?: number }) {
+    return this.brokenLink.sendFollowUps(body?.maxFollowUps || 2);
+  }
+
+  @Post('link-building/broken-links/:id/acquired')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async markBrokenLinkAcquired(@Param('id') id: string) {
+    return this.brokenLink.markLinkAcquired(id);
+  }
+
+  @Get('link-building/broken-links/opportunities')
+  async getBrokenLinkOpportunities(@Query('limit') limit?: string) {
+    return this.brokenLink.getTopOpportunities(limit ? parseInt(limit) : 50);
+  }
+
+  @Get('link-building/broken-links/stats')
+  async getBrokenLinkStats() {
+    return this.brokenLink.getStats();
+  }
+
+  // ============================================
+  // LINK BUILDING - PARTNERSHIPS
+  // ============================================
+
+  @Post('link-building/partnerships/identify')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async identifyPartners(@Body() body?: { industry?: string }) {
+    const prospects = await this.partnershipNetwork.identifyPartners(body?.industry);
+    const created = await this.partnershipNetwork.createProposals(prospects);
+    return { prospects: prospects.length, created };
+  }
+
+  @Post('link-building/partnerships/import')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async importPartners(@Body() body: { prospects: Array<{ domain: string; name: string; email?: string; partnershipType: string }> }) {
+    return this.partnershipNetwork.importProspects(body.prospects);
+  }
+
+  @Post('link-building/partnerships/send-proposals')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async sendPartnershipProposals(@Body() body?: { limit?: number }) {
+    return this.partnershipNetwork.sendProposals(body?.limit || 10);
+  }
+
+  @Post('link-building/partnerships/:id/activate')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async activatePartnership(@Param('id') id: string, @Body() body: { agreedTerms: string; startDate: string; endDate?: string }) {
+    return this.partnershipNetwork.activatePartnership(id, {
+      agreedTerms: body.agreedTerms,
+      startDate: new Date(body.startDate),
+      endDate: body.endDate ? new Date(body.endDate) : undefined,
+    });
+  }
+
+  @Post('link-building/partnerships/:id/track')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async trackPartnership(@Param('id') id: string, @Body() body: { contentShared?: number; backlinksReceived?: number; backlinksGiven?: number; trafficReceived?: number }) {
+    return this.partnershipNetwork.trackPerformance(id, body);
+  }
+
+  @Get('link-building/partnerships/active')
+  async getActivePartnerships() {
+    return this.partnershipNetwork.getActivePartnerships();
+  }
+
+  @Get('link-building/partnerships/opportunities')
+  async getPartnershipOpportunities(@Query('limit') limit?: string) {
+    return this.partnershipNetwork.getTopOpportunities(limit ? parseInt(limit) : 20);
+  }
+
+  @Get('link-building/partnerships/stats')
+  async getPartnershipStats() {
+    return this.partnershipNetwork.getStats();
+  }
+
+  @Get('link-building/partnerships/:domain/topics')
+  async suggestPartnershipTopics(@Param('domain') domain: string) {
+    return this.partnershipNetwork.suggestExchangeTopics(domain);
+  }
+
+  // ============================================
+  // LINK BUILDING - RESOURCE PAGES
+  // ============================================
+
+  @Post('link-building/resource-pages/import-topics')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async importResourceTopics(@Body() body: { topics: string[] }) {
+    return this.resourcePage.importTopics(body.topics);
+  }
+
+  @Post('link-building/resource-pages/process')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async processResourcePages(@Body() body: { topics: string[] }) {
+    return this.resourcePage.processOpportunities(body.topics);
+  }
+
+  @Post('link-building/resource-pages/send-outreach')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async sendResourcePageOutreach(@Body() body?: { limit?: number }) {
+    return this.resourcePage.sendOutreachEmails(body?.limit || 15);
+  }
+
+  @Post('link-building/resource-pages/follow-ups')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async sendResourcePageFollowUps(@Body() body?: { maxFollowUps?: number }) {
+    return this.resourcePage.sendFollowUps(body?.maxFollowUps || 1);
+  }
+
+  @Post('link-building/resource-pages/:id/added')
+  @Permissions(Permission.MANAGE_SETTINGS)
+  async markResourceAdded(@Param('id') id: string, @Body() body?: { position?: number }) {
+    return this.resourcePage.markAsAdded(id, body?.position);
+  }
+
+  @Get('link-building/resource-pages/opportunities')
+  async getResourcePageOpportunities(@Query('limit') limit?: string) {
+    return this.resourcePage.getTopOpportunities(limit ? parseInt(limit) : 30);
+  }
+
+  @Get('link-building/resource-pages/by-topic/:topic')
+  async getResourcePagesByTopic(@Param('topic') topic: string, @Query('limit') limit?: string) {
+    return this.resourcePage.getPagesByTopic(topic, limit ? parseInt(limit) : 50);
+  }
+
+  @Get('link-building/resource-pages/stats')
+  async getResourcePageStats() {
+    return this.resourcePage.getStats();
   }
 }

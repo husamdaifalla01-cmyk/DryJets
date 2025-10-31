@@ -4,7 +4,7 @@ import {
   AlertSeverity,
   AlertStatus,
   MaintenanceAlertType,
-} from '@prisma/client';
+} from '@dryjets/database';
 
 export class AcknowledgeAlertDto {
   @ApiPropertyOptional({ description: 'Notes when acknowledging the alert' })

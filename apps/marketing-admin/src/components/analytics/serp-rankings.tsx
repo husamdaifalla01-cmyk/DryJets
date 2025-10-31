@@ -33,7 +33,7 @@ export function SerpRankings({ rankings }: SerpRankingsProps) {
             <CardTitle>SERP Rankings by URL</CardTitle>
             <CardDescription>Your pages ranked for keywords in Google Search Results</CardDescription>
           </div>
-          <Badge variant="outline">{rankings.length} pages</Badge>
+          <Badge variant="secondary">{rankings.length} pages</Badge>
         </div>
       </CardHeader>
       <CardContent>

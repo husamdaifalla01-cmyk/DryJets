@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
-import { EquipmentType } from '@prisma/client';
+import { EquipmentType } from '@dryjets/database';
 
 interface ResourceUsageData {
   powerWatts: number;

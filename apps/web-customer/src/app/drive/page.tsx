@@ -17,7 +17,7 @@ export default function DrivePage() {
     {
       icon: ClockIcon,
       title: 'Flexible Schedule',
-      description: 'Work when you want, as much as you want. You're in control of your hours.',
+      description: 'Work when you want, as much as you want. You\'re in control of your hours.',
     },
     {
       icon: CurrencyDollarIcon,
@@ -37,7 +37,7 @@ export default function DrivePage() {
     {
       icon: ShieldCheckIcon,
       title: 'Insurance Covered',
-      description: 'You're protected with liability insurance while on active deliveries.',
+      description: 'You\'re protected with liability insurance while on active deliveries.',
     },
     {
       icon: CalendarIcon,
@@ -47,7 +47,7 @@ export default function DrivePage() {
   ];
 
   const requirements = [
-    'Valid driver's license',
+    'Valid driver\'s license',
     'Clean driving record',
     'Reliable vehicle (car, van, or SUV)',
     'Smartphone (iOS or Android)',

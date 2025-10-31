@@ -85,7 +85,7 @@ export function AnalyticsDashboard({ campaignId }: { campaignId: string }) {
             Comprehensive performance insights and reporting
           </p>
         </div>
-        <Button onClick={refetch} variant="outline" size="sm">
+        <Button onClick={refetch} variant="secondary" size="sm">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
@@ -319,7 +319,7 @@ export function AnalyticsDashboard({ campaignId }: { campaignId: string }) {
                       <span className="text-sm font-medium">
                         Needs Improvement
                       </span>
-                      <Badge variant="outline" className="capitalize">
+                      <Badge variant="secondary" className="capitalize">
                         {comparison.worstPerformingChannel}
                       </Badge>
                     </div>

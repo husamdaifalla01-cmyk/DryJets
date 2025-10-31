@@ -1,35 +1,31 @@
 {
+  "extends": "../../packages/config/tsconfig.nest.json",
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "ES2021",
-    "lib": ["ES2021"],
-    "declaration": true,
-    "removeComments": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
-    "sourceMap": true,
     "outDir": "./dist",
+    "rootDir": "./src",
     "baseUrl": "./",
-    "noEmit": false,
-    "noEmitOnError": false,
-    "incremental": false,
-    "skipLibCheck": true,
+    "incremental": true,
+
+    // Type checking - Gradual strict mode migration
+    // NOTE: Enabling full strict mode reveals 100+ type errors across API
+    // Marketing module DTOs are ready for strict mode, but legacy modules need fixes first
     "strict": false,
     "strictNullChecks": false,
     "noImplicitAny": false,
-    "strictBindCallApply": false,
-    "strictPropertyInitialization": false,
-    "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false,
-    "esModuleInterop": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": false,
+
+    // Partially enabled for better type safety
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // Path aliases
     "paths": {
       "@/modules/*": ["src/modules/*"],
       "@/common/*": ["src/common/*"],
-      "@/config/*": ["src/config/*"]
+      "@/config/*": ["src/config/*"],
+      "@dryjets/database": ["../../packages/database/index.ts"],
+      "@dryjets/types": ["../../packages/types/index.ts"],
+      "@dryjets/types/marketing": ["../../packages/types/src/marketing/index.ts"]
     }
   },
   "include": ["src/**/*"],

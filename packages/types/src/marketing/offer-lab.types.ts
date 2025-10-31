@@ -382,3 +382,175 @@ export interface NetworkAdapterConfig {
     requestsPerHour: number;
   };
 }
+
+// ============================================
+// PHASE 2: TRAFFIC DEPLOYMENT & TESTING
+// ============================================
+
+/**
+ * Traffic network connection
+ */
+export interface TrafficConnection {
+  id: string;
+  network: TrafficNetwork;
+  apiKey: string; // Encrypted
+  isSandbox: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Ad campaign
+ */
+export interface AdCampaign {
+  id: string;
+  connectionId: string;
+  connection?: TrafficConnection;
+  offerId: string;
+  offer?: Offer;
+  funnelId: string;
+  funnel?: Funnel;
+  name: string;
+  externalCampaignId: string;
+  dailyBudget: number;
+  totalSpent: number;
+  status: CampaignStatus;
+  pauseReason?: string;
+  targetGeos: string[];
+  targetDevices: string[];
+  launchedAt?: string;
+  pausedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Ad variant (multiple creatives per campaign)
+ */
+export interface AdVariant {
+  id: string;
+  campaignId: string;
+  headline: string;
+  description: string;
+  callToAction: string;
+  imageUrl?: string;
+  angle: AdAngle;
+  isWinner: boolean;
+  createdAt: string;
+}
+
+/**
+ * Campaign performance metrics
+ */
+export interface AdMetric {
+  id: string;
+  campaignId: string;
+  impressions: number;
+  clicks: number;
+  spent: number;
+  conversions: number;
+  revenue: number;
+  ctr: number; // Click-through rate (%)
+  epc: number; // Earnings per click
+  roi: number; // Return on investment (%)
+  recordedAt: string;
+}
+
+/**
+ * Campaign launch options
+ */
+export interface LaunchCampaignRequest {
+  offerId: string;
+  funnelId: string;
+  connectionId: string;
+  targetGeos: string[];
+  dailyBudget: number;
+  targetDevices?: string[];
+}
+
+/**
+ * Campaign launch response
+ */
+export interface LaunchCampaignResponse {
+  success: boolean;
+  campaignId?: string;
+  externalCampaignId?: string;
+  variantsCreated?: number;
+  message?: string;
+  errors?: string[];
+}
+
+/**
+ * Campaign filters
+ */
+export interface CampaignFilters {
+  status?: CampaignStatus;
+  offerId?: string;
+  connectionId?: string;
+  page?: number;
+  pageSize?: number;
+  sortBy?: 'createdAt' | 'dailyBudget' | 'totalSpent';
+  sortOrder?: 'asc' | 'desc';
+}
+
+/**
+ * Paginated campaigns response
+ */
+export interface PaginatedCampaigns {
+  campaigns: AdCampaign[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+}
+
+/**
+ * Conversion postback data
+ */
+export interface PostbackData {
+  campaignId?: string;
+  clickId?: string;
+  leadId?: string;
+  payout?: string | number;
+  status?: 'approved' | 'pending' | 'rejected';
+  transactionId?: string;
+  offerId?: string;
+}
+
+/**
+ * Campaign statistics
+ */
+export interface CampaignStats {
+  campaignId: string;
+  totalImpressions: number;
+  totalClicks: number;
+  totalSpent: number;
+  totalConversions: number;
+  totalRevenue: number;
+  avgCTR: number;
+  avgEPC: number;
+  avgROI: number;
+  bestPerformingVariant?: AdVariant;
+}
+
+// ============================================
+// PHASE 2: ENUMS & CONSTANTS
+// ============================================
+
+export type TrafficNetwork = 'popads' | 'propellerads';
+
+export type CampaignStatus = 'active' | 'paused' | 'completed' | 'error';
+
+export type AdAngle = 'pain' | 'benefit' | 'urgency' | 'social-proof' | 'scarcity';
+
+/**
+ * Auto-pause rules thresholds
+ */
+export interface PauseThresholds {
+  minImpressions: number;
+  minCTR: number; // Percentage
+  minEPC: number; // Dollars
+  maxSpendWithoutConversion: number; // Dollars
+  budgetExhaustionThreshold: number; // Percentage (0-100)
+}

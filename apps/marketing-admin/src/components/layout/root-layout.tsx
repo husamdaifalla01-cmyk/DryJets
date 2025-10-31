@@ -24,25 +24,30 @@ export function RootLayout({ children }: { children: ReactNode }) {
     return <LoginPage />
   }
 
-  // Show loading state
+  // Show loading state with command-style spinner
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+      <div className="flex items-center justify-center h-screen bg-bg-primary">
+        <div className="flex flex-col items-center gap-4">
+          <div className="spinner" />
+          <p className="text-text-tertiary text-sm font-mono uppercase tracking-wide">
+            INITIALIZING SYSTEM
+          </p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-bg-primary">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopBar />
-        <main className="flex-1 overflow-y-auto">
-          <div className="container mx-auto px-4 py-8">
+        <main className="flex-1 overflow-y-auto bg-bg-primary">
+          <div className="container mx-auto px-6 py-8">
             {children}
           </div>
         </main>

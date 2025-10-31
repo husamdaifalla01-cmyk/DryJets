@@ -96,7 +96,7 @@ export function KeywordTracking({ keywords = [] }: KeywordTrackingProps) {
                         <p className="font-medium text-foreground">{kw.keyword}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline">
+                        <Badge variant="secondary">
                           <span className="font-semibold">#{kw.rank}</span>
                         </Badge>
                         {rankChange && (

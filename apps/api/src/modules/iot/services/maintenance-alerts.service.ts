@@ -5,7 +5,7 @@ import {
   AlertStatus,
   EquipmentType,
   MaintenanceAlertType,
-} from '@prisma/client';
+} from '@dryjets/database';
 
 interface TelemetryData {
   powerWatts?: number;

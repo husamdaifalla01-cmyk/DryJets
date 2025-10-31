@@ -5,10 +5,23 @@
   "description": "Shared TypeScript types for DryJets platform",
   "main": "./index.ts",
   "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./marketing": "./src/marketing/index.ts",
+    "./dtos": "./src/dtos/index.ts",
+    "./user": "./src/user.types.ts",
+    "./order": "./src/order.types.ts"
+  },
   "scripts": {
-    "type-check": "tsc --noEmit"
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@dryjets/database": "*"
   },
   "devDependencies": {
+    "@dryjets/config": "*",
     "typescript": "^5.3.3"
   }
 }

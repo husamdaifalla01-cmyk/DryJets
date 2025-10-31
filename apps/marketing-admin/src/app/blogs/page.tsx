@@ -60,12 +60,20 @@ export default function BlogsPage() {
         title="Blog Posts"
         description="Manage your SEO-optimized blog content"
         action={
-          <Link href="/blogs/generate">
-            <Button>
-              <Zap className="h-4 w-4 mr-2" />
-              Generate with AI
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/blogs/new">
+              <Button variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                New Blog
+              </Button>
+            </Link>
+            <Link href="/blogs/generate">
+              <Button>
+                <Zap className="h-4 w-4 mr-2" />
+                Generate with AI
+              </Button>
+            </Link>
+          </div>
         }
       />
 
@@ -189,12 +197,20 @@ export default function BlogsPage() {
       ) : (
         <div className="bg-muted rounded-lg p-12 text-center">
           <p className="text-muted-foreground mb-4">No blog posts yet</p>
-          <Link href="/blogs/generate">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Your First Blog
-            </Button>
-          </Link>
+          <div className="flex gap-3 justify-center">
+            <Link href="/blogs/new">
+              <Button variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Write Manually
+              </Button>
+            </Link>
+            <Link href="/blogs/generate">
+              <Button>
+                <Zap className="h-4 w-4 mr-2" />
+                Generate with AI
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
 

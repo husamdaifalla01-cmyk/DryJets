@@ -4,9 +4,51 @@
   "private": true,
   "description": "Shared configuration for DryJets platform",
   "main": "index.js",
+  "exports": {
+    "./eslint-preset": "./eslint-preset.js",
+    "./eslint-nest": "./eslint-nest.js",
+    "./eslint-react": "./eslint-react.js",
+    "./prettier": "./prettier.config.js",
+    "./tsconfig-base": "./tsconfig.base.json",
+    "./tsconfig-strict": "./tsconfig.strict.json",
+    "./tsconfig-nest": "./tsconfig.nest.json",
+    "./tsconfig-react": "./tsconfig.react.json"
+  },
   "files": [
+    "index.js",
     "eslint-preset.js",
+    "eslint-nest.js",
+    "eslint-react.js",
     "prettier.config.js",
-    "tsconfig.json"
-  ]
+    "tsconfig.base.json",
+    "tsconfig.strict.json",
+    "tsconfig.nest.json",
+    "tsconfig.react.json"
+  ],
+  "peerDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.0.0 || ^7.0.0",
+    "@typescript-eslint/parser": "^6.0.0 || ^7.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-jsx-a11y": "^6.8.0",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "eslint-config-next": {
+      "optional": true
+    },
+    "eslint-plugin-jsx-a11y": {
+      "optional": true
+    },
+    "eslint-plugin-react": {
+      "optional": true
+    },
+    "eslint-plugin-react-hooks": {
+      "optional": true
+    }
+  }
 }

@@ -422,3 +422,142 @@ export class UpdateOfferLabSettingsDto {
   @IsEnum(AffiliateNetworkEnum, { each: true })
   enabledNetworks?: AffiliateNetworkEnum[];
 }
+
+// ============================================
+// PHASE 2: TRAFFIC DEPLOYMENT
+// ============================================
+
+export enum TrafficNetworkEnum {
+  POPADS = 'popads',
+  PROPELLERADS = 'propellerads',
+}
+
+export enum CampaignStatusEnum {
+  ACTIVE = 'active',
+  PAUSED = 'paused',
+  COMPLETED = 'completed',
+  ERROR = 'error',
+}
+
+/**
+ * Create traffic connection
+ */
+export class CreateTrafficConnectionDto {
+  @IsEnum(TrafficNetworkEnum)
+  network: TrafficNetworkEnum;
+
+  @IsString()
+  @MinLength(10)
+  apiKey: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isSandbox?: boolean;
+}
+
+/**
+ * Launch campaign
+ */
+export class LaunchCampaignDto {
+  @IsString()
+  offerId: string;
+
+  @IsString()
+  funnelId: string;
+
+  @IsString()
+  connectionId: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  targetGeos: string[];
+
+  @IsNumber()
+  @Min(5)
+  @Max(1000)
+  dailyBudget: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsIn(['desktop', 'mobile', 'tablet'], { each: true })
+  targetDevices?: string[];
+}
+
+/**
+ * Query campaigns
+ */
+export class QueryCampaignsDto {
+  @IsOptional()
+  @IsEnum(CampaignStatusEnum)
+  status?: CampaignStatusEnum;
+
+  @IsOptional()
+  @IsString()
+  offerId?: string;
+
+  @IsOptional()
+  @IsString()
+  connectionId?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(100)
+  pageSize?: number;
+
+  @IsOptional()
+  @IsIn(['createdAt', 'dailyBudget', 'totalSpent'])
+  sortBy?: 'createdAt' | 'dailyBudget' | 'totalSpent';
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc';
+}
+
+/**
+ * Pause campaign
+ */
+export class PauseCampaignDto {
+  @IsString()
+  @MinLength(5)
+  @MaxLength(200)
+  reason: string;
+}
+
+/**
+ * Postback handler (public endpoint)
+ */
+export class PostbackDto {
+  @IsOptional()
+  @IsString()
+  campaign_id?: string;
+
+  @IsOptional()
+  @IsString()
+  click_id?: string;
+
+  @IsOptional()
+  @IsString()
+  lead_id?: string;
+
+  @IsOptional()
+  @IsString()
+  payout?: string;
+
+  @IsOptional()
+  @IsIn(['approved', 'pending', 'rejected'])
+  status?: 'approved' | 'pending' | 'rejected';
+
+  @IsOptional()
+  @IsString()
+  transaction_id?: string;
+
+  @IsOptional()
+  @IsString()
+  offer_id?: string;
+}

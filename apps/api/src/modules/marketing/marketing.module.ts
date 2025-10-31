@@ -137,6 +137,15 @@ import { FunnelCreativeService } from './services/offer-lab/funnel-creative.serv
 import { LeadMagnetGeneratorService } from './services/offer-lab/lead-magnet-generator.service'
 import { FunnelGeneratorService } from './services/offer-lab/funnel-generator.service'
 import { OfferSyncProcessor } from './jobs/offer-sync.processor'
+// Phase 2: Offer-Lab Traffic Services
+import { PopAdsAdapterService } from './services/offer-lab/traffic/networks/popads-adapter.service'
+import { PropellerAdsAdapterService } from './services/offer-lab/traffic/networks/propellerads-adapter.service'
+import { AdGeneratorService } from './services/offer-lab/traffic/ad-generator.service'
+import { PauseRulesService } from './services/offer-lab/traffic/pause-rules.service'
+import { ConversionTrackerService } from './services/offer-lab/traffic/conversion-tracker.service'
+import { TrafficOrchestratorService } from './services/offer-lab/traffic/traffic-orchestrator.service'
+import { AdMetricsSyncProcessor } from './jobs/ad-metrics-sync.processor'
+import { AutoPauseCheckerProcessor } from './jobs/auto-pause-checker.processor'
 
 @Module({
   imports: [
@@ -289,6 +298,15 @@ import { OfferSyncProcessor } from './jobs/offer-sync.processor'
     LeadMagnetGeneratorService,
     FunnelGeneratorService,
     OfferSyncProcessor,
+    // Phase 2: Offer-Lab Traffic Services
+    PopAdsAdapterService,
+    PropellerAdsAdapterService,
+    AdGeneratorService,
+    PauseRulesService,
+    ConversionTrackerService,
+    TrafficOrchestratorService,
+    AdMetricsSyncProcessor,
+    AutoPauseCheckerProcessor,
   ],
   exports: [
     MarketingService,

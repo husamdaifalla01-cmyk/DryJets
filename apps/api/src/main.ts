@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import * as fs from 'fs';
+import * as path from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -44,7 +46,14 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = process.env.PORT || 3000;
+  // Export OpenAPI spec to JSON file for client generation
+  if (process.env.NODE_ENV !== 'production' || process.env.GENERATE_OPENAPI === 'true') {
+    const outputPath = path.join(__dirname, '..', 'openapi.json');
+    fs.writeFileSync(outputPath, JSON.stringify(document, null, 2));
+    console.log(`📄 OpenAPI spec exported to: ${outputPath}`);
+  }
+
+  const port = process.env.PORT || 4000; // Changed from 3000 to 4000 to avoid conflicts
   await app.listen(port);
 
   console.log(`🚀 DryJets API is running on: http://localhost:${port}`);

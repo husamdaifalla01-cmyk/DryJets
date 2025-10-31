@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Permission } from '../../decorators/permissions.decorator';
-import { StaffRole } from '@prisma/client';
+import { StaffRole } from '@dryjets/database';
 
 /**
  * Permissions Service
