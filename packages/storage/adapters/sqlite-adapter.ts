@@ -1,5 +1,5 @@
 /**
- * SqliteAdapter - SQLite storage for Electron desktop applications
+ * SqliteAdapter - SQLite storage for desktop applications
  *
  * Uses better-sqlite3 for fast, synchronous SQLite operations
  */
@@ -40,7 +40,7 @@ export class SqliteAdapter implements StorageAdapter {
       debug: config?.debug ?? false,
     };
 
-    // Default database path (user data directory in Electron)
+    // Default database path (user data directory)
     this.dbPath = dbPath || path.join(process.env.HOME || '', '.dryjets', 'dryjets.db');
   }
 

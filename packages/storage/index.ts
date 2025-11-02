@@ -325,7 +325,7 @@ export async function createStorageAdapter(
     const { DexieAdapter } = await import('./adapters/dexie-adapter');
     return new DexieAdapter(config);
   } else {
-    // Desktop platform - use SQLite (only available in Electron)
+    // Desktop platform - use SQLite
     try {
       const { SqliteAdapter } = await import('./adapters/sqlite-adapter');
       return new SqliteAdapter(config);
