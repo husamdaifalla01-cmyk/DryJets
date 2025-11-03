@@ -58,13 +58,15 @@ export class QueueConfigService implements OnModuleInit {
     } catch (error) {
       this.logger.error(`❌ Redis connection failed: ${error.message}`);
 
-      // In production, Redis should be required for queue functionality
-      if (process.env.NODE_ENV === 'production') {
+      // Only require Redis if explicitly configured via REQUIRE_REDIS flag
+      if (process.env.NODE_ENV === 'production' && process.env.REQUIRE_REDIS === 'true') {
         throw new Error(
-          `Redis connection required in production. Please set REDIS_HOST and REDIS_PORT environment variables. Error: ${error.message}`
+          `Redis connection required in production (REQUIRE_REDIS=true). Please set REDIS_HOST and REDIS_PORT environment variables. Error: ${error.message}`
         );
       } else {
-        this.logger.warn('⚠️  Redis unavailable in development mode - queue functionality will not work');
+        this.logger.warn(
+          `⚠️  Redis unavailable - queue functionality disabled. Set REDIS_HOST and REDIS_PORT to enable queues. Error: ${error.message}`
+        );
       }
     }
   }
