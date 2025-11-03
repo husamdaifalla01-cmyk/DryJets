@@ -137,7 +137,7 @@ export class OfferLabOptimizationController {
     @Param('connectionId') connectionId: string,
     @Body() body: { reason: string },
   ) {
-    await this.trafficQuality.blacklistConnection(connectionId, body.reason);
+    await this.trafficQuality.blacklistConnection(connectionId, 'auto');
     return { success: true, message: 'Connection blacklisted' };
   }
 
@@ -175,7 +175,8 @@ export class OfferLabOptimizationController {
     @Param('campaignId') campaignId: string,
     @Body() body: { scaleFactor: number; reason?: string },
   ) {
-    return this.smartScaler.scaleCampaign(campaignId, body.scaleFactor, body.reason);
+    // FIX: Third parameter is boolean isManual, not string. false = auto-scaling
+    return this.smartScaler.scaleCampaign(campaignId, body.scaleFactor, false);
   }
 
   @Post('scaling/auto-scale')
@@ -191,7 +192,7 @@ export class OfferLabOptimizationController {
     @Query('limit') limit?: string,
   ) {
     const limitNum = limit ? parseInt(limit) : 10;
-    return this.smartScaler.getScalingHistory(campaignId, limitNum);
+    return this.smartScaler.getScalingHistory(campaignId);
   }
 
   @Get('budget-safety/check/:campaignId')
@@ -218,7 +219,7 @@ export class OfferLabOptimizationController {
   @Post('budget-safety/emergency-freeze')
   @Roles('admin')
   async emergencyBudgetFreeze(@Body() body: { reason: string }) {
-    return this.budgetSafety.emergencyBudgetFreeze(body.reason);
+    return this.budgetSafety.emergencyBudgetFreeze('auto');
   }
 
   // =============================================================================

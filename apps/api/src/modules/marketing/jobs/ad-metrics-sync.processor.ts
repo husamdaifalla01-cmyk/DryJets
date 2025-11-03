@@ -40,9 +40,10 @@ export class AdMetricsSyncProcessor implements OnModuleInit {
     private readonly popAdsAdapter: PopAdsAdapterService,
     private readonly propellerAdsAdapter: PropellerAdsAdapterService,
   ) {
-    this.adapters = new Map([
-      ['popads', popAdsAdapter],
-      ['propellerads', propellerAdsAdapter],
+    // FIX: Cast each adapter to TrafficAdapter to satisfy type checker
+    this.adapters = new Map<string, TrafficAdapter>([
+      ['popads', popAdsAdapter as TrafficAdapter],
+      ['propellerads', propellerAdsAdapter as TrafficAdapter],
     ]);
   }
 

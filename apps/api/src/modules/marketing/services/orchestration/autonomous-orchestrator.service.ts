@@ -98,10 +98,10 @@ export class AutonomousOrchestratorService {
   async launchCampaign(request: CampaignLaunchRequest): Promise<CampaignExecutionResult> {
     this.logger.log(`= Launching autonomous campaign: ${request.campaignName}`);
 
-    // Create campaign order
+    // Create campaign order - FIX: Use relation connect syntax for Prisma
     const campaign = await this.prisma.campaignOrder.create({
       data: {
-        profileId: request.profileId,
+        profile: { connect: { id: request.profileId } },
         name: request.campaignName,
         strategy: 'autonomous',
         contentTypes: request.contentPreferences || {},
@@ -111,6 +111,7 @@ export class AutonomousOrchestratorService {
         budgetAllocated: request.budget,
         budgetUsed: 0,
         budgetRemaining: request.budget,
+        costBreakdown: {}, // FIX: Required field in Prisma schema
         status: 'planning',
         mode: request.mode,
         startDate: new Date(),
@@ -544,7 +545,8 @@ Format as JSON: {title, metaDescription, content, wordCount}
       where: { id: campaignId },
     });
 
-    return campaign.workflowState as OrchestrationState;
+    // FIX: Cast through unknown to handle Json type from Prisma
+    return campaign.workflowState as unknown as OrchestrationState;
   }
 
   /**

@@ -135,8 +135,10 @@ export class MaxBountyAdapterService implements NetworkAdapter {
       // @ts-ignore - Running in browser context via Puppeteer
       const rawOffers = await page.evaluate(() => {
         // @ts-ignore - document is available in browser context
+        // FIX: Cast document to any to avoid TS2584 error in Node.js environment
+        const doc = document as any;
         const offerRows = Array.from(
-          document.querySelectorAll('tr.offer-row, .offer-item, table.offers-table tbody tr'),
+          doc.querySelectorAll('tr.offer-row, .offer-item, table.offers-table tbody tr'),
         );
 
         return offerRows.map((row: any) => {

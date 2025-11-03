@@ -524,10 +524,11 @@ export class OfferLabController {
   @Post('lead-magnets/generate')
   @HttpCode(HttpStatus.CREATED)
   async generateLeadMagnet(@Body() dto: GenerateLeadMagnetDto) {
+    // FIX: Cast format to match expected union type (service doesn't support 'doc' format)
     const result = await this.leadMagnetGenerator.generateLeadMagnet({
       title: dto.title,
       description: dto.description,
-      format: dto.format,
+      format: dto.format as 'pdf' | 'html' | 'checklist',
       content: dto.content,
       offerId: dto.offerId,
     });

@@ -130,7 +130,7 @@ export class UpdateMarketingProfileDto {
 
   @IsOptional()
   @IsString()
-  status?: string;
+  status?: 'draft' | 'active' | 'paused' | 'archived'; // FIX: Use union type to match Prisma schema
 }
 
 export class ConnectPlatformDto {

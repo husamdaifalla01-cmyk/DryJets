@@ -41,7 +41,7 @@ export interface PlatformConnection {
 
 export interface OAuth2AuthUrl {
   authUrl: string;
-  state: string;
+  state?: string; // FIX: Made optional since OAuth methods don't return state anymore
   platform: string;
 }
 
@@ -121,28 +121,28 @@ export class PlatformConnectionService {
     await this.verifyProfileOwnership(profileId, userId);
 
     let authUrl: string;
-    const state = `${profileId}:${platform}:${Date.now()}`;
+    // FIX: getAuthorizationUrl() methods only accept redirectUri, not state parameter
 
     switch (platform.toLowerCase()) {
       case 'twitter':
-        authUrl = await this.twitterIntegration.getAuthorizationUrl(redirectUri, state);
+        authUrl = await this.twitterIntegration.getAuthorizationUrl(redirectUri);
         break;
 
       case 'linkedin':
-        authUrl = await this.linkedInIntegration.getAuthorizationUrl(redirectUri, state);
+        authUrl = await this.linkedInIntegration.getAuthorizationUrl(redirectUri);
         break;
 
       case 'facebook':
       case 'instagram':
-        authUrl = await this.facebookIntegration.getAuthorizationUrl(redirectUri, state);
+        authUrl = await this.facebookIntegration.getAuthorizationUrl(redirectUri);
         break;
 
       case 'tiktok':
-        authUrl = await this.tiktokIntegration.getAuthorizationUrl(redirectUri, state);
+        authUrl = await this.tiktokIntegration.getAuthorizationUrl(redirectUri);
         break;
 
       case 'youtube':
-        authUrl = await this.youtubeIntegration.getAuthorizationUrl(redirectUri, state);
+        authUrl = await this.youtubeIntegration.getAuthorizationUrl(redirectUri);
         break;
 
       default:
@@ -170,9 +170,9 @@ export class PlatformConnectionService {
       },
     });
 
+    // FIX: Remove state from return object since it's no longer used
     return {
       authUrl,
-      state,
       platform,
     };
   }

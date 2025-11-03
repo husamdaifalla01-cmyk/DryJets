@@ -53,10 +53,10 @@ export class TrafficOrchestratorService {
     private readonly popAdsAdapter: PopAdsAdapterService,
     private readonly propellerAdsAdapter: PropellerAdsAdapterService,
   ) {
-    // Register traffic adapters
-    this.adapters = new Map([
-      ['popads', popAdsAdapter],
-      ['propellerads', propellerAdsAdapter],
+    // Register traffic adapters - FIX: Cast each adapter to TrafficAdapter to satisfy type checker
+    this.adapters = new Map<string, TrafficAdapter>([
+      ['popads', popAdsAdapter as TrafficAdapter],
+      ['propellerads', propellerAdsAdapter as TrafficAdapter],
     ]);
 
     this.globalBudgetCap = parseFloat(
@@ -122,7 +122,7 @@ export class TrafficOrchestratorService {
           status: 'active',
           targetGeos: options.targetGeos,
           targetDevices: options.targetDevices || ['desktop', 'mobile'],
-          externalId: '', // FIX: Renamed from externalCampaignId to match schema
+          externalCampaignId: '', // FIX: Field renamed in Prisma schema from externalId for clarity
           startDate: new Date(), // FIX: Renamed from launchedAt to match schema
         },
       });
@@ -152,7 +152,7 @@ export class TrafficOrchestratorService {
       // 8. Update campaign with external ID
       await this.prisma.adCampaign.update({
         where: { id: campaign.id },
-        data: { externalId: networkResult.externalCampaignId }, // FIX: Renamed field to match schema
+        data: { externalCampaignId: networkResult.externalCampaignId }, // FIX: Field renamed in Prisma schema
       });
 
       // 9. Save ad variants to database
@@ -164,7 +164,7 @@ export class TrafficOrchestratorService {
             description: variant.description,
             callToAction: variant.callToAction,
             imageUrl: variant.imageUrl,
-            angle: variant.angle,
+            // FIX: Removed 'angle' field - not present in Prisma AdVariant schema
           },
         });
       }
@@ -309,7 +309,7 @@ export class TrafficOrchestratorService {
       const metrics = this.pauseRules.calculateMetrics({
         impressions: latestMetric.impressions,
         clicks: latestMetric.clicks,
-        spent: parseFloat(latestMetric.spent.toString()),
+        spent: parseFloat(latestMetric.spend.toString()), // FIX: Prisma field is 'spend' not 'spent'
         conversions: latestMetric.conversions,
         revenue: parseFloat(latestMetric.revenue.toString()),
       });

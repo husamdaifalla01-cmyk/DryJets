@@ -261,7 +261,16 @@ export class ROIPredictorService {
       return `High volatility or insufficient data. Prediction confidence is low. Continue monitoring.`;
     }
 
-    return `Predicted 30-day ROI: ${predictedROI.toFixed(0)}%. ${trend === 'improving' ? 'Trending up' : trend !== 'improving' && trend !== 'stable' ? 'Trending down' : 'Stable'}.`;
+    // FIX: Use if-else to avoid type narrowing issues with nested ternary
+    let trendText: string;
+    if (trend === 'improving') {
+      trendText = 'Trending up';
+    } else if (trend === 'declining') {
+      trendText = 'Trending down';
+    } else {
+      trendText = 'Stable';
+    }
+    return `Predicted 30-day ROI: ${predictedROI.toFixed(0)}%. ${trendText}.`;
   }
 
   /**
@@ -270,8 +279,9 @@ export class ROIPredictorService {
   async getCampaignsPredictedToDecline(): Promise<ROIPrediction[]> {
     const predictions = await this.predictAllCampaigns();
 
+    // FIX: Changed 'trend' to 'p.trend' to reference the prediction object
     return predictions.filter(
-      (p) => p.trend !== 'improving' && trend !== 'stable' || (p.predictedROI30Days < 0 && p.confidence !== 'low'),
+      (p) => (p.trend !== 'improving' && p.trend !== 'stable') || (p.predictedROI30Days < 0 && p.confidence !== 'low'),
     );
   }
 
