@@ -96,7 +96,7 @@ export class AutonomousOrchestratorService {
    * Launch autonomous campaign
    */
   async launchCampaign(request: CampaignLaunchRequest): Promise<CampaignExecutionResult> {
-    this.logger.log(`=€ Launching autonomous campaign: ${request.campaignName}`);
+    this.logger.log(`= Launching autonomous campaign: ${request.campaignName}`);
 
     // Create campaign order
     const campaign = await this.prisma.campaignOrder.create({
@@ -184,7 +184,7 @@ export class AutonomousOrchestratorService {
     request: CampaignLaunchRequest,
     state: OrchestrationState,
   ): Promise<CampaignExecutionResult> {
-    this.logger.log('™ Executing FULL AUTO mode');
+    this.logger.log(' Executing FULL AUTO mode');
 
     // STEP 1: Analyze Landscape (if not already done)
     state.currentStep = 'Analyzing market landscape';
@@ -415,7 +415,7 @@ export class AutonomousOrchestratorService {
     request: CampaignLaunchRequest,
     state: OrchestrationState,
   ): Promise<CampaignExecutionResult> {
-    this.logger.log('™ Executing SEMI AUTO mode (approval required)');
+    this.logger.log(' Executing SEMI AUTO mode (approval required)');
 
     // Similar to full auto, but pause at key checkpoints
     state.phase = 'planning';
@@ -449,7 +449,7 @@ export class AutonomousOrchestratorService {
     request: CampaignLaunchRequest,
     state: OrchestrationState,
   ): Promise<CampaignExecutionResult> {
-    this.logger.log('™ Executing HYBRID mode');
+    this.logger.log(' Executing HYBRID mode');
 
     // Automate strategy and content creation, manual publishing
     return this.executeFullAutoMode(campaignId, request, state);
