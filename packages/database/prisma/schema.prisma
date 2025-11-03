@@ -3516,6 +3516,10 @@ model AdVariant {
   @@index([isActive])
 }
 
+// ============================================
+// OFFER-LAB PHASE 3: OPTIMIZATION LAYER
+// ============================================
+
 // Ad performance metrics (hourly snapshots)
 model AdMetric {
   id          String     @id @default(cuid())
@@ -3535,10 +3539,6 @@ model AdMetric {
   @@index([campaignId, timestamp])
   @@index([timestamp])
 }
-
-// ============================================
-// OFFER-LAB PHASE 3: OPTIMIZATION LAYER
-// ============================================
 
 // Traffic quality scores
 model TrafficQualityScore {
@@ -3565,12 +3565,6 @@ model ScalingEvent {
   campaignId  String
   campaign    AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   scalingType String // 'manual' | 'auto'
-  scaleFactor Decimal    @db.Decimal(5, 2) // 2.0 = 2x, 5.0 = 5x
+  scaleFactor Decimal    @db.Decimal(5, 2) // 2.0 = 2×, 5.0 = 5×
   oldBudget   Decimal    @db.Decimal(10, 2)
-  newBudget   Decimal    @db.Decimal(10, 2)
-  reason      String // e.g., "High ROI: 150%"
-  createdAt   DateTime   @default(now())
-
-  @@index([campaignId])
-  @@index([createdAt])
 }
