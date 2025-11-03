@@ -249,11 +249,12 @@ export class ROIPredictorService {
       return `Stable profitable performance. Predicted ROI: ${predictedROI.toFixed(0)}%.`;
     }
 
-    if (trend !== 'improving' && trend !== 'stable' && predictedROI < 0) {
+    // FIX: Use explicit 'declining' check instead of double-negative logic
+    if (trend === 'declining' && predictedROI < 0) {
       return `Declining performance. Predicted negative ROI (${predictedROI.toFixed(0)}%). Consider pausing or pivoting.`;
     }
 
-    if (trend !== 'improving' && trend !== 'stable') {
+    if (trend === 'declining') {
       return `Performance declining. Predicted ROI: ${predictedROI.toFixed(0)}%. Investigate and optimize.`;
     }
 
@@ -261,16 +262,9 @@ export class ROIPredictorService {
       return `High volatility or insufficient data. Prediction confidence is low. Continue monitoring.`;
     }
 
-    // FIX: Use if-else to avoid type narrowing issues with nested ternary
-    let trendText: string;
-    if (trend === 'improving') {
-      trendText = 'Trending up';
-    } else if (trend === 'declining') {
-      trendText = 'Trending down';
-    } else {
-      trendText = 'Stable';
-    }
-    return `Predicted 30-day ROI: ${predictedROI.toFixed(0)}%. ${trendText}.`;
+    // FIX: At this point, TypeScript has narrowed trend to 'stable' with non-positive ROI
+    // Handle this remaining stable case explicitly
+    return `Stable performance. Predicted 30-day ROI: ${predictedROI.toFixed(0)}%. Monitor closely.`;
   }
 
   /**

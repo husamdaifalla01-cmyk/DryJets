@@ -10,6 +10,7 @@ export interface LeadMagnetOptions {
   description?: string;
   format: 'pdf' | 'html' | 'checklist';
   content?: string;
+  offerId?: string; // FIX: Added missing offerId field used in controller
   offerTitle?: string;
   offerCategory?: string[];
 }

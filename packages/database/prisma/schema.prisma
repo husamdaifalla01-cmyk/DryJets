@@ -3568,6 +3568,7 @@ model ScalingEvent {
   scaleFactor Decimal    @db.Decimal(5, 2) // 2.0 = 2×, 5.0 = 5×
   oldBudget   Decimal    @db.Decimal(10, 2)
   newBudget   Decimal    @db.Decimal(10, 2) // FIX: Added field used by smart-scaler service
+  reason      String? // FIX: Added optional reason field for scaling decisions
   createdAt   DateTime   @default(now()) // FIX: Added timestamp field for ordering
 
   @@index([campaignId])
