@@ -83,7 +83,7 @@ export class StrategyPlannerService {
   ) {}
 
   async generateStrategy(profileId: string): Promise<StrategyPlan> {
-    this.logger.log(`=Ë Generating strategy plan for profile: ${profileId}`);
+    this.logger.log(`= Generating strategy plan for profile: ${profileId}`);
 
     const profile = await this.prisma.marketingProfile.findUnique({
       where: { id: profileId },

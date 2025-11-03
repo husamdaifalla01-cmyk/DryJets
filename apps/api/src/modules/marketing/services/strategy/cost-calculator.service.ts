@@ -159,7 +159,7 @@ export class CostCalculatorService {
     },
     rules?: Partial<CostingRules>,
   ): Promise<CampaignCostEstimate> {
-    this.logger.log(`=° Calculating cost for campaign: ${campaign.name}`);
+    this.logger.log(`= Calculating cost for campaign: ${campaign.name}`);
 
     const costRules = { ...this.defaultRules, ...rules };
 

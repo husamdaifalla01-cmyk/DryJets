@@ -10,12 +10,12 @@ import { ContentPlatformValidatorService } from './content-platform-validator.se
  * Implements "create once, publish everywhere" strategy with platform-specific optimization.
  *
  * Capabilities:
- * - 1 blog post ’ 10+ tweets
- * - 1 blog post ’ 5+ LinkedIn posts
- * - 1 blog post ’ Instagram carousel
- * - 1 blog post ’ TikTok script
- * - 1 blog post ’ YouTube script
- * - 1 video ’ multiple platform clips
+ * - 1 blog post  10+ tweets
+ * - 1 blog post  5+ LinkedIn posts
+ * - 1 blog post  Instagram carousel
+ * - 1 blog post  TikTok script
+ * - 1 blog post  YouTube script
+ * - 1 video  multiple platform clips
  * - Smart content extraction and adaptation
  */
 
