@@ -3167,6 +3167,7 @@ model ContentPiece {
   keywords        String[]
   metaTitle       String?
   metaDescription String?
+  metadata        Json? // Additional flexible metadata storage
 
   // Quality Metrics
   qualityScore     Int @default(0) // 0-100
@@ -3458,28 +3459,28 @@ model TrafficConnection {
 
 // Ad campaigns for testing offers
 model AdCampaign {
-  id            String            @id @default(cuid())
-  connectionId  String
-  connection    TrafficConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
-  offerId       String
-  offer         Offer             @relation(fields: [offerId], references: [id], onDelete: Cascade)
-  funnelId      String
-  funnel        Funnel            @relation(fields: [funnelId], references: [id], onDelete: Cascade)
-  externalId    String? // Network's campaign ID
-  name          String
-  dailyBudget   Decimal           @db.Decimal(10, 2)
-  totalBudget   Decimal           @db.Decimal(10, 2)
-  totalSpent    Decimal           @default(0) @db.Decimal(10, 2)
-  status        String            @default("active") // active|paused|completed|error
-  pauseReason   String?
-  pausedAt      DateTime? // When campaign was paused
-  targetGeos    String[]
-  targetDevices String[] // ['desktop', 'mobile', 'tablet']
-  bidAmount     Decimal?          @db.Decimal(10, 4)
-  startDate     DateTime          @default(now())
-  endDate       DateTime?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  id                 String            @id @default(cuid())
+  connectionId       String
+  connection         TrafficConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  offerId            String
+  offer              Offer             @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  funnelId           String
+  funnel             Funnel            @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  externalCampaignId String? // Network's campaign ID (renamed from externalId for clarity)
+  name               String
+  dailyBudget        Decimal           @db.Decimal(10, 2)
+  totalBudget        Decimal           @db.Decimal(10, 2)
+  totalSpent         Decimal           @default(0) @db.Decimal(10, 2)
+  status             String            @default("active") // active|paused|completed|error
+  pauseReason        String?
+  pausedAt           DateTime? // When campaign was paused
+  targetGeos         String[]
+  targetDevices      String[] // ['desktop', 'mobile', 'tablet']
+  bidAmount          Decimal?          @db.Decimal(10, 4)
+  startDate          DateTime          @default(now())
+  endDate            DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
   // Relationships
   variants      AdVariant[]
@@ -3495,20 +3496,21 @@ model AdCampaign {
 
 // Ad creative variants
 model AdVariant {
-  id          String     @id @default(cuid())
-  campaignId  String
-  campaign    AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  headline    String
-  description String
-  imageUrl    String?
-  ctaText     String     @default("Learn More")
-  isActive    Boolean    @default(true)
-  impressions Int        @default(0)
-  clicks      Int        @default(0)
-  conversions Int        @default(0)
-  spend       Decimal    @default(0) @db.Decimal(10, 2)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id           String     @id @default(cuid())
+  campaignId   String
+  campaign     AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  headline     String
+  description  String
+  imageUrl     String?
+  ctaText      String     @default("Learn More")
+  callToAction String? // Alias for ctaText, used in some services
+  isActive     Boolean    @default(true)
+  impressions  Int        @default(0)
+  clicks       Int        @default(0)
+  conversions  Int        @default(0)
+  spend        Decimal    @default(0) @db.Decimal(10, 2)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   @@index([campaignId])
   @@index([isActive])
