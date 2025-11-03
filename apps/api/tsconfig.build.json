@@ -1,17 +1,14 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "../../packages/config/tsconfig.nest.json",
   "compilerOptions": {
-    "noEmitOnError": false,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./",
     "skipLibCheck": true,
-    "strict": false,
-    "declaration": false,
-    "declarationMap": false,
-    "composite": false,
-    "sourceMap": false,
-    "incremental": false,
-    "removeComments": true,
-    "outDir": "./dist"
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "test", "dist", "**/*.spec.ts"]
+  "include": ["src"],
+  "exclude": ["node_modules", "../../node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
 }

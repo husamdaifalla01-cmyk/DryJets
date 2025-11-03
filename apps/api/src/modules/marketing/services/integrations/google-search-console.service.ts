@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
-import { google } from 'googleapis';
+// Using require() instead of import to avoid TypeScript 5.x parse errors in googleapis type definitions
+const { google } = require('googleapis');
 
 /**
  * Google Search Console Integration Service

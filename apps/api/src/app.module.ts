@@ -53,5 +53,6 @@ import { PrismaModule } from './common/prisma/prisma.module';
     EventsModule,
     IotModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}
