@@ -146,6 +146,25 @@ import { ConversionTrackerService } from './services/offer-lab/traffic/conversio
 import { TrafficOrchestratorService } from './services/offer-lab/traffic/traffic-orchestrator.service'
 import { AdMetricsSyncProcessor } from './jobs/ad-metrics-sync.processor'
 import { AutoPauseCheckerProcessor } from './jobs/auto-pause-checker.processor'
+// Phase 3: Offer-Lab Optimization Services
+import { ABTestService } from './services/offer-lab/optimization/ab-test.service'
+import { VariantComparerService } from './services/offer-lab/optimization/variant-comparer.service'
+import { WinnerDetectorService } from './services/offer-lab/optimization/winner-detector.service'
+import { TrafficQualityService } from './services/offer-lab/optimization/traffic-quality.service'
+import { FraudDetectorService } from './services/offer-lab/optimization/fraud-detector.service'
+import { SmartScalerService } from './services/offer-lab/optimization/smart-scaler.service'
+import { PerformanceThresholdCheckerService } from './services/offer-lab/optimization/performance-threshold-checker.service'
+import { BudgetSafetyGuardService } from './services/offer-lab/optimization/budget-safety-guard.service'
+import { BudgetOptimizerService } from './services/offer-lab/optimization/budget-optimizer.service'
+import { ROIPredictorService } from './services/offer-lab/optimization/roi-predictor.service'
+import { BudgetRebalancerService } from './services/offer-lab/optimization/budget-rebalancer.service'
+import { FunnelAnalyzerService } from './services/offer-lab/optimization/funnel-analyzer.service'
+import { DropoffDetectorService } from './services/offer-lab/optimization/dropoff-detector.service'
+import { CTAOptimizerService } from './services/offer-lab/optimization/cta-optimizer.service'
+import { BidOptimizerService } from './services/offer-lab/optimization/bid-optimizer.service'
+import { CompetitorBidAnalyzerService } from './services/offer-lab/optimization/competitor-bid-analyzer.service'
+import { BidStrategySelectorService } from './services/offer-lab/optimization/bid-strategy-selector.service'
+import { OfferLabOptimizationController } from './controllers/offer-lab-optimization.controller'
 
 @Module({
   imports: [
@@ -168,6 +187,7 @@ import { AutoPauseCheckerProcessor } from './jobs/auto-pause-checker.processor'
     WorkflowsController,
     ProfileController,
     OfferLabController,
+    OfferLabOptimizationController,
   ],
   providers: [
     MarketingService,
@@ -307,6 +327,24 @@ import { AutoPauseCheckerProcessor } from './jobs/auto-pause-checker.processor'
     TrafficOrchestratorService,
     AdMetricsSyncProcessor,
     AutoPauseCheckerProcessor,
+    // Phase 3: Offer-Lab Optimization Services
+    ABTestService,
+    VariantComparerService,
+    WinnerDetectorService,
+    TrafficQualityService,
+    FraudDetectorService,
+    SmartScalerService,
+    PerformanceThresholdCheckerService,
+    BudgetSafetyGuardService,
+    BudgetOptimizerService,
+    ROIPredictorService,
+    BudgetRebalancerService,
+    FunnelAnalyzerService,
+    DropoffDetectorService,
+    CTAOptimizerService,
+    BidOptimizerService,
+    CompetitorBidAnalyzerService,
+    BidStrategySelectorService,
   ],
   exports: [
     MarketingService,

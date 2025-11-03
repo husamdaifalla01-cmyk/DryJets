@@ -338,7 +338,7 @@ export class DomainTrackerService {
     const contentMap = new Map();
 
     posts.forEach(post => {
-      const normalizedContent = post.content.substring(0, 100).toLowerCase();
+      const normalizedContent = post.content.content.substring(0, 100).toLowerCase();
       if (!contentMap.has(normalizedContent)) {
         contentMap.set(normalizedContent, []);
       }

@@ -57,6 +57,22 @@ export class TwitterIntegration {
   }
 
   /**
+   * TODO: Implement createPost() method for multi-platform publisher
+   *
+   * Required signature:
+   * async createPost(
+   *   content: { text: string; media?: { url: string }[] },
+   *   accessToken: string
+   * ): Promise<{ id: string; url: string }>
+   *
+   * This method should:
+   * - Accept user-specific access token instead of using global bearer token
+   * - Support media attachments
+   * - Return post ID and URL in the expected format
+   * - Handle authentication using the provided access token
+   */
+
+  /**
    * Publish a tweet
    */
   async publishTweet(content: TweetContent): Promise<PublishResult> {

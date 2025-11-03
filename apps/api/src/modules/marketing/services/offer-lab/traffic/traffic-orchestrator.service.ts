@@ -117,12 +117,13 @@ export class TrafficOrchestratorService {
           funnelId: funnel.id,
           name: `${offer.title.substring(0, 30)} - ${options.targetGeos.join(',')}`,
           dailyBudget: new Decimal(options.dailyBudget),
+          totalBudget: new Decimal(options.dailyBudget * 30), // FIX: Added required field (30-day default)
           totalSpent: new Decimal(0),
           status: 'active',
           targetGeos: options.targetGeos,
           targetDevices: options.targetDevices || ['desktop', 'mobile'],
-          externalCampaignId: '', // Will be updated after network creation
-          launchedAt: new Date(),
+          externalId: '', // FIX: Renamed from externalCampaignId to match schema
+          startDate: new Date(), // FIX: Renamed from launchedAt to match schema
         },
       });
 
@@ -151,7 +152,7 @@ export class TrafficOrchestratorService {
       // 8. Update campaign with external ID
       await this.prisma.adCampaign.update({
         where: { id: campaign.id },
-        data: { externalCampaignId: networkResult.externalCampaignId },
+        data: { externalId: networkResult.externalCampaignId }, // FIX: Renamed field to match schema
       });
 
       // 9. Save ad variants to database
@@ -174,13 +175,13 @@ export class TrafficOrchestratorService {
           campaignId: campaign.id,
           impressions: 0,
           clicks: 0,
-          spent: new Decimal(0),
+          spend: new Decimal(0), // FIX: Renamed from 'spent' to match schema
           conversions: 0,
           revenue: new Decimal(0),
           ctr: new Decimal(0),
           epc: new Decimal(0),
           roi: new Decimal(0),
-          recordedAt: new Date(),
+          timestamp: new Date(), // FIX: Renamed from 'recordedAt' to match schema
         },
       });
 
@@ -273,7 +274,7 @@ export class TrafficOrchestratorService {
         data: {
           status: 'paused',
           pauseReason: reason,
-          pausedAt: new Date(),
+          // FIX: Removed 'pausedAt' field - it doesn't exist in schema
         },
       });
 
@@ -293,7 +294,7 @@ export class TrafficOrchestratorService {
       where: { status: 'active' },
       include: {
         metrics: {
-          orderBy: { recordedAt: 'desc' },
+          orderBy: { timestamp: 'desc' }, // FIX: Renamed from recordedAt to match schema
           take: 1,
         },
       },

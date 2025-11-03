@@ -1,0 +1,136 @@
+@startuml Offer-Lab Use-Case Diagram
+title Offer-Lab: Affiliate Marketing Automation System\nPhases 1 & 2 - Intelligence + Traffic Deployment
+
+' Actors
+actor "Admin User" as Admin
+actor "Affiliate Network\n(MaxBounty/ClickBank)" as AffiliateNetwork
+actor "Traffic Network\n(PopAds/PropellerAds)" as TrafficNetwork
+database "PostgreSQL\nDatabase" as DB
+actor "Analytics Engine" as Analytics
+
+' Phase 1: Affiliate Intelligence & Funnel Generation
+package "Phase 1: Intelligence & Funnels" {
+  usecase "Connect Affiliate Network" as UC1
+  usecase "Sync Offers" as UC2
+  usecase "Score Offers" as UC3
+  usecase "Activate Offer" as UC4
+  usecase "Generate Funnel" as UC5
+  usecase "Generate AI Copy" as UC6
+  usecase "Generate Hero Image" as UC7
+  usecase "Create Lead Magnet" as UC8
+  usecase "Publish Funnel" as UC9
+  usecase "Capture Lead" as UC10
+  usecase "View Funnel Metrics" as UC11
+}
+
+' Phase 2: Traffic Deployment & Optimization
+package "Phase 2: Traffic & Optimization" {
+  usecase "Create Traffic Connection" as UC12
+  usecase "Launch Campaign" as UC13
+  usecase "Generate Ad Variants" as UC14
+  usecase "Sync Campaign Metrics" as UC15
+  usecase "Evaluate Auto-Pause Rules" as UC16
+  usecase "Pause Campaign" as UC17
+  usecase "Track Conversion (Postback)" as UC18
+  usecase "Calculate Performance" as UC19
+  usecase "View Campaign Analytics" as UC20
+}
+
+' System Boundaries
+rectangle "Offer-Lab System" {
+  UC1
+  UC2
+  UC3
+  UC4
+  UC5
+  UC6
+  UC7
+  UC8
+  UC9
+  UC10
+  UC11
+  UC12
+  UC13
+  UC14
+  UC15
+  UC16
+  UC17
+  UC18
+  UC19
+  UC20
+}
+
+' Phase 1 Relationships
+Admin --> UC1 : Provides credentials
+Admin --> UC2 : Triggers sync
+Admin --> UC4 : Enters tracking link
+Admin --> UC5 : Initiates generation
+Admin --> UC9 : Publishes to /f/{id}
+Admin --> UC11 : Views dashboard
+
+AffiliateNetwork --> UC2 : Provides offers
+UC2 ..> UC3 : <<include>>
+UC5 ..> UC6 : <<include>>
+UC5 ..> UC7 : <<include>>
+UC5 ..> UC8 : <<extend>>
+UC10 --> DB : Stores lead data
+UC11 --> DB : Queries metrics
+
+' Phase 2 Relationships
+Admin --> UC12 : Provides API credentials
+Admin --> UC13 : Launches test campaign
+Admin --> UC17 : Manual pause
+Admin --> UC20 : Views analytics
+
+UC13 ..> UC14 : <<include>>
+UC13 ..> TrafficNetwork : Creates campaign
+TrafficNetwork --> UC15 : Provides metrics
+UC15 --> DB : Stores AdMetric
+UC15 ..> UC16 : <<include>>
+UC16 ..> UC17 : <<extend>>
+UC18 --> DB : Updates FunnelLead
+UC18 ..> UC19 : <<include>>
+
+' Cross-Phase Dependencies
+UC13 ..> UC5 : Requires funnel
+UC13 ..> UC4 : Requires activated offer
+UC10 ..> UC18 : Enables conversion tracking
+
+' Analytics & Monitoring
+Analytics --> UC19 : Calculates CTR, EPC, ROI
+Analytics --> UC16 : Evaluates pause rules
+UC19 --> DB : Persists calculations
+
+' Job Processors (Background)
+note right of UC15
+  **Automated Job**
+  Runs every 6 hours
+  Syncs metrics from networks
+end note
+
+note right of UC16
+  **Automated Job**
+  Runs every 30 minutes
+  - CTR < 0.4% → Pause
+  - No conversions after $50 → Pause
+  - Budget exhaustion → Pause
+end note
+
+' Data Flow Notes
+note left of UC2
+  **Networks Supported:**
+  • MaxBounty (Playwright scraper)
+  • ClickBank (REST API)
+  • Digistore24 (planned)
+end note
+
+note left of UC14
+  **5 Psychological Angles:**
+  • Pain point
+  • Benefit/transformation
+  • Urgency/scarcity
+  • Social proof
+  • Exclusive access
+end note
+
+@enduml

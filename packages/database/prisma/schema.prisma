@@ -3208,18 +3208,28 @@ model PublishedPost {
   profile    MarketingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
   campaignId String?
   campaign   CampaignOrder?   @relation(fields: [campaignId], references: [id], onDelete: SetNull)
-  contentId  String
-  content    ContentPiece     @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  contentId  String? // FIX: Made optional - not always available at publish time
+  content    ContentPiece?    @relation(fields: [contentId], references: [id], onDelete: Cascade)
 
   // Publishing Details
   platform       String // "wordpress", "twitter", "linkedin", etc.
-  domain         String // "blog.example.com", "twitter.com", etc.
+  domain         String? // FIX: Made optional - can be derived from postUrl later
   postUrl        String? // Full URL to published content
   platformPostId String? // ID from platform (for updates/deletes)
+  postId         String? // Alias or alternative platform post ID
+
+  // Content (denormalized for quick access)
+  contentType String // Denormalized from ContentPiece.type
+  title       String? // Denormalized from ContentPiece.title
 
   // Publishing Config
   publishedAt  DateTime
   scheduledFor DateTime?
+
+  // Status Tracking
+  status       String  @default("pending") // "pending", "scheduled", "publishing", "published", "failed"
+  errorMessage String? @db.Text // Error details for failed posts
+  retryCount   Int     @default(0) // Number of retry attempts
 
   // Performance Metrics
   views       Int @default(0)
@@ -3245,6 +3255,7 @@ model PublishedPost {
 
   // Tracking
   lastSyncedAt DateTime?
+  metrics      Json? // Platform-specific metrics and metadata
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3254,6 +3265,7 @@ model PublishedPost {
   @@index([platform])
   @@index([domain])
   @@index([performanceRating])
+  @@index([status])
 }
 
 // Log optimization actions taken by AI
@@ -3295,11 +3307,11 @@ model OptimizationLog {
 // Scraper execution logs for debugging
 model ScraperLog {
   id           String   @id @default(cuid())
-  network      String   // 'maxbounty', 'clickbank', etc.
-  status       String   // 'success', 'error', 'timeout'
+  network      String // 'maxbounty', 'clickbank', etc.
+  status       String // 'success', 'error', 'timeout'
   offersFound  Int      @default(0)
   errorMessage String?  @db.Text
-  duration     Int?     // milliseconds
+  duration     Int? // milliseconds
   createdAt    DateTime @default(now())
 
   @@index([network, createdAt])
@@ -3308,28 +3320,28 @@ model ScraperLog {
 
 // Affiliate offers imported from networks
 model Offer {
-  id              String    @id @default(cuid())
-  network         String    // 'maxbounty', 'clickbank'
-  externalId      String    // Network's offer ID
-  title           String
-  category        String[]
-  description     String?   @db.Text
-  epc             Decimal   @db.Decimal(10, 2) // Earnings per click
-  payout          Decimal   @db.Decimal(10, 2)
-  currency        String    @default("USD")
-  conversionRate  Decimal?  @db.Decimal(5, 2)
-  geoTargets      String[]
-  allowedTraffic  String[]  // ['email', 'social', 'search']
-  creativeUrls    String[]
-  previewUrl      String?
-  terms           String?   @db.Text
-  score           Decimal   @db.Decimal(5, 2) // Calculated score (0-100)
-  trackingLink    String?   // User-entered after manual activation
-  activatedAt     DateTime?
-  status          String    @default("pending") // pending|testing|paused|scaling|inactive
-  lastSyncedAt    DateTime  @default(now())
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  network        String // 'maxbounty', 'clickbank'
+  externalId     String // Network's offer ID
+  title          String
+  category       String[]
+  description    String?   @db.Text
+  epc            Decimal   @db.Decimal(10, 2) // Earnings per click
+  payout         Decimal   @db.Decimal(10, 2)
+  currency       String    @default("USD")
+  conversionRate Decimal?  @db.Decimal(5, 2)
+  geoTargets     String[]
+  allowedTraffic String[] // ['email', 'social', 'search']
+  creativeUrls   String[]
+  previewUrl     String?
+  terms          String?   @db.Text
+  score          Decimal   @db.Decimal(5, 2) // Calculated score (0-100)
+  trackingLink   String? // User-entered after manual activation
+  activatedAt    DateTime?
+  status         String    @default("pending") // pending|testing|paused|scaling|inactive
+  lastSyncedAt   DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   // Relationships
   funnels   Funnel[]
@@ -3344,27 +3356,27 @@ model Offer {
 
 // Generated funnels for offers
 model Funnel {
-  id               String    @id @default(cuid())
-  offerId          String
-  offer            Offer     @relation(fields: [offerId], references: [id], onDelete: Cascade)
-  templateUsed     String    // 'aida-standard', 'vsl-short', etc.
-  headline         String
-  subheadline      String?
-  heroImageUrl     String?
-  bodyContent      String    @db.Text // AIDA-structured HTML
-  ctaText          String
-  ctaUrl           String    // Populated from Offer.trackingLink
-  leadMagnetId     String?
-  leadMagnet       LeadMagnet? @relation(fields: [leadMagnetId], references: [id])
-  fleschScore      Int?
-  ctrEstimate      Decimal?  @db.Decimal(5, 2)
-  status           String    @default("draft") // draft|published|archived
-  publishedAt      DateTime?
-  views            Int       @default(0)
-  clicks           Int       @default(0)
-  leads            Int       @default(0)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id           String      @id @default(cuid())
+  offerId      String
+  offer        Offer       @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  templateUsed String // 'aida-standard', 'vsl-short', etc.
+  headline     String
+  subheadline  String?
+  heroImageUrl String?
+  bodyContent  String      @db.Text // AIDA-structured HTML
+  ctaText      String
+  ctaUrl       String // Populated from Offer.trackingLink
+  leadMagnetId String?
+  leadMagnet   LeadMagnet? @relation(fields: [leadMagnetId], references: [id])
+  fleschScore  Int?
+  ctrEstimate  Decimal?    @db.Decimal(5, 2)
+  status       String      @default("draft") // draft|published|archived
+  publishedAt  DateTime?
+  views        Int         @default(0)
+  clicks       Int         @default(0)
+  leads        Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   // Relationships
   funnelLeads FunnelLead[]
@@ -3377,14 +3389,14 @@ model Funnel {
 
 // Lead magnets (PDFs, checklists, etc.)
 model LeadMagnet {
-  id           String   @id @default(cuid())
-  title        String
-  description  String?
-  format       String   // 'pdf', 'html'
-  fileUrl      String   // Local path or S3 URL later
-  fileSize     Int?     // bytes
-  downloads    Int      @default(0)
-  createdAt    DateTime @default(now())
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  format      String // 'pdf', 'html'
+  fileUrl     String // Local path or S3 URL later
+  fileSize    Int? // bytes
+  downloads   Int      @default(0)
+  createdAt   DateTime @default(now())
 
   // Relationships
   funnels Funnel[]
@@ -3394,24 +3406,24 @@ model LeadMagnet {
 
 // Leads captured through funnels
 model FunnelLead {
-  id               String    @id @default(cuid())
-  funnelId         String
-  funnel           Funnel    @relation(fields: [funnelId], references: [id], onDelete: Cascade)
-  campaignId       String?   // Optional: link to traffic campaign
-  email            String
-  firstName        String?
-  lastName         String?
-  ipAddress        String?
-  userAgent        String?   @db.Text
-  utmSource        String?
-  utmMedium        String?
-  utmCampaign      String?
+  id              String    @id @default(cuid())
+  funnelId        String
+  funnel          Funnel    @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  campaignId      String? // Optional: link to traffic campaign
+  email           String
+  firstName       String?
+  lastName        String?
+  ipAddress       String?
+  userAgent       String?   @db.Text
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
   // Conversion tracking (Phase 2)
-  converted        Boolean   @default(false)
-  conversionDate   DateTime?
-  conversionValue  Decimal?  @db.Decimal(10, 2)
-  transactionId    String?
-  createdAt        DateTime  @default(now())
+  converted       Boolean   @default(false)
+  conversionDate  DateTime?
+  conversionValue Decimal?  @db.Decimal(10, 2)
+  transactionId   String?
+  createdAt       DateTime  @default(now())
 
   @@index([funnelId])
   @@index([email])
@@ -3426,18 +3438,19 @@ model FunnelLead {
 
 // Traffic network connections (ad platforms)
 model TrafficConnection {
-  id          String   @id @default(cuid())
-  network     String   // 'popads', 'propellerads', 'taboola', etc.
-  apiKey      String   @db.Text // Encrypted
-  apiSecret   String?  @db.Text // Encrypted (if needed)
-  isActive    Boolean  @default(true)
-  isSandbox   Boolean  @default(false)
-  lastSyncAt  DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String    @id @default(cuid())
+  network    String // 'popads', 'propellerads', 'taboola', etc.
+  apiKey     String    @db.Text // Encrypted
+  apiSecret  String?   @db.Text // Encrypted (if needed)
+  isActive   Boolean   @default(true)
+  isSandbox  Boolean   @default(false)
+  lastSyncAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   // Relationships
-  campaigns AdCampaign[]
+  campaigns     AdCampaign[]
+  qualityScores TrafficQualityScore[]
 
   @@index([network])
   @@index([isActive])
@@ -3445,31 +3458,32 @@ model TrafficConnection {
 
 // Ad campaigns for testing offers
 model AdCampaign {
-  id               String   @id @default(cuid())
-  connectionId     String
-  connection       TrafficConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
-  offerId          String
-  offer            Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
-  funnelId         String
-  funnel           Funnel   @relation(fields: [funnelId], references: [id], onDelete: Cascade)
-  externalId       String?  // Network's campaign ID
-  name             String
-  dailyBudget      Decimal  @db.Decimal(10, 2)
-  totalBudget      Decimal  @db.Decimal(10, 2)
-  totalSpent       Decimal  @db.Decimal(10, 2) @default(0)
-  status           String   @default("active") // active|paused|completed|error
-  pauseReason      String?
-  targetGeos       String[]
-  targetDevices    String[] // ['desktop', 'mobile', 'tablet']
-  bidAmount        Decimal? @db.Decimal(10, 4)
-  startDate        DateTime @default(now())
-  endDate          DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id            String            @id @default(cuid())
+  connectionId  String
+  connection    TrafficConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  offerId       String
+  offer         Offer             @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  funnelId      String
+  funnel        Funnel            @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  externalId    String? // Network's campaign ID
+  name          String
+  dailyBudget   Decimal           @db.Decimal(10, 2)
+  totalBudget   Decimal           @db.Decimal(10, 2)
+  totalSpent    Decimal           @default(0) @db.Decimal(10, 2)
+  status        String            @default("active") // active|paused|completed|error
+  pauseReason   String?
+  targetGeos    String[]
+  targetDevices String[] // ['desktop', 'mobile', 'tablet']
+  bidAmount     Decimal?          @db.Decimal(10, 4)
+  startDate     DateTime          @default(now())
+  endDate       DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
   // Relationships
-  variants AdVariant[]
-  metrics  AdMetric[]
+  variants      AdVariant[]
+  metrics       AdMetric[]
+  scalingEvents ScalingEvent[]
 
   @@index([connectionId])
   @@index([offerId])
@@ -3480,20 +3494,20 @@ model AdCampaign {
 
 // Ad creative variants
 model AdVariant {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   campaignId  String
   campaign    AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   headline    String
   description String
   imageUrl    String?
-  ctaText     String   @default("Learn More")
-  isActive    Boolean  @default(true)
-  impressions Int      @default(0)
-  clicks      Int      @default(0)
-  conversions Int      @default(0)
-  spend       Decimal  @db.Decimal(10, 2) @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  ctaText     String     @default("Learn More")
+  isActive    Boolean    @default(true)
+  impressions Int        @default(0)
+  clicks      Int        @default(0)
+  conversions Int        @default(0)
+  spend       Decimal    @default(0) @db.Decimal(10, 2)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   @@index([campaignId])
   @@index([isActive])
@@ -3501,20 +3515,59 @@ model AdVariant {
 
 // Ad performance metrics (hourly snapshots)
 model AdMetric {
-  id           String   @id @default(cuid())
-  campaignId   String
-  campaign     AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  timestamp    DateTime @default(now())
-  impressions  Int      @default(0)
-  clicks       Int      @default(0)
-  conversions  Int      @default(0)
-  spend        Decimal  @db.Decimal(10, 2) @default(0)
-  revenue      Decimal  @db.Decimal(10, 2) @default(0)
-  cpc          Decimal? @db.Decimal(10, 4) // Cost per click
-  ctr          Decimal? @db.Decimal(5, 2)  // Click-through rate
-  epc          Decimal? @db.Decimal(10, 4) // Earnings per click
-  roi          Decimal? @db.Decimal(10, 2) // Return on investment
+  id          String     @id @default(cuid())
+  campaignId  String
+  campaign    AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  timestamp   DateTime   @default(now())
+  impressions Int        @default(0)
+  clicks      Int        @default(0)
+  conversions Int        @default(0)
+  spend       Decimal    @default(0) @db.Decimal(10, 2)
+  revenue     Decimal    @default(0) @db.Decimal(10, 2)
+  cpc         Decimal?   @db.Decimal(10, 4) // Cost per click
+  ctr         Decimal?   @db.Decimal(5, 2) // Click-through rate
+  epc         Decimal?   @db.Decimal(10, 4) // Earnings per click
+  roi         Decimal?   @db.Decimal(10, 2) // Return on investment
 
   @@index([campaignId, timestamp])
   @@index([timestamp])
+}
+
+// ============================================
+// OFFER-LAB PHASE 3: OPTIMIZATION LAYER
+// ============================================
+
+// Traffic quality scores
+model TrafficQualityScore {
+  id             String            @id @default(cuid())
+  connectionId   String
+  connection     TrafficConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  date           DateTime          @default(now())
+  qualityScore   Int // 0-100
+  conversionRate Decimal           @db.Decimal(5, 2)
+  bounceRate     Decimal           @db.Decimal(5, 2)
+  avgTimeOnPage  Int // Seconds
+  fraudScore     Int // 0-100 (higher = more fraud)
+  isBlacklisted  Boolean           @default(false)
+  createdAt      DateTime          @default(now())
+
+  @@unique([connectionId, date])
+  @@index([qualityScore])
+  @@index([isBlacklisted])
+}
+
+// Scaling history
+model ScalingEvent {
+  id          String     @id @default(cuid())
+  campaignId  String
+  campaign    AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  scalingType String // 'manual' | 'auto'
+  scaleFactor Decimal    @db.Decimal(5, 2) // 2.0 = 2x, 5.0 = 5x
+  oldBudget   Decimal    @db.Decimal(10, 2)
+  newBudget   Decimal    @db.Decimal(10, 2)
+  reason      String // e.g., "High ROI: 150%"
+  createdAt   DateTime   @default(now())
+
+  @@index([campaignId])
+  @@index([createdAt])
 }

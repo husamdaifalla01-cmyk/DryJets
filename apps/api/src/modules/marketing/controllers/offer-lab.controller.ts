@@ -704,7 +704,7 @@ export class OfferLabController {
           },
         },
         metrics: {
-          orderBy: { recordedAt: 'desc' },
+          orderBy: { timestamp: 'desc' },
           take: 1,
         },
       },

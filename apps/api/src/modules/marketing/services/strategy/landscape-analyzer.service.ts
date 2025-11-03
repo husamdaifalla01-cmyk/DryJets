@@ -589,7 +589,7 @@ Format as JSON array:
       select: { landscapeAnalysis: true },
     });
 
-    return profile?.landscapeAnalysis as LandscapeAnalysis || null;
+    return profile?.landscapeAnalysis as unknown as unknown as LandscapeAnalysis || null;
   }
 
   /**

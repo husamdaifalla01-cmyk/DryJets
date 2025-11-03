@@ -205,7 +205,7 @@ export class AdMetricsSyncProcessor implements OnModuleInit {
           campaignId: campaign.id,
           impressions: metric.impressions,
           clicks: metric.clicks,
-          spent: new Decimal(metric.spent),
+          spend: new Decimal(metric.spend),
           conversions: 0, // Updated by conversion tracker
           revenue: new Decimal(0), // Updated by conversion tracker
           ctr: new Decimal(metric.ctr),

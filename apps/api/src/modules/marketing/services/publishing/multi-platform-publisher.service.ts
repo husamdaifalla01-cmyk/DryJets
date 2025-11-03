@@ -86,7 +86,7 @@ export class MultiPlatformPublisherService {
    * Publish content to multiple platforms
    */
   async publishToMultiplePlatforms(request: PublishRequest): Promise<PublishSummary> {
-    this.logger.log(`=ä Publishing to ${request.content.length} platforms for profile: ${request.profileId}`);
+    this.logger.log(`=ï¿½ Publishing to ${request.content.length} platforms for profile: ${request.profileId}`);
 
     const requestId = `pub_${Date.now()}`;
     const results: PublishResult[] = [];
@@ -149,7 +149,7 @@ export class MultiPlatformPublisherService {
     content: any,
     campaignId?: string,
   ): Promise<PublishResult> {
-    this.logger.log(`=ä Publishing to ${platform}...`);
+    this.logger.log(`=ï¿½ Publishing to ${platform}...`);
 
     // Get platform connection
     const connection = await this.prisma.platformConnection.findUnique({
@@ -178,56 +178,66 @@ export class MultiPlatformPublisherService {
       // Publish based on platform
       switch (platform.toLowerCase()) {
         case 'twitter':
-          const twitterResult = await this.twitterIntegration.createPost({
+          // FIX: Changed createPost() to publishTweet() - matches actual method signature
+          const twitterResult = await this.twitterIntegration.publishTweet({
             text: content.body,
-            media: content.media?.map(m => ({ url: m.url })),
-          }, connection.accessToken);
-          postId = twitterResult.id;
+            media: content.media?.map(m => m.url),
+          });
+          postId = twitterResult.tweetId;
           postUrl = twitterResult.url;
           break;
 
         case 'linkedin':
-          const linkedInResult = await this.linkedInIntegration.createPost({
+          // FIX: Changed createPost() to publishPost() and removed accessToken parameter
+          const linkedInResult = await this.linkedInIntegration.publishPost({
             text: content.body,
-            media: content.media,
-          }, connection.accessToken);
-          postId = linkedInResult.id;
-          postUrl = linkedInResult.url;
+            media: content.media?.map(m => ({ url: m.url, title: m.title })),
+          });
+          postId = linkedInResult.postId;
+          postUrl = linkedInResult.postUrl;
           break;
 
         case 'facebook':
         case 'instagram':
-          const fbResult = await this.facebookIntegration.createPost(
-            platform.toLowerCase() as 'facebook' | 'instagram',
-            {
-              message: content.body,
-              media: content.media,
-            },
-            connection.accessToken,
-          );
-          postId = fbResult.id;
-          postUrl = fbResult.url;
+          // FIX: Changed createPost() to platform-specific methods
+          const fbResult = platform.toLowerCase() === 'facebook'
+            ? await this.facebookIntegration.publishToFacebook({
+                text: content.body,
+                mediaUrls: content.media?.map(m => m.url),
+                type: 'post',
+              })
+            : await this.facebookIntegration.publishToInstagram({
+                caption: content.body,
+                mediaUrls: content.media?.map(m => m.url) || [],
+                mediaType: 'image',
+              });
+          postId = fbResult.postId;
+          postUrl = fbResult.postUrl;
           break;
 
         case 'tiktok':
-          const tiktokResult = await this.tiktokIntegration.uploadVideo({
-            title: content.title,
-            description: content.body,
+          // FIX: Changed uploadVideo() to publishVideo() and removed accessToken parameter
+          const tiktokResult = await this.tiktokIntegration.publishVideo({
             videoUrl: content.media?.[0]?.url,
-          }, connection.accessToken);
-          postId = tiktokResult.id;
-          postUrl = tiktokResult.url;
+            caption: content.body,
+            hashtags: content.hashtags || [],
+          });
+          postId = tiktokResult.videoId;
+          postUrl = tiktokResult.videoUrl;
           break;
 
         case 'youtube':
-          const youtubeResult = await this.youtubeIntegration.uploadVideo({
+          // FIX: Changed uploadVideo() to publishVideo() and removed accessToken parameter
+          const youtubeResult = await this.youtubeIntegration.publishVideo({
             title: content.title,
             description: content.body,
             videoUrl: content.media?.[0]?.url,
-            tags: content.hashtags,
-          }, connection.accessToken);
-          postId = youtubeResult.id;
-          postUrl = youtubeResult.url;
+            tags: content.hashtags || [],
+            category: 'tech',
+            visibility: 'public',
+          });
+          postId = youtubeResult.videoId;
+          postUrl = youtubeResult.videoUrl;
           break;
 
         default:
@@ -242,7 +252,7 @@ export class MultiPlatformPublisherService {
           platform,
           contentType: content.type,
           title: content.title,
-          content: content.body,
+          // FIX: removed 'content' field - it's a relation, not a string field
           postId,
           postUrl,
           publishedAt: new Date(),
@@ -271,7 +281,7 @@ export class MultiPlatformPublisherService {
           platform,
           contentType: content.type,
           title: content.title,
-          content: content.body,
+          // FIX: removed 'content' field - it's a relation, not a string field
           status: 'failed',
           errorMessage: error.message,
           metrics: {},
@@ -295,7 +305,7 @@ export class MultiPlatformPublisherService {
     campaignId: string | undefined,
     content: any,
   ): Promise<ScheduledPost> {
-    this.logger.log(`=Å Scheduling post for ${content.platform} at ${content.scheduledFor}`);
+    this.logger.log(`=ï¿½ Scheduling post for ${content.platform} at ${content.scheduledFor}`);
 
     // Save to database (you would need a ScheduledPost model in Prisma)
     // For now, create as unpublished post
@@ -306,7 +316,7 @@ export class MultiPlatformPublisherService {
         platform: content.platform,
         contentType: content.type,
         title: content.title,
-        content: content.body,
+        // FIX: removed 'content' field - it's a relation, not a string field
         scheduledFor: content.scheduledFor,
         status: 'scheduled',
         metrics: {},
@@ -329,7 +339,7 @@ export class MultiPlatformPublisherService {
    * Process scheduled posts (run by cron job)
    */
   async processScheduledPosts(): Promise<void> {
-    this.logger.log('ð Processing scheduled posts...');
+    this.logger.log('ï¿½ Processing scheduled posts...');
 
     // Get all scheduled posts that are due
     const duePosts = await this.prisma.publishedPost.findMany({

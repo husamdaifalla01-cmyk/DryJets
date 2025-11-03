@@ -415,7 +415,7 @@ export interface AdCampaign {
   externalCampaignId: string;
   dailyBudget: number;
   totalSpent: number;
-  status: CampaignStatus;
+  status: AdCampaignStatus;
   pauseReason?: string;
   targetGeos: string[];
   targetDevices: string[];
@@ -485,7 +485,7 @@ export interface LaunchCampaignResponse {
  * Campaign filters
  */
 export interface CampaignFilters {
-  status?: CampaignStatus;
+  status?: AdCampaignStatus;
   offerId?: string;
   connectionId?: string;
   page?: number;
@@ -540,7 +540,7 @@ export interface CampaignStats {
 
 export type TrafficNetwork = 'popads' | 'propellerads';
 
-export type CampaignStatus = 'active' | 'paused' | 'completed' | 'error';
+export type AdCampaignStatus = 'active' | 'paused' | 'completed' | 'error';
 
 export type AdAngle = 'pain' | 'benefit' | 'urgency' | 'social-proof' | 'scarcity';
 

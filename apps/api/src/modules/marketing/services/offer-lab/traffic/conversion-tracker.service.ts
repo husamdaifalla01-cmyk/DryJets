@@ -142,7 +142,7 @@ export class ConversionTrackerService {
       // Increment conversions and revenue in latest metric record
       const latestMetric = await this.prisma.adMetric.findFirst({
         where: { campaignId },
-        orderBy: { recordedAt: 'desc' },
+        orderBy: { timestamp: 'desc' },
       });
 
       if (latestMetric) {
@@ -215,7 +215,7 @@ export class ConversionTrackerService {
   async getCampaignConversionStats(campaignId: string) {
     const metrics = await this.prisma.adMetric.findMany({
       where: { campaignId },
-      orderBy: { recordedAt: 'desc' },
+      orderBy: { timestamp: 'desc' },
       take: 24, // Last 24 hours
     });
 

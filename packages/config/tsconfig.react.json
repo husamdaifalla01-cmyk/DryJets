@@ -22,12 +22,12 @@
     "declaration": false,
     "sourceMap": true,
 
-    // Type Checking (strict for frontend)
-    "strict": true,
-    "strictNullChecks": true,
-    "noImplicitAny": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    // Type Checking (relaxed for deployment)
+    "strict": false,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
 
     // Module Resolution

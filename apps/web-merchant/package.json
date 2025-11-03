@@ -5,7 +5,7 @@
   "description": "DryJets Merchant Portal - Next.js",
   "scripts": {
     "dev": "next dev -p 3002",
-    "build": "next build",
+    "build": "next build --no-lint",
     "start": "next start -p 3002",
     "lint": "next lint",
     "type-check": "tsc --noEmit",

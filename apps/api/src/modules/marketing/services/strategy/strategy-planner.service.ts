@@ -128,6 +128,6 @@ Format as JSON following the StrategyPlan interface structure.
       select: { strategyPlan: true },
     });
 
-    return profile?.strategyPlan as StrategyPlan || null;
+    return profile?.strategyPlan as unknown as StrategyPlan || null;
   }
 }

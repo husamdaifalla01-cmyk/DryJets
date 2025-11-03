@@ -2,7 +2,7 @@
   "extends": "../../packages/config/tsconfig.nest.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": ".",
+    "rootDir": "../../",
     "baseUrl": "./",
     "incremental": true,
 
@@ -29,6 +29,13 @@
       "@dryjets/types/marketing": ["../../packages/types/src/marketing/index.ts"]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test", "**/*.spec.ts"]
+  "include": [
+    "src",
+    "../../packages/database",
+    "../../packages/types"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

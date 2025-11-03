@@ -19,6 +19,7 @@
    - [Workflows APIs](#workflows-apis)
    - [Optimization Center APIs](#optimization-center-apis)
    - [Monitoring & Health APIs](#monitoring--health-apis)
+   - [Offer-Lab APIs](#offer-lab-apis)
 5. [Error Handling](#error-handling)
 6. [Rate Limiting](#rate-limiting)
 7. [Webhooks](#webhooks)
@@ -2504,6 +2505,603 @@ Get urgent trend opportunities (early signals).
 - `GET /monitoring/integrations` - External integration status
 - `GET /monitoring/logs` - System logs
 - `POST /monitoring/logs/search` - Search logs
+
+---
+
+## Offer-Lab APIs
+
+**Base Path**: `/api/marketing/offer-lab`
+
+Affiliate marketing automation system with intelligent offer sourcing, AI funnel generation, traffic deployment, and conversion optimization.
+
+### Use-Case Diagram
+[View Complete Use-Case Diagram](../docs/14-marketing-engine/OFFER_LAB_USE_CASE_DIAGRAM.md)
+
+### Phase 1: Affiliate Intelligence & Funnel Generation
+
+#### Offer Sync & Management (5 endpoints)
+
+**POST `/marketing/offer-lab/sync`**
+- **Description**: Trigger manual offer sync from affiliate network
+- **Auth**: Required (JWT)
+- **Request Body**:
+  ```json
+  {
+    "network": "maxbounty" | "clickbank",
+    "forceRefresh": boolean
+  }
+  ```
+- **Response** (202 Accepted):
+  ```json
+  {
+    "success": true,
+    "network": "maxbounty",
+    "message": "Sync job queued",
+    "jobId": "job_abc123"
+  }
+  ```
+
+**GET `/marketing/offer-lab/offers`**
+- **Description**: List and filter available offers
+- **Auth**: Required (JWT)
+- **Query Parameters**:
+  - `network`: Filter by affiliate network
+  - `status`: `pending` | `testing` | `paused` | `scaling` | `inactive`
+  - `minScore`: Minimum quality score (0-100)
+  - `minPayout`: Minimum payout amount
+  - `category`: Filter by category
+  - `geoTarget`: Filter by GEO target
+  - `searchQuery`: Full-text search
+  - `page`: Page number (default: 1)
+  - `pageSize`: Results per page (default: 20, max: 100)
+  - `sortBy`: `score` | `payout` | `epc` | `createdAt`
+  - `sortOrder`: `asc` | `desc`
+- **Response** (200 OK):
+  ```json
+  {
+    "offers": [
+      {
+        "id": "offer_abc123",
+        "network": "maxbounty",
+        "externalId": "12345",
+        "title": "Premium Weight Loss Program",
+        "category": ["health", "weight-loss"],
+        "epc": 2.45,
+        "payout": 35.00,
+        "currency": "USD",
+        "score": 87.5,
+        "geoTargets": ["US", "CA", "UK"],
+        "allowedTraffic": ["email", "social", "search"],
+        "trackingLink": null,
+        "status": "pending",
+        "createdAt": "2025-10-29T10:00:00Z"
+      }
+    ],
+    "pagination": {
+      "total": 150,
+      "page": 1,
+      "pageSize": 20,
+      "totalPages": 8,
+      "hasMore": true
+    }
+  }
+  ```
+
+**GET `/marketing/offer-lab/offers/:id`**
+- **Description**: Get single offer details with funnels
+- **Auth**: Required (JWT)
+- **Response** (200 OK):
+  ```json
+  {
+    "id": "offer_abc123",
+    "network": "maxbounty",
+    "title": "Premium Weight Loss Program",
+    "description": "90-day transformation program...",
+    "epc": 2.45,
+    "payout": 35.00,
+    "score": 87.5,
+    "conversionRate": 3.2,
+    "geoTargets": ["US", "CA"],
+    "creativeUrls": ["https://...", "https://..."],
+    "previewUrl": "https://maxbounty.com/preview/12345",
+    "terms": "Email submit, single opt-in",
+    "trackingLink": "https://track.example.com/?aff=123",
+    "activatedAt": "2025-10-29T12:00:00Z",
+    "funnels": [
+      {
+        "id": "funnel_xyz789",
+        "headline": "Lose 30 Pounds in 90 Days",
+        "status": "published",
+        "views": 1250,
+        "clicks": 89,
+        "leads": 41,
+        "createdAt": "2025-10-29T14:00:00Z"
+      }
+    ]
+  }
+  ```
+
+**PATCH `/marketing/offer-lab/offers/:id/tracking-link`**
+- **Description**: Update tracking link after manual activation
+- **Auth**: Required (JWT)
+- **Request Body**:
+  ```json
+  {
+    "trackingLink": "https://track.example.com/?aff=123&oid=456"
+  }
+  ```
+- **Response** (200 OK):
+  ```json
+  {
+    "success": true,
+    "offer": { /* updated offer */ },
+    "message": "Tracking link updated successfully"
+  }
+  ```
+
+**PATCH `/marketing/offer-lab/offers/:id/status`**
+- **Description**: Update offer status
+- **Auth**: Required (JWT)
+- **Request Body**:
+  ```json
+  {
+    "status": "testing" | "paused" | "scaling" | "inactive"
+  }
+  ```
+
+#### Funnel Generation & Publishing (5 endpoints)
+
+**POST `/marketing/offer-lab/funnels/generate`**
+- **Description**: Generate AI-powered landing funnel
+- **Auth**: Required (JWT)
+- **Request Body**:
+  ```json
+  {
+    "offerId": "offer_abc123",
+    "template": "aida-standard" | "vsl-short" | "vsl-long" | "listicle",
+    "includeLeadMagnet": true,
+    "targetGeo": "US",
+    "tone": "professional" | "casual" | "urgent" | "friendly",
+    "length": "short" | "medium" | "long"
+  }
+  ```
+- **Response** (201 Created):
+  ```json
+  {
+    "success": true,
+    "funnel": {
+      "id": "funnel_xyz789",
+      "offerId": "offer_abc123",
+      "headline": "Transform Your Body in 90 Days",
+      "subheadline": "Science-backed program trusted by 10,000+ people",
+      "heroImageUrl": "https://storage.example.com/images/hero.jpg",
+      "bodyContent": "<div>...</div>",
+      "ctaText": "Start Your Transformation",
+      "ctaUrl": "https://track.example.com/?aff=123",
+      "leadMagnetId": "lm_abc123",
+      "fleschScore": 68,
+      "status": "draft",
+      "publicUrl": "/f/funnel_xyz789"
+    },
+    "generationTime": 12500,
+    "aiTokensUsed": 4250
+  }
+  ```
+
+**GET `/marketing/offer-lab/funnels`**
+- **Description**: List funnels with filters
+- **Auth**: Required (JWT)
+- **Query Parameters**: Similar pagination to offers
+- **Response**: Paginated funnel list
+
+**GET `/marketing/offer-lab/funnels/:id`**
+- **Description**: Get funnel details with metrics and validation
+- **Auth**: Required (JWT)
+- **Response** (200 OK):
+  ```json
+  {
+    "id": "funnel_xyz789",
+    "headline": "Transform Your Body in 90 Days",
+    "bodyContent": "<div>...</div>",
+    "status": "published",
+    "publishedAt": "2025-10-29T15:00:00Z",
+    "metrics": {
+      "views": 1250,
+      "clicks": 89,
+      "leads": 41,
+      "ctr": 7.12,
+      "conversionRate": 3.28
+    },
+    "validation": {
+      "hasTrackingLink": true,
+      "hasLeadMagnet": true,
+      "contentLength": 2450,
+      "readabilityScore": 68,
+      "isPublishable": true
+    }
+  }
+  ```
+
+**PATCH `/marketing/offer-lab/funnels/:id`**
+- **Description**: Update funnel content
+- **Auth**: Required (JWT)
+- **Request Body**: Partial funnel update
+
+**POST `/marketing/offer-lab/funnels/:id/publish`**
+- **Description**: Publish funnel to public URL
+- **Auth**: Required (JWT)
+- **Request Body**:
+  ```json
+  {
+    "overrideValidation": false
+  }
+  ```
+- **Response** (200 OK):
+  ```json
+  {
+    "success": true,
+    "funnel": { /* updated funnel */ },
+    "publicUrl": "/f/funnel_xyz789",
+    "message": "Funnel published successfully"
+  }
+  ```
+
+#### Lead Capture & Management (2 endpoints)
+
+**POST `/marketing/offer-lab/leads`** (Public - No Auth)
+- **Description**: Capture lead from funnel form
+- **Request Body**:
+  ```json
+  {
+    "funnelId": "funnel_xyz789",
+    "email": "user@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "utmSource": "facebook",
+    "utmMedium": "cpc",
+    "utmCampaign": "spring2025"
+  }
+  ```
+- **Response** (201 Created):
+  ```json
+  {
+    "success": true,
+    "leadId": "lead_abc123",
+    "message": "Lead captured successfully"
+  }
+  ```
+
+**GET `/marketing/offer-lab/leads`**
+- **Description**: List captured leads
+- **Auth**: Required (JWT)
+- **Query Parameters**: Filters by funnel, UTM params, date range
+- **Response**: Paginated leads list
+
+#### Lead Magnet Generation (1 endpoint)
+
+**POST `/marketing/offer-lab/lead-magnets/generate`**
+- **Description**: Generate PDF lead magnet
+- **Auth**: Required (JWT)
+- **Request Body**:
+  ```json
+  {
+    "title": "7-Day Weight Loss Meal Plan",
+    "description": "Complete guide with recipes",
+    "format": "pdf" | "html" | "doc" | "checklist",
+    "content": "Optional pre-filled content",
+    "offerId": "offer_abc123"
+  }
+  ```
+
+#### Scraper Logs (1 endpoint)
+
+**GET `/marketing/offer-lab/scraper-logs`**
+- **Description**: View scraper execution logs
+- **Auth**: Required (JWT)
+- **Query Parameters**:
+  - `network`: Filter by network
+  - `limit`: Max results (default: 20)
+
+---
+
+### Phase 2: Traffic Deployment & Optimization
+
+#### Traffic Connections (2 endpoints)
+
+**POST `/marketing/offer-lab/traffic/connections`**
+- **Description**: Create encrypted traffic network connection
+- **Auth**: Required (JWT)
+- **Request Body**:
+  ```json
+  {
+    "network": "popads" | "propellerads",
+    "apiKey": "your-api-key-here",
+    "isSandbox": false
+  }
+  ```
+- **Response** (201 Created):
+  ```json
+  {
+    "success": true,
+    "connection": {
+      "id": "conn_abc123",
+      "network": "popads",
+      "apiKey": "***ENCRYPTED***",
+      "isSandbox": false,
+      "isActive": true,
+      "createdAt": "2025-10-29T16:00:00Z"
+    },
+    "message": "Traffic connection created successfully"
+  }
+  ```
+- **Notes**: API key is encrypted with AES-256 before storage
+
+**GET `/marketing/offer-lab/traffic/connections`**
+- **Description**: List traffic connections
+- **Auth**: Required (JWT)
+- **Response** (200 OK):
+  ```json
+  {
+    "connections": [
+      {
+        "id": "conn_abc123",
+        "network": "popads",
+        "apiKey": "***ENCRYPTED***",
+        "isSandbox": false,
+        "isActive": true,
+        "campaigns": 3,
+        "createdAt": "2025-10-29T16:00:00Z"
+      }
+    ]
+  }
+  ```
+
+#### Campaign Management (3 endpoints)
+
+**POST `/marketing/offer-lab/campaigns/launch`**
+- **Description**: Launch automated test campaign with ad variants
+- **Auth**: Required (JWT)
+- **Request Body**:
+  ```json
+  {
+    "offerId": "offer_abc123",
+    "funnelId": "funnel_xyz789",
+    "connectionId": "conn_abc123",
+    "targetGeos": ["US", "CA"],
+    "dailyBudget": 10.00,
+    "targetDevices": ["desktop", "mobile"]
+  }
+  ```
+- **Response** (201 Created):
+  ```json
+  {
+    "success": true,
+    "campaignId": "camp_def456",
+    "externalCampaignId": "popads_sandbox_1730218800000",
+    "variantsCreated": 5,
+    "message": "Campaign launched successfully"
+  }
+  ```
+- **Validation**:
+  - Minimum daily budget: $5 (network requirement)
+  - Maximum daily budget: $1000
+  - Global budget cap enforcement
+  - Requires activated offer with tracking link
+  - Requires published funnel
+
+**GET `/marketing/offer-lab/campaigns`**
+- **Description**: List campaigns with latest metrics
+- **Auth**: Required (JWT)
+- **Query Parameters**:
+  - `status`: `active` | `paused` | `completed` | `error`
+  - `offerId`: Filter by offer
+  - `connectionId`: Filter by connection
+  - `page`, `pageSize`, `sortBy`, `sortOrder`
+- **Response** (200 OK):
+  ```json
+  {
+    "campaigns": [
+      {
+        "id": "camp_def456",
+        "name": "Premium Weight Loss - US,CA",
+        "offer": {
+          "id": "offer_abc123",
+          "title": "Premium Weight Loss Program",
+          "payout": 35.00
+        },
+        "funnel": {
+          "id": "funnel_xyz789",
+          "headline": "Transform Your Body"
+        },
+        "connection": {
+          "id": "conn_abc123",
+          "network": "popads"
+        },
+        "dailyBudget": 10.00,
+        "totalSpent": 8.45,
+        "status": "active",
+        "targetGeos": ["US", "CA"],
+        "launchedAt": "2025-10-29T17:00:00Z",
+        "metrics": [
+          {
+            "impressions": 2450,
+            "clicks": 18,
+            "spent": 8.45,
+            "conversions": 2,
+            "revenue": 70.00,
+            "ctr": 0.73,
+            "epc": 3.89,
+            "roi": 728.40,
+            "recordedAt": "2025-10-29T20:00:00Z"
+          }
+        ]
+      }
+    ],
+    "pagination": { /* standard pagination */ }
+  }
+  ```
+
+**PATCH `/marketing/offer-lab/campaigns/:id/pause`**
+- **Description**: Manually pause campaign
+- **Auth**: Required (JWT)
+- **Request Body**:
+  ```json
+  {
+    "reason": "Manual pause for budget reallocation"
+  }
+  ```
+- **Response** (200 OK):
+  ```json
+  {
+    "success": true,
+    "message": "Campaign paused: Manual pause for budget reallocation"
+  }
+  ```
+- **Notes**: Also pauses campaign on traffic network via adapter
+
+#### Conversion Tracking (1 endpoint)
+
+**POST `/marketing/offer-lab/postback`** (Public - No Auth)
+- **Description**: Conversion tracking webhook from affiliate networks
+- **Query Parameters**:
+  - `campaign_id`: Optional campaign ID
+  - `click_id`: Network click identifier
+  - `lead_id`: Internal lead ID
+  - `payout`: Conversion payout amount
+  - `status`: `approved` | `pending` | `rejected`
+  - `transaction_id`: Network transaction ID
+  - `offer_id`: Optional offer ID
+- **Example URL**:
+  ```
+  https://yourdomain.com/api/marketing/offer-lab/postback?
+    lead_id={LEAD_ID}&
+    click_id={CLICK_ID}&
+    payout={PAYOUT}&
+    status={STATUS}&
+    transaction_id={TRANSACTION_ID}
+  ```
+- **Response** (200 OK):
+  ```json
+  {
+    "success": true,
+    "message": "Conversion tracked successfully",
+    "conversionId": "lead_abc123",
+    "payout": 35.00
+  }
+  ```
+- **Notes**:
+  - Updates `FunnelLead` with conversion data
+  - Recalculates campaign EPC and ROI metrics
+  - No authentication required (public webhook)
+
+---
+
+### Auto-Pause Rules (Automated)
+
+**Job Processor**: `AutoPauseCheckerProcessor`
+**Schedule**: Every 30 minutes
+**Thresholds**:
+
+| Rule | Threshold | Action |
+|------|-----------|--------|
+| Low CTR | < 0.4% after 500 impressions | Auto-pause campaign |
+| No Conversions | After $50 spent | Auto-pause campaign |
+| Budget Exhaustion | 95% of daily budget | Auto-pause campaign |
+| Low EPC | < $0.01 with 100+ clicks | Auto-pause campaign |
+| Negative ROI | < -50% with $20+ spent | Auto-pause campaign |
+
+**Example Auto-Pause Log**:
+```
+[AUTO-PAUSE] Campaign camp_def456: Low CTR: 0.32% (threshold: 0.4%)
+Severity: high
+Metrics: { ctr: 0.32, epc: 0.005, roi: -65, spent: 15.30 }
+Recommendation: Test new ad creatives or adjust GEO targeting
+```
+
+---
+
+### Metrics Sync (Automated)
+
+**Job Processor**: `AdMetricsSyncProcessor`
+**Schedule**: Every 6 hours
+**Process**:
+
+1. Fetch latest metrics from traffic networks (PopAds, PropellerAds)
+2. Calculate derived metrics (CTR, EPC, ROI)
+3. Store hourly snapshots in `AdMetric` table
+4. Trigger auto-pause evaluation
+
+---
+
+### Enums & Constants
+
+**Affiliate Networks**:
+```typescript
+type AffiliateNetwork =
+  | 'maxbounty'    // Playwright scraper
+  | 'clickbank'    // REST API
+  | 'digistore24'  // Planned
+  | 'cj'           // Planned
+  | 'awin';        // Planned
+```
+
+**Offer Status**:
+```typescript
+type OfferStatus =
+  | 'pending'      // Not yet activated
+  | 'testing'      // Active with traffic
+  | 'paused'       // Manually paused
+  | 'scaling'      // High-performing, scaling budget
+  | 'inactive';    // Archived
+```
+
+**Funnel Templates**:
+```typescript
+type FunnelTemplate =
+  | 'aida-standard'  // Attention, Interest, Desire, Action
+  | 'vsl-short'      // Video sales letter (3-5 min)
+  | 'vsl-long'       // Video sales letter (10-20 min)
+  | 'listicle'       // List-based content
+  | 'case-study'     // Testimonial-driven
+  | 'quiz'           // Interactive quiz funnel
+  | 'comparison';    // Product comparison
+```
+
+**Traffic Networks**:
+```typescript
+type TrafficNetwork =
+  | 'popads'         // Pop-unders, $5 min daily budget
+  | 'propellerads';  // Push + pops, $5 min daily budget
+```
+
+**Campaign Status**:
+```typescript
+type CampaignStatus =
+  | 'active'     // Running
+  | 'paused'     // Manually or auto-paused
+  | 'completed'  // Budget exhausted
+  | 'error';     // Network error
+```
+
+**Ad Angles**:
+```typescript
+type AdAngle =
+  | 'pain'          // Focus on problem
+  | 'benefit'       // Focus on transformation
+  | 'urgency'       // Time pressure
+  | 'social-proof'  // FOMO-driven
+  | 'scarcity';     // Limited availability
+```
+
+---
+
+### Related Documentation
+
+- [Use-Case Diagram](../docs/14-marketing-engine/OFFER_LAB_USE_CASE_DIAGRAM.md)
+- [Phase 1 Audit](../docs/15-validations/HALLUCINATION_AUDITS/OFFER_LAB_PHASE1_AUDIT.md)
+- [Phase 2 Audit](../docs/15-validations/HALLUCINATION_AUDITS/OFFER_LAB_PHASE2_AUDIT.md)
+- [Phase 2 Verification](../docs/15-validations/OFFER_LAB_PHASE2_AUDIT.md)
+- [Environment Variables](../.env.example.offer-lab)
 
 ---
 

@@ -53,6 +53,17 @@ async function bootstrap() {
     console.log(`📄 OpenAPI spec exported to: ${outputPath}`);
   }
 
+  // Root health endpoint for Railway/infrastructure (no auth, no prefix)
+  const httpAdapter = app.getHttpAdapter();
+  httpAdapter.get('/health', (req, res) => {
+    res.status(200).json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+    });
+  });
+
   const port = process.env.PORT || 4000; // Changed from 3000 to 4000 to avoid conflicts
   await app.listen(port);
 

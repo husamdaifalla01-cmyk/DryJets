@@ -1,0 +1,1087 @@
+# ============================================
+# DRYJETS MARKETING ENGINE - CANONICAL TRUTH MAP
+# ============================================
+#
+# This file serves as the single source of truth for all:
+# - Database models and fields (from schema.prisma)
+# - API endpoints (from controllers)
+# - Enums and valid values
+# - External API integrations
+# - Service names and modules
+#
+# Purpose: Prevent AI hallucinations by providing verifiable references
+# Version: 1.0.0
+# Last Updated: 2025-10-31
+# Maintained By: AI Anti-Hallucination Protocol
+#
+# Usage:
+#   - AI agents MUST validate all outputs against this file
+#   - All code generation MUST reference entities defined here
+#   - All API endpoint references MUST exist in api_endpoints section
+#   - All model/field references MUST exist in database_models section
+#
+# ============================================
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-10-31"
+  schema_source: "packages/database/prisma/schema.prisma"
+  api_docs_source: "MARKETING_ENGINE_API_DOCUMENTATION.md"
+  validation_schemas_source: "apps/marketing-admin/src/lib/validations/"
+
+# ============================================
+# DATABASE MODELS
+# ============================================
+# Source: packages/database/prisma/schema.prisma
+# All models from Prisma schema
+
+database_models:
+  # Core User Management
+  User:
+    description: "User authentication and profile"
+    key_fields: [id, email, phone, role, status, passwordHash]
+    relationships: [customer, businessAccount, enterpriseAccount, driver, merchant]
+
+  UserSession:
+    description: "User authentication sessions"
+    key_fields: [id, userId, token, expiresAt]
+
+  Customer:
+    description: "Individual customer accounts"
+    key_fields: [id, userId, firstName, lastName, loyaltyPoints]
+
+  BusinessAccount:
+    description: "Corporate client accounts (hotels, restaurants, etc.)"
+    key_fields: [id, userId, companyName, industry, subscriptionTier]
+
+  EnterpriseAccount:
+    description: "Multi-location enterprise organizations"
+    key_fields: [id, userId, name, tenantId, subscriptionPlan, apiKey]
+
+  Branch:
+    description: "Enterprise branch locations"
+    key_fields: [id, organizationId, name, code, address]
+
+  Driver:
+    description: "Driver accounts"
+    key_fields: [id, userId, status, vehicleType, rating]
+
+  Merchant:
+    description: "Dry cleaning merchant accounts"
+    key_fields: [id, userId, businessName, tier, rating, stripeAccountId]
+
+  MerchantLocation:
+    description: "Physical merchant locations"
+    key_fields: [id, merchantId, address, latitude, longitude]
+
+  # Orders & Services
+  Order:
+    description: "Customer orders"
+    key_fields: [id, orderNumber, customerId, merchantId, status, totalAmount, fulfillmentMode]
+
+  OrderItem:
+    description: "Individual items in an order"
+    key_fields: [id, orderId, serviceId, itemName, quantity, unitPrice]
+
+  Service:
+    description: "Merchant services (dry cleaning, wash & fold, etc.)"
+    key_fields: [id, merchantId, name, type, pricingModel, basePrice]
+
+  # Payments & Financial
+  Payment:
+    description: "Payment transactions"
+    key_fields: [id, orderId, amount, status, paymentMethod, stripePaymentIntent]
+
+  Invoice:
+    description: "Business/Enterprise invoices"
+    key_fields: [id, invoiceNumber, businessId, organizationId, amount, status]
+
+  # Equipment & IoT
+  Equipment:
+    description: "Merchant equipment (washers, dryers, etc.)"
+    key_fields: [id, merchantId, type, status, isIotEnabled, iotDeviceId]
+
+  EquipmentTelemetry:
+    description: "Real-time IoT equipment telemetry"
+    key_fields: [id, equipmentId, temperature, cycleCount, energyUsage, healthScore]
+
+  MaintenanceAlert:
+    description: "Equipment maintenance alerts"
+    key_fields: [id, equipmentId, merchantId, type, severity, status]
+
+  # Marketing Engine Models
+  MarketingProfile:
+    description: "Marketing profile for brands/clients"
+    key_fields: [id, userId, name, brandVoice, industry, targetAudience, goals]
+
+  Campaign:
+    description: "Marketing campaigns"
+    key_fields: [id, name, profileId, type, status, objective, platforms, budget]
+
+  CampaignContent:
+    description: "Generated campaign content"
+    key_fields: [id, campaignId, platform, contentType, content, status, scheduledFor]
+
+  CampaignMetric:
+    description: "Campaign performance metrics"
+    key_fields: [id, campaignId, date, platform, impressions, clicks, conversions]
+
+  BlogPost:
+    description: "Generated blog posts"
+    key_fields: [id, title, slug, content, status, keywords, metaTitle]
+
+  ContentAsset:
+    description: "Reusable content assets"
+    key_fields: [id, profileId, platform, type, content, status]
+
+  TrendData:
+    description: "Trend intelligence data"
+    key_fields: [id, source, keyword, volume, growth, lifecycle, relevanceScore]
+
+  Keyword:
+    description: "SEO keyword tracking"
+    key_fields: [id, keyword, searchVolume, difficulty, intent, currentRank]
+
+  ProgrammaticPage:
+    description: "Programmatically generated SEO pages"
+    key_fields: [id, slug, title, content, pageType, targetKeywordId, indexed]
+
+  SerpResult:
+    description: "SERP ranking data"
+    key_fields: [id, keywordId, position, url, domain, isCompetitor]
+
+  Backlink:
+    description: "Backlink tracking"
+    key_fields: [id, sourceUrl, sourceDomain, targetUrl, acquisitionType, status]
+
+  VideoDNA:
+    description: "Video brand identity configuration"
+    key_fields: [id, profileId, name, colorPalette, visualStyle, characters]
+
+  VideoAsset:
+    description: "Generated video assets"
+    key_fields: [id, videoDnaId, fileName, generationModel, status, consistencyScore]
+
+  # Multi-Platform Publishing
+  PublishingPlatform:
+    description: "Connected publishing platforms"
+    key_fields: [id, name, category, authType, requiresOAuth]
+
+  PlatformConnection:
+    description: "User platform connections"
+    key_fields: [id, profileId, platform, status, credentials]
+
+  PublishedContent:
+    description: "Published content tracking"
+    key_fields: [id, contentId, platform, externalId, publishedAt, metrics]
+
+  # Workflow & Automation
+  MultiPlatformWorkflow:
+    description: "Multi-platform content workflows"
+    key_fields: [id, name, type, status, sourcePlatform, targetPlatforms]
+
+  WorkflowExecution:
+    description: "Workflow execution logs"
+    key_fields: [id, workflowId, status, startedAt, completedAt]
+
+  # Intelligence & ML
+  ABTest:
+    description: "A/B testing experiments"
+    key_fields: [id, name, hypothesis, status, confidenceLevel]
+
+  AlgorithmExperiment:
+    description: "Platform algorithm experiments"
+    key_fields: [id, platform, hypothesis, status, resultsSignificant]
+
+  CampaignMemory:
+    description: "Campaign learning memory"
+    key_fields: [id, campaignId, insights, patterns, recommendations]
+
+  # Offer Lab (Affiliate Marketing)
+  Offer:
+    description: "Affiliate offers"
+    key_fields: [id, network, title, payout, epc, category, restrictions]
+
+  Funnel:
+    description: "Marketing funnels"
+    key_fields: [id, offerId, name, steps, conversionRate]
+
+  LeadMagnet:
+    description: "Lead magnet content"
+    key_fields: [id, title, type, contentUrl, conversionRate]
+
+  AdCampaign:
+    description: "Paid advertising campaigns"
+    key_fields: [id, funnelId, platform, budget, status, roas]
+
+  TrafficConnection:
+    description: "Traffic source API connections"
+    key_fields: [id, source, credentials, status]
+
+# ============================================
+# ENUMS (Valid Values)
+# ============================================
+# Source: packages/database/prisma/schema.prisma
+# All enum types with valid values
+
+enums:
+  UserRole:
+    values: [CUSTOMER, BUSINESS, ENTERPRISE, DRIVER, MERCHANT, ADMIN]
+    description: "User account types"
+
+  UserStatus:
+    values: [ACTIVE, INACTIVE, SUSPENDED, PENDING_VERIFICATION]
+    description: "User account status"
+
+  DriverStatus:
+    values: [OFFLINE, AVAILABLE, BUSY, ON_BREAK]
+    description: "Real-time driver availability"
+
+  OrderStatus:
+    values:
+      - PENDING_PAYMENT
+      - PAYMENT_CONFIRMED
+      - AWAITING_CUSTOMER_DROPOFF
+      - DRIVER_ASSIGNED
+      - PICKED_UP
+      - IN_TRANSIT_TO_MERCHANT
+      - RECEIVED_BY_MERCHANT
+      - IN_PROCESS
+      - READY_FOR_DELIVERY
+      - READY_FOR_CUSTOMER_PICKUP
+      - OUT_FOR_DELIVERY
+      - DELIVERED
+      - PICKED_UP_BY_CUSTOMER
+      - CANCELLED
+      - REFUNDED
+    description: "Order lifecycle states"
+
+  FulfillmentMode:
+    values:
+      - FULL_SERVICE
+      - CUSTOMER_DROPOFF_PICKUP
+      - CUSTOMER_DROPOFF_DRIVER_DELIVERY
+      - DRIVER_PICKUP_CUSTOMER_PICKUP
+    description: "Order fulfillment modes"
+
+  CampaignType:
+    values: [PAID_SEARCH, PAID_SOCIAL, EMAIL, SEO, CONTENT, VIDEO, MULTI_CHANNEL]
+    description: "Marketing campaign types"
+    frontend_values: [social, content, email, seo, video, multi-channel]
+    note: "Frontend uses lowercase kebab-case, backend uses SCREAMING_SNAKE_CASE"
+
+  CampaignStatus:
+    values: [DRAFT, SCHEDULED, ACTIVE, PAUSED, COMPLETED, CANCELLED]
+    description: "Campaign lifecycle status"
+    frontend_values: [draft, scheduled, active, paused, completed, cancelled]
+
+  BlogPostStatus:
+    values: [DRAFT, SCHEDULED, PUBLISHED, ARCHIVED]
+    description: "Blog post status"
+
+  ContentAssetType:
+    values: [TEXT, IMAGE, VIDEO, CAROUSEL, STORY, REEL]
+    description: "Content asset types"
+
+  TrendLifecycle:
+    values: [EMERGING, GROWING, PEAK, DECLINING, DEAD]
+    description: "Trend lifecycle stages"
+
+  KeywordIntent:
+    values: [INFORMATIONAL, COMMERCIAL, TRANSACTIONAL, NAVIGATIONAL]
+    description: "SEO keyword intent"
+
+  PageType:
+    values: [LOCATION_PAGE, SERVICE_PAGE, COMPARISON_PAGE, QUESTION_PAGE, ULTIMATE_GUIDE, BLOG_POST]
+    description: "Programmatic page types"
+
+  BacklinkType:
+    values: [HARO, GUEST_POST, BROKEN_LINK, RESOURCE_PAGE, PARTNERSHIP, UGC_TOOL, ORGANIC, OTHER]
+    description: "Backlink acquisition methods"
+
+  BacklinkStatus:
+    values: [ACTIVE, LOST, TOXIC, DISAVOWED]
+    description: "Backlink status"
+
+  VideoStatus:
+    values: [GENERATING, GENERATED, QUALITY_CHECK_FAILED, APPROVED, PUBLISHED, REJECTED]
+    description: "Video generation status"
+
+  EquipmentType:
+    values: [WASHER, DRYER, PRESSER, STEAMER, OTHER]
+    description: "Equipment types"
+
+  EquipmentStatus:
+    values: [OPERATIONAL, MAINTENANCE_REQUIRED, OUT_OF_SERVICE]
+    description: "Equipment operational status"
+
+  MaintenanceAlertType:
+    values:
+      - TEMPERATURE_ANOMALY
+      - VIBRATION_SPIKE
+      - CYCLE_TIME_INCREASE
+      - ENERGY_SPIKE
+      - PREDICTIVE_FAILURE
+      - FILTER_REPLACEMENT
+      - BELT_WEAR
+      - WATER_USAGE_ANOMALY
+      - ERROR_CODE_DETECTED
+      - MANUAL_INSPECTION_DUE
+    description: "IoT maintenance alert types"
+
+  AlertSeverity:
+    values: [LOW, MEDIUM, HIGH, CRITICAL]
+    description: "Alert severity levels"
+
+  AlertStatus:
+    values: [ACTIVE, ACKNOWLEDGED, RESOLVED, DISMISSED]
+    description: "Alert status"
+
+# ============================================
+# PLATFORMS (Social Media & Content Platforms)
+# ============================================
+# Source: apps/marketing-admin/src/lib/validations/platform.schema.ts
+
+platforms:
+  supported:
+    - linkedin
+    - youtube
+    - tiktok
+    - twitter
+    - facebook
+    - instagram
+    - pinterest
+    - medium
+    - substack
+
+  categories:
+    social:
+      - twitter
+      - facebook
+      - instagram
+      - linkedin
+      - tiktok
+      - pinterest
+    video:
+      - youtube
+      - tiktok
+    publishing:
+      - medium
+      - substack
+
+  oauth_enabled:
+    - linkedin
+    - youtube
+    - twitter
+    - facebook
+    - instagram
+    - tiktok
+
+  api_key_supported:
+    - medium
+    - substack
+    - pinterest
+
+# ============================================
+# API ENDPOINTS
+# ============================================
+# Source: apps/api/src/modules/marketing/controllers/*.controller.ts
+# Organized by controller
+
+api_endpoints:
+  base_url: "/api/marketing"
+
+  controllers:
+    profile:
+      base_path: "/profile"
+      endpoints:
+        - method: POST
+          path: "/"
+          description: "Create marketing profile"
+          use_case: "UC010"
+
+        - method: GET
+          path: "/"
+          description: "List all profiles"
+          use_case: "UC011"
+
+        - method: GET
+          path: "/:id"
+          description: "Get profile by ID"
+          use_case: "UC012"
+
+        - method: PATCH
+          path: "/:id"
+          description: "Update profile"
+          use_case: "UC013"
+
+        - method: DELETE
+          path: "/:id"
+          description: "Delete profile"
+          use_case: "UC014"
+
+        - method: POST
+          path: "/:id/activate"
+          description: "Activate profile"
+
+        - method: POST
+          path: "/:id/pause"
+          description: "Pause profile"
+
+        - method: GET
+          path: "/:id/stats"
+          description: "Get profile statistics"
+
+        - method: POST
+          path: "/:id/connections"
+          description: "Connect platform (API key method)"
+          use_case: "UC030"
+
+        - method: GET
+          path: "/:id/connections"
+          description: "List platform connections"
+          use_case: "UC031"
+
+        - method: GET
+          path: "/:id/connections/:platform/oauth/initiate"
+          description: "Initiate OAuth flow"
+
+        - method: GET
+          path: "/:id/connections/:platform/oauth/callback"
+          description: "OAuth callback handler"
+
+        - method: DELETE
+          path: "/:id/connections/:platform"
+          description: "Disconnect platform"
+          use_case: "UC032"
+
+        - method: GET
+          path: "/:id/connections/:platform/health"
+          description: "Check platform connection health"
+
+        - method: POST
+          path: "/:id/strategy/analyze"
+          description: "Analyze market landscape"
+
+        - method: POST
+          path: "/:id/strategy/generate"
+          description: "Generate marketing strategy"
+
+        - method: POST
+          path: "/:id/repurpose/rules"
+          description: "Set content repurposing rules"
+
+    campaigns:
+      base_path: "/campaigns"
+      endpoints:
+        - method: POST
+          path: "/"
+          description: "Create campaign"
+          use_case: "UC040"
+
+        - method: GET
+          path: "/"
+          description: "List campaigns"
+          use_case: "UC041"
+
+        - method: GET
+          path: "/:id"
+          description: "Get campaign details"
+          use_case: "UC042"
+
+        - method: PATCH
+          path: "/:id"
+          description: "Update campaign"
+          use_case: "UC043"
+
+        - method: DELETE
+          path: "/:id"
+          description: "Delete campaign"
+          use_case: "UC044"
+
+        - method: POST
+          path: "/:id/analyze-trends"
+          description: "Trigger trend analysis (Step 1)"
+          use_case: "UC045"
+
+        - method: GET
+          path: "/:id/trends"
+          description: "Get trend analysis results"
+
+        - method: POST
+          path: "/:id/analyze-seo"
+          description: "Trigger SEO analysis (Step 2)"
+          use_case: "UC046"
+
+        - method: GET
+          path: "/:id/seo"
+          description: "Get SEO analysis results"
+
+        - method: POST
+          path: "/:id/orchestrate"
+          description: "Trigger campaign orchestration (Step 3)"
+          use_case: "UC047"
+
+        - method: GET
+          path: "/:id/orchestration"
+          description: "Get orchestration results"
+
+        - method: POST
+          path: "/:id/approve"
+          description: "Approve campaign plan (Step 4)"
+          use_case: "UC048"
+
+        - method: POST
+          path: "/:id/reject"
+          description: "Reject and regenerate"
+
+        - method: POST
+          path: "/:id/start"
+          description: "Start approved campaign"
+          use_case: "UC049"
+
+        - method: POST
+          path: "/:id/pause"
+          description: "Pause active campaign"
+
+        - method: POST
+          path: "/:id/resume"
+          description: "Resume paused campaign"
+
+        - method: POST
+          path: "/:id/end"
+          description: "End campaign early"
+
+    content:
+      base_path: "/content"
+      endpoints:
+        - method: POST
+          path: "/blog/generate"
+          description: "Generate blog post with AI"
+          use_case: "UC050"
+
+        - method: GET
+          path: "/blog/:id"
+          description: "Get blog post"
+
+        - method: POST
+          path: "/repurpose"
+          description: "Repurpose content for multiple platforms"
+          use_case: "UC051"
+
+        - method: GET
+          path: "/repurpose/:jobId"
+          description: "Get repurposed content"
+
+        - method: GET
+          path: "/"
+          description: "List content assets"
+
+    trends:
+      base_path: "/trends"
+      endpoints:
+        - method: POST
+          path: "/collect"
+          description: "Collect live trends"
+          use_case: "UC070"
+
+        - method: GET
+          path: "/"
+          description: "Get current trends"
+          use_case: "UC071"
+
+        - method: POST
+          path: "/predict"
+          description: "Predict trend growth"
+          use_case: "UC072"
+
+        - method: GET
+          path: "/opportunities"
+          description: "Get urgent trend opportunities"
+
+    seo:
+      base_path: "/seo"
+      endpoints:
+        - method: POST
+          path: "/keywords/discover"
+          description: "Discover keyword universe"
+          use_case: "UC060"
+
+        - method: GET
+          path: "/keywords"
+          description: "List tracked keywords"
+
+        - method: POST
+          path: "/keywords/:id/track"
+          description: "Start tracking keyword"
+
+        - method: POST
+          path: "/programmatic-pages/generate"
+          description: "Generate programmatic pages"
+          use_case: "UC061"
+
+        - method: GET
+          path: "/programmatic-pages"
+          description: "List programmatic pages"
+
+        - method: POST
+          path: "/serp/track"
+          description: "Track SERP rankings"
+          use_case: "UC062"
+
+        - method: GET
+          path: "/serp/rankings"
+          description: "Get current rankings"
+
+        - method: POST
+          path: "/snippets/opportunities"
+          description: "Find featured snippet opportunities"
+
+        - method: POST
+          path: "/schema/generate"
+          description: "Generate schema markup"
+
+    video:
+      base_path: "/video"
+      endpoints:
+        - method: POST
+          path: "/script/generate"
+          description: "Generate video script"
+
+        - method: POST
+          path: "/metadata/generate"
+          description: "Generate video metadata"
+
+        - method: POST
+          path: "/hashtags/generate"
+          description: "Generate video hashtags"
+
+        - method: POST
+          path: "/dna/create"
+          description: "Create Video DNA profile"
+
+        - method: POST
+          path: "/generate/runway"
+          description: "Generate video with Runway Gen-3"
+          status: "not_implemented"
+
+        - method: POST
+          path: "/generate/pika"
+          description: "Generate video with Pika Labs"
+          status: "not_implemented"
+
+    publishing:
+      base_path: "/publishing"
+      endpoints:
+        - method: POST
+          path: "/schedule"
+          description: "Schedule content for publishing"
+
+        - method: POST
+          path: "/publish"
+          description: "Publish content immediately"
+
+        - method: GET
+          path: "/queue"
+          description: "View publishing queue"
+
+        - method: GET
+          path: "/calendar"
+          description: "View publishing calendar"
+
+    analytics:
+      base_path: "/analytics"
+      endpoints:
+        - method: GET
+          path: "/dashboard"
+          description: "Analytics dashboard overview"
+          use_case: "UC090"
+
+        - method: GET
+          path: "/campaigns/:id"
+          description: "Campaign analytics"
+          use_case: "UC091"
+
+        - method: GET
+          path: "/campaigns/:id/platform/:platform"
+          description: "Platform-specific analytics"
+
+        - method: GET
+          path: "/content/:id"
+          description: "Content performance"
+
+        - method: GET
+          path: "/roi"
+          description: "Calculate ROI"
+
+        - method: POST
+          path: "/reports/custom"
+          description: "Generate custom report"
+
+    intelligence:
+      base_path: "/intelligence"
+      endpoints:
+        - method: POST
+          path: "/narrative/generate"
+          description: "Generate neural narrative"
+
+        - method: POST
+          path: "/forecasting/quantum"
+          description: "Quantum trend forecasting"
+
+        - method: GET
+          path: "/attribution/multi-touch"
+          description: "Multi-touch attribution"
+
+        - method: POST
+          path: "/ab-testing/create"
+          description: "Create A/B test"
+
+        - method: POST
+          path: "/eeat/audit"
+          description: "E-E-A-T audit"
+
+    ml:
+      base_path: "/ml"
+      endpoints:
+        - method: GET
+          path: "/dashboard"
+          description: "ML Lab dashboard"
+          use_case: "UC100"
+
+        - method: POST
+          path: "/trends/forecast"
+          description: "Forecast trend growth with ML"
+          use_case: "UC101"
+
+        - method: POST
+          path: "/content/predict"
+          description: "Predict content performance"
+          use_case: "UC102"
+
+        - method: POST
+          path: "/keywords/cluster"
+          description: "Semantic keyword clustering"
+
+        - method: POST
+          path: "/campaigns/predict"
+          description: "Predict campaign success"
+
+    workflows:
+      base_path: "/workflows"
+      endpoints:
+        - method: GET
+          path: "/dashboard"
+          description: "Workflows dashboard"
+          use_case: "UC080"
+
+        - method: POST
+          path: "/seo/run"
+          description: "Run SEO workflow"
+
+        - method: POST
+          path: "/trends/detect"
+          description: "Detect viral trends"
+
+        - method: GET
+          path: "/seo/opportunities"
+          description: "Get SEO opportunities"
+
+    optimization:
+      base_path: "/optimization"
+      endpoints:
+        - method: GET
+          path: "/dashboard"
+          description: "Optimization dashboard"
+
+        - method: GET
+          path: "/cache/stats"
+          description: "Cache statistics"
+
+        - method: POST
+          path: "/cache/clear"
+          description: "Clear cache"
+
+        - method: GET
+          path: "/query/slow"
+          description: "Get slow queries"
+
+        - method: GET
+          path: "/performance/metrics"
+          description: "Performance metrics"
+
+    monitoring:
+      base_path: "/monitoring"
+      endpoints:
+        - method: GET
+          path: "/health"
+          description: "System health check"
+
+        - method: GET
+          path: "/metrics"
+          description: "System metrics"
+
+        - method: GET
+          path: "/errors"
+          description: "Error logs"
+
+        - method: GET
+          path: "/queue/stats"
+          description: "Queue statistics"
+
+    offer_lab:
+      base_path: "/offer-lab"
+      endpoints:
+        - method: POST
+          path: "/offers/import"
+          description: "Import affiliate offers"
+
+        - method: GET
+          path: "/offers"
+          description: "List offers"
+
+        - method: POST
+          path: "/funnels/generate"
+          description: "Generate funnel from offer"
+
+        - method: GET
+          path: "/funnels/:id"
+          description: "Get funnel details"
+
+        - method: POST
+          path: "/traffic/connect"
+          description: "Connect traffic source"
+
+        - method: POST
+          path: "/campaigns/deploy"
+          description: "Deploy ad campaign"
+
+# ============================================
+# SERVICES
+# ============================================
+# Source: apps/api/src/modules/marketing/services/
+# Service modules organized by domain
+
+services:
+  trends:
+    - TrendCollectorService
+    - TrendAnalyzerService
+    - TrendPredictorService
+
+  seo:
+    - KeywordResearchService
+    - RankTrackerService
+    - BacklinkAnalyzerService
+    - ProgrammaticSEOService
+    - SnippetOptimizerService
+
+  ml:
+    - TrendForecastingService
+    - ContentPerformanceMLService
+    - ABTestingMLService
+    - KeywordClusteringService
+    - CampaignPredictionService
+    - PerformancePredictorService
+
+  video:
+    - VideoScriptService
+    - VideoMetadataService
+    - VideoHashtagService
+    - VideoFormattingService
+
+  publishing:
+    - LinkedInPublisherService
+    - YouTubePublisherService
+    - TikTokPublisherService
+    - TwitterPublisherService
+    - FacebookPublisherService
+    - InstagramPublisherService
+
+  orchestration:
+    - MultiPlatformWorkflowOrchestratorService
+
+  intelligence:
+    - NeuralNarrativeService
+    - QuantumForecastingService
+    - MultiTouchAttributionService
+    - CreativeIntelligenceService
+
+  optimization:
+    - CacheOptimizationService
+    - QueryOptimizationService
+    - PerformanceMonitoringService
+
+  monitoring:
+    - HealthMonitoringService
+    - AlertingService
+
+  offer_lab:
+    - OfferIntelligenceService
+    - FunnelGeneratorService
+    - TrafficDeploymentService
+
+  external_apis:
+    - GoogleTrendsAPIService
+    - TwitterAPIService
+    - RedditAPIService
+    - TikTokAPIService
+    - YouTubeAPIService
+    - ClaudeAPIService
+
+# ============================================
+# EXTERNAL API NETWORKS
+# ============================================
+# Verified external API integrations
+
+external_apis:
+  trend_sources:
+    google_trends:
+      provider: "SerpAPI / Google Trends API"
+      status: "implemented"
+      data_fields: [keyword, volume, growth, geography]
+
+    twitter:
+      provider: "Twitter API v2"
+      status: "implemented"
+      data_fields: [keyword, tweets, engagement, trending_score]
+
+    reddit:
+      provider: "Reddit API"
+      status: "implemented"
+      data_fields: [keyword, submissions, comments, upvotes]
+
+    tiktok:
+      provider: "TikTok Creator API"
+      status: "partial"
+      data_fields: [keyword, views, hashtag_data]
+
+    youtube:
+      provider: "YouTube Data API"
+      status: "implemented"
+      data_fields: [keyword, video_count, view_count]
+
+  ai_providers:
+    claude:
+      provider: "Anthropic Claude API"
+      models:
+        - claude-3-5-sonnet-20241022 # Strategy, content generation
+        - claude-3-5-haiku-20241022 # Fast classification
+      status: "implemented"
+
+    openai:
+      provider: "OpenAI API"
+      models:
+        - gpt-4-vision-preview # Image analysis
+      status: "planned"
+
+  seo_tools:
+    serp_api:
+      provider: "SerpAPI"
+      status: "planned"
+      data_fields: [position, url, domain, snippet]
+
+    ahrefs:
+      provider: "Ahrefs API"
+      status: "planned"
+      data_fields: [domain_rating, backlinks, keywords]
+
+  video_generation:
+    runway:
+      provider: "Runway Gen-3"
+      status: "not_implemented"
+
+    pika:
+      provider: "Pika Labs"
+      status: "not_implemented"
+
+  affiliate_networks:
+    clickbank:
+      provider: "ClickBank API"
+      status: "planned"
+
+    cj_affiliate:
+      provider: "CJ Affiliate API"
+      status: "planned"
+
+    impact:
+      provider: "Impact.com API"
+      status: "planned"
+
+# ============================================
+# VALIDATION RULES
+# ============================================
+# Rules for validating AI-generated outputs
+
+validation_rules:
+  database:
+    - "All model names must exist in database_models section"
+    - "All field references must exist in the referenced model"
+    - "All enum values must exist in enums section"
+    - "Relationships must reference valid models"
+
+  api:
+    - "All endpoint references must exist in api_endpoints section"
+    - "HTTP methods must be: GET, POST, PUT, PATCH, DELETE"
+    - "Paths must start with / or be relative to base_path"
+    - "Use case references must match UC### pattern"
+
+  platforms:
+    - "All platform names must exist in platforms.supported list"
+    - "OAuth flows only for platforms in platforms.oauth_enabled"
+    - "API key auth only for platforms in platforms.api_key_supported"
+
+  services:
+    - "Service names must exist in services section"
+    - "Service imports must match actual file paths"
+    - "Service dependencies must be valid services"
+
+  enums:
+    - "All enum references must use values from enums section"
+    - "Case sensitivity must match defined values exactly"
+    - "Frontend/backend enum mapping must be respected"
+
+  external_apis:
+    - "All external API references must exist in external_apis section"
+    - "API status must be checked before implementation"
+    - "Data fields must match documented fields"
+
+# ============================================
+# ANTI-HALLUCINATION CHECKLIST
+# ============================================
+# Checklist for validating AI outputs
+
+anti_hallucination_checklist:
+  before_generation:
+    - "Verify all models exist in TRUTH_MAP"
+    - "Verify all API endpoints exist in TRUTH_MAP"
+    - "Verify all enums have valid values"
+    - "Check external API implementation status"
+
+  during_generation:
+    - "Cross-reference field names with schema"
+    - "Validate enum values against allowed list"
+    - "Check service names against services section"
+    - "Verify platform names against supported list"
+
+  after_generation:
+    - "Run schema validation tests"
+    - "Check all imports resolve correctly"
+    - "Verify no invented fields or models"
+    - "Confirm all endpoints are documented"
+    - "Generate hallucination audit report"
+
+# ============================================
+# CHANGELOG
+# ============================================
+
+changelog:
+  - version: "1.0.0"
+    date: "2025-10-31"
+    changes:
+      - "Initial TRUTH_MAP creation"
+      - "Extracted 150+ models and enums from schema.prisma"
+      - "Documented 337+ API endpoints from controllers"
+      - "Mapped 9 supported platforms"
+      - "Cataloged 80+ services across 13 domains"
+      - "Listed external API integrations"
+      - "Established validation rules"
