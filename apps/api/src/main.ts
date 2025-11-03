@@ -73,4 +73,8 @@ async function bootstrap() {
   console.log(`💚 Health Check: http://0.0.0.0:${port}/health`);
 }
 
-bootstrap();
+bootstrap().catch((error) => {
+  console.error('❌ Failed to start DryJets API:', error.message);
+  console.error('Stack trace:', error.stack);
+  process.exit(1);
+});
