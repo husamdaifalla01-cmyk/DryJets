@@ -65,10 +65,12 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT || 4000; // Changed from 3000 to 4000 to avoid conflicts
-  await app.listen(port);
+  // FIX: Bind to 0.0.0.0 for Railway/container compatibility (not localhost)
+  await app.listen(port, '0.0.0.0');
 
-  console.log(`🚀 DryJets API is running on: http://localhost:${port}`);
-  console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
+  console.log(`🚀 DryJets API is running on: http://0.0.0.0:${port}`);
+  console.log(`📚 API Documentation: http://0.0.0.0:${port}/api/docs`);
+  console.log(`💚 Health Check: http://0.0.0.0:${port}/health`);
 }
 
 bootstrap();
