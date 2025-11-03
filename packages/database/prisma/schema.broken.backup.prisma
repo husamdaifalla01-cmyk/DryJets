@@ -1,0 +1,3575 @@
+// DryJets Platform Database Schema
+// This schema represents the complete data model for the three-sided marketplace
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+enum UserRole {
+  CUSTOMER
+  BUSINESS // Corporate client (hotels, restaurants, etc.)
+  ENTERPRISE // Multi-location enterprise organization
+  DRIVER
+  MERCHANT
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  phone         String?    @unique
+  passwordHash  String
+  role          UserRole
+  status        UserStatus @default(PENDING_VERIFICATION)
+  emailVerified Boolean    @default(false)
+  phoneVerified Boolean    @default(false)
+  profileImage  String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  lastLoginAt   DateTime?
+
+  // Relationships
+  customer          Customer?
+  businessAccount   BusinessAccount?
+  enterpriseAccount EnterpriseAccount?
+  driver            Driver?
+  merchant          Merchant?
+  notifications     Notification[]
+  sessions          UserSession[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+}
+
+model UserSession {
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique
+  deviceInfo Json?
+  ipAddress  String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+// ============================================
+// CUSTOMER
+// ============================================
+
+model Customer {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  firstName            String
+  lastName             String
+  loyaltyPoints        Int      @default(0)
+  preferredDetergent   String?
+  preferredFoldOption  String? // "HANGER" | "FOLD"
+  preferredStarchLevel String? // "NONE" | "LIGHT" | "MEDIUM" | "HEAVY"
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relationships
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addresses         Address[]
+  orders            Order[]
+  reviews           Review[]
+  favoriteMerchants FavoriteMerchant[]
+  wardrobeItems     WardrobeItem[]
+  subscriptions     Subscription[]
+  referrals         Referral[]         @relation("Referrer")
+  referredBy        Referral?          @relation("Referred")
+
+  @@index([userId])
+}
+
+// ============================================
+// BUSINESS ACCOUNT (Corporate Clients)
+// ============================================
+
+enum BusinessIndustry {
+  HOSPITALITY // Hotels, resorts
+  FOOD_SERVICE // Restaurants, cafes
+  HEALTHCARE // Hospitals, clinics
+  BEAUTY_WELLNESS // Salons, spas
+  FITNESS // Gyms, yoga studios
+  RETAIL // Clothing stores
+  CORPORATE // Office buildings
+  EDUCATION // Schools, universities
+  OTHER
+}
+
+enum BusinessSubscriptionTier {
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+model BusinessAccount {
+  id                String                   @id @default(cuid())
+  userId            String                   @unique
+  companyName       String
+  taxId             String?
+  industry          BusinessIndustry?
+  billingEmail      String
+  billingPhone      String?
+  subscriptionTier  BusinessSubscriptionTier @default(BASIC)
+  monthlySpendLimit Float? // Optional spending limit
+  autoPayEnabled    Boolean                  @default(false)
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  // Relationships
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addresses       Address[]
+  orders          Order[]
+  invoices        Invoice[]
+  teamMembers     TeamMember[]
+  recurringOrders RecurringOrder[]
+
+  @@index([userId])
+  @@index([companyName])
+  @@index([subscriptionTier])
+}
+
+// Team members for business accounts (staff access)
+model TeamMember {
+  id              String    @id @default(cuid())
+  businessId      String
+  email           String
+  firstName       String
+  lastName        String
+  role            String // "ADMIN" | "MANAGER" | "MEMBER"
+  canPlaceOrders  Boolean   @default(true)
+  canViewInvoices Boolean   @default(false)
+  canManageTeam   Boolean   @default(false)
+  invitedAt       DateTime  @default(now())
+  acceptedAt      DateTime?
+  isActive        Boolean   @default(true)
+
+  businessAccount BusinessAccount @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, email])
+  @@index([businessId])
+  @@index([email])
+}
+
+// ============================================
+// ENTERPRISE ORGANIZATION (Multi-Tenant SaaS)
+// ============================================
+
+enum SubscriptionPlan {
+  STARTUP // 1-5 locations
+  GROWTH // 6-20 locations
+  ENTERPRISE // 21+ locations
+  CUSTOM // Custom pricing
+}
+
+model EnterpriseAccount {
+  id               String           @id @default(cuid())
+  userId           String           @unique
+  name             String
+  tenantId         String           @unique // Unique tenant identifier for isolation
+  subscriptionPlan SubscriptionPlan @default(STARTUP)
+  billingEmail     String
+  contractStart    DateTime?
+  contractEnd      DateTime?
+  apiKey           String           @unique
+  apiKeyEnabled    Boolean          @default(false)
+  monthlyQuota     Int? // Number of orders allowed per month
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  // Relationships
+  user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branches     Branch[]
+  subscription EnterpriseSubscription?
+  invoices     Invoice[]
+  apiLogs      ApiLog[]
+
+  @@index([userId])
+  @@index([tenantId])
+  @@index([subscriptionPlan])
+}
+
+// Branch locations for enterprise organizations
+model Branch {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  code           String? // Branch code (e.g., "NYC-01")
+  address        String
+  city           String
+  state          String?
+  postalCode     String?
+  country        String   @default("USA")
+  phone          String?
+  managerId      String? // Optional manager user ID
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization EnterpriseAccount @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  orders       Order[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([managerId])
+}
+
+// Enterprise subscription details
+model EnterpriseSubscription {
+  id                   String   @id @default(cuid())
+  organizationId       String   @unique
+  stripeSubscriptionId String?  @unique
+  stripePriceId        String?
+  status               String   @default("ACTIVE") // "ACTIVE" | "PAUSED" | "CANCELED"
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  organization EnterpriseAccount @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([status])
+}
+
+// API usage logs for enterprise clients
+model ApiLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  endpoint       String
+  method         String
+  statusCode     Int
+  responseTime   Int // in milliseconds
+  ipAddress      String?
+  userAgent      String?
+  timestamp      DateTime @default(now())
+
+  organization EnterpriseAccount @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, timestamp])
+  @@index([timestamp])
+}
+
+// ============================================
+// INVOICES (for Business & Enterprise)
+// ============================================
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  PAID
+  OVERDUE
+  CANCELED
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  invoiceNumber  String        @unique
+  businessId     String? // For business accounts
+  organizationId String? // For enterprise accounts
+  amount         Float
+  tax            Float         @default(0)
+  total          Float
+  currency       String        @default("USD")
+  status         InvoiceStatus @default(PENDING)
+  dueDate        DateTime
+  paidAt         DateTime?
+  paymentMethod  String?
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relationships
+  businessAccount   BusinessAccount?   @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  enterpriseAccount EnterpriseAccount? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  lineItems         InvoiceLineItem[]
+
+  @@index([businessId])
+  @@index([organizationId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model InvoiceLineItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Int
+  unitPrice   Float
+  total       Float
+  orderId     String? // Link to specific order if applicable
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([orderId])
+}
+
+// ============================================
+// RECURRING ORDERS (for Business Accounts)
+// ============================================
+
+enum RecurringFrequency {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+model RecurringOrder {
+  id                String             @id @default(cuid())
+  businessId        String
+  frequency         RecurringFrequency
+  nextScheduledDate DateTime
+  pickupTime        String // Time of day (e.g., "09:00")
+  isActive          Boolean            @default(true)
+  notes             String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  businessAccount BusinessAccount @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([nextScheduledDate])
+  @@index([isActive])
+}
+
+// ============================================
+// DRIVER
+// ============================================
+
+enum DriverStatus {
+  OFFLINE
+  AVAILABLE
+  BUSY
+  ON_BREAK
+}
+
+enum VehicleType {
+  CAR
+  VAN
+  TRUCK
+  MOTORCYCLE
+  BICYCLE
+}
+
+model Driver {
+  id                    String       @id @default(cuid())
+  userId                String       @unique
+  firstName             String
+  lastName              String
+  status                DriverStatus @default(OFFLINE)
+  vehicleType           VehicleType
+  vehicleMake           String?
+  vehicleModel          String?
+  vehiclePlate          String
+  vehicleColor          String?
+  licenseNumber         String
+  licenseExpiry         DateTime
+  backgroundCheckStatus String       @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
+  backgroundCheckDate   DateTime?
+  insuranceVerified     Boolean      @default(false)
+  currentLatitude       Float?
+  currentLongitude      Float?
+  totalEarnings         Float        @default(0)
+  totalTrips            Int          @default(0)
+  rating                Float        @default(5.0)
+  ratingCount           Int          @default(0)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  // Relationships
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pickups    Order[]         @relation("DriverPickup")
+  deliveries Order[]         @relation("DriverDelivery")
+  earnings   DriverEarning[]
+  reviews    Review[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([currentLatitude, currentLongitude])
+}
+
+model DriverEarning {
+  id          String    @id @default(cuid())
+  driverId    String
+  orderId     String
+  amount      Float
+  tip         Float     @default(0)
+  bonus       Float     @default(0)
+  surge       Float     @default(0)
+  platformFee Float
+  netEarning  Float
+  paidOut     Boolean   @default(false)
+  paidOutAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  driver Driver @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([driverId])
+  @@index([orderId])
+  @@index([paidOut])
+}
+
+// ============================================
+// MERCHANT
+// ============================================
+
+enum MerchantType {
+  DRY_CLEANER
+  LAUNDROMAT
+  BOTH
+}
+
+enum MerchantTier {
+  BASIC
+  PRO
+  ENTERPRISE
+}
+
+model Merchant {
+  id              String       @id @default(cuid())
+  userId          String       @unique
+  businessName    String
+  businessType    MerchantType
+  tier            MerchantTier @default(BASIC)
+  taxId           String?
+  stripeAccountId String?      @unique
+  stripeOnboarded Boolean      @default(false)
+  totalOrders     Int          @default(0)
+  totalRevenue    Float        @default(0)
+  rating          Float        @default(5.0)
+  ratingCount     Int          @default(0)
+  verified        Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relationships
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  locations         MerchantLocation[]
+  services          Service[]
+  orders            Order[]
+  staff             Staff[]
+  inventory         InventoryItem[]
+  equipment         Equipment[]
+  reviews           Review[]
+  favoritedBy       FavoriteMerchant[]
+  promotions        Promotion[]
+  maintenanceAlerts MaintenanceAlert[]
+
+  @@index([userId])
+  @@index([businessName])
+  @@index([rating])
+}
+
+model MerchantLocation {
+  id             String   @id @default(cuid())
+  merchantId     String
+  name           String
+  address        String
+  city           String
+  state          String
+  zipCode        String
+  country        String   @default("USA")
+  latitude       Float
+  longitude      Float
+  phone          String
+  email          String?
+  isMain         Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  operatingHours Json // { "monday": { "open": "08:00", "close": "18:00" }, ... }
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  orders   Order[]
+
+  @@index([merchantId])
+  @@index([latitude, longitude])
+  @@index([zipCode])
+}
+
+// ============================================
+// SERVICES & PRICING
+// ============================================
+
+enum ServiceType {
+  DRY_CLEANING
+  WASH_AND_FOLD
+  ALTERATIONS
+  SHOE_REPAIR
+  LEATHER_CLEANING
+  WEDDING_DRESS
+  COMFORTER
+  CURTAINS
+  OTHER
+}
+
+enum PricingModel {
+  PER_ITEM
+  PER_POUND
+  FLAT_RATE
+}
+
+model Service {
+  id            String       @id @default(cuid())
+  merchantId    String
+  name          String
+  description   String?
+  type          ServiceType
+  pricingModel  PricingModel
+  basePrice     Float
+  estimatedTime Int // in minutes
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  merchant   Merchant    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@index([merchantId])
+  @@index([type])
+}
+
+// ============================================
+// ORDERS
+// ============================================
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAYMENT_CONFIRMED
+  AWAITING_CUSTOMER_DROPOFF
+  DRIVER_ASSIGNED
+  PICKED_UP
+  IN_TRANSIT_TO_MERCHANT
+  RECEIVED_BY_MERCHANT
+  IN_PROCESS
+  READY_FOR_DELIVERY
+  READY_FOR_CUSTOMER_PICKUP
+  OUT_FOR_DELIVERY
+  DELIVERED
+  PICKED_UP_BY_CUSTOMER
+  CANCELLED
+  REFUNDED
+}
+
+enum OrderType {
+  ON_DEMAND
+  SCHEDULED
+  SUBSCRIPTION
+}
+
+enum FulfillmentMode {
+  FULL_SERVICE
+  CUSTOMER_DROPOFF_PICKUP
+  CUSTOMER_DROPOFF_DRIVER_DELIVERY
+  DRIVER_PICKUP_CUSTOMER_PICKUP
+}
+
+model Order {
+  id                 String          @id @default(cuid())
+  orderNumber        String          @unique
+  customerId         String? // Individual customer (optional)
+  businessId         String? // Business account (optional)
+  branchId           String? // Enterprise branch (optional)
+  merchantId         String
+  merchantLocationId String
+  pickupDriverId     String?
+  deliveryDriverId   String?
+  type               OrderType       @default(ON_DEMAND)
+  status             OrderStatus     @default(PENDING_PAYMENT)
+  fulfillmentMode    FulfillmentMode @default(FULL_SERVICE)
+
+  // Pricing
+  subtotal            Float
+  taxAmount           Float
+  serviceFee          Float
+  deliveryFee         Float
+  tip                 Float @default(0)
+  discount            Float @default(0)
+  selfServiceDiscount Float @default(0)
+  totalAmount         Float
+
+  // Addresses
+  pickupAddressId   String
+  deliveryAddressId String
+
+  // Scheduling
+  scheduledPickupAt   DateTime?
+  scheduledDeliveryAt DateTime?
+  actualPickupAt      DateTime?
+  actualDeliveryAt    DateTime?
+  customerDropoffTime DateTime?
+  customerPickupTime  DateTime?
+
+  // Special instructions
+  specialInstructions String?
+  customerNotes       String?
+  merchantNotes       String?
+
+  // Self-service confirmation
+  dropoffConfirmed      Boolean   @default(false)
+  dropoffConfirmedAt    DateTime?
+  pickupConfirmed       Boolean   @default(false)
+  pickupConfirmedAt     DateTime?
+  confirmationPhotoUrls String[]  @default([])
+
+  // Metadata
+  estimatedWeight Float?
+  actualWeight    Float?
+  photoUrls       String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  customer         Customer?            @relation(fields: [customerId], references: [id])
+  businessAccount  BusinessAccount?     @relation(fields: [businessId], references: [id])
+  branch           Branch?              @relation(fields: [branchId], references: [id])
+  merchant         Merchant             @relation(fields: [merchantId], references: [id])
+  merchantLocation MerchantLocation     @relation(fields: [merchantLocationId], references: [id])
+  pickupDriver     Driver?              @relation("DriverPickup", fields: [pickupDriverId], references: [id])
+  deliveryDriver   Driver?              @relation("DriverDelivery", fields: [deliveryDriverId], references: [id])
+  pickupAddress    Address              @relation("PickupAddress", fields: [pickupAddressId], references: [id])
+  deliveryAddress  Address              @relation("DeliveryAddress", fields: [deliveryAddressId], references: [id])
+  items            OrderItem[]
+  statusHistory    OrderStatusHistory[]
+  payment          Payment?
+  review           Review?
+
+  @@index([customerId])
+  @@index([businessId])
+  @@index([branchId])
+  @@index([merchantId])
+  @@index([pickupDriverId])
+  @@index([deliveryDriverId])
+  @@index([status])
+  @@index([orderNumber])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id                  String   @id @default(cuid())
+  orderId             String
+  serviceId           String
+  itemName            String
+  description         String?
+  quantity            Int      @default(1)
+  unitPrice           Float
+  totalPrice          Float
+  specialInstructions String?
+  photoUrl            String?
+  fabricType          String? // AI-detected
+  stainType           String? // AI-detected
+  createdAt           DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@index([orderId])
+  @@index([serviceId])
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  status    OrderStatus
+  notes     String?
+  latitude  Float?
+  longitude Float?
+  createdBy String? // userId who triggered the status change
+  createdAt DateTime    @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+// ============================================
+// ADDRESSES
+// ============================================
+
+model Address {
+  id            String   @id @default(cuid())
+  customerId    String
+  label         String? // "Home", "Work", "Other"
+  street        String
+  apartment     String?
+  city          String
+  state         String
+  zipCode       String
+  country       String   @default("USA")
+  latitude      Float?
+  longitude     Float?
+  deliveryNotes String? // Gate code, special instructions
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  customer          Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  pickupOrders      Order[]          @relation("PickupAddress")
+  deliveryOrders    Order[]          @relation("DeliveryAddress")
+  BusinessAccount   BusinessAccount? @relation(fields: [businessAccountId], references: [id])
+  businessAccountId String?
+
+  @@index([customerId])
+}
+
+// ============================================
+// PAYMENTS
+// ============================================
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  WALLET
+  CASH
+  BNPL
+}
+
+model Payment {
+  id                  String        @id @default(cuid())
+  orderId             String        @unique
+  customerId          String
+  merchantId          String
+  amount              Float
+  currency            String        @default("USD")
+  status              PaymentStatus @default(PENDING)
+  paymentMethod       PaymentMethod
+  stripePaymentIntent String?       @unique
+  stripeChargeId      String?
+  merchantPayout      Float
+  platformFee         Float
+  driverPayout        Float
+  refundAmount        Float         @default(0)
+  refundReason        String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================
+// REVIEWS & RATINGS
+// ============================================
+
+enum ReviewType {
+  MERCHANT
+  DRIVER
+}
+
+model Review {
+  id         String     @id @default(cuid())
+  orderId    String     @unique
+  customerId String
+  merchantId String?
+  driverId   String?
+  type       ReviewType
+  rating     Int // 1-5
+  comment    String?
+  response   String? // Merchant/Driver response
+  isPublic   Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  order    Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customer Customer  @relation(fields: [customerId], references: [id])
+  merchant Merchant? @relation(fields: [merchantId], references: [id])
+  driver   Driver?   @relation(fields: [driverId], references: [id])
+
+  @@index([customerId])
+  @@index([merchantId])
+  @@index([driverId])
+  @@index([rating])
+}
+
+// ============================================
+// INVENTORY & SUPPLIES (Merchant)
+// ============================================
+
+model InventoryItem {
+  id              String    @id @default(cuid())
+  merchantId      String
+  name            String
+  category        String // "DETERGENT", "HANGER", "BAG", "TAG", etc.
+  currentStock    Int
+  minStockLevel   Int
+  unit            String // "UNITS", "LITERS", "KG"
+  costPerUnit     Float
+  supplierId      String?
+  lastRestockedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId])
+  @@index([currentStock])
+}
+
+// ============================================
+// EQUIPMENT & MAINTENANCE (Merchant)
+// ============================================
+
+enum EquipmentType {
+  WASHER
+  DRYER
+  PRESSER
+  STEAMER
+  OTHER
+}
+
+enum EquipmentStatus {
+  OPERATIONAL
+  MAINTENANCE_REQUIRED
+  OUT_OF_SERVICE
+}
+
+model Equipment {
+  id                  String          @id @default(cuid())
+  merchantId          String
+  name                String
+  type                EquipmentType
+  status              EquipmentStatus @default(OPERATIONAL)
+  manufacturer        String?
+  model               String?
+  serialNumber        String?
+  purchaseDate        DateTime?
+  lastMaintenanceDate DateTime?
+  nextMaintenanceDate DateTime?
+  maintenanceNotes    String?
+
+  // IoT Integration
+  isIotEnabled    Boolean   @default(false)
+  iotDeviceId     String?   @unique
+  iotApiKey       String? // For device authentication
+  lastTelemetryAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  merchant          Merchant                @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  telemetry         EquipmentTelemetry?
+  telemetryHistory  EquipmentTelemetryLog[]
+  maintenanceAlerts MaintenanceAlert[]
+
+  @@index([merchantId])
+  @@index([status])
+  @@index([iotDeviceId])
+}
+
+// ============================================
+// STAFF MANAGEMENT (Merchant)
+// ============================================
+
+enum StaffRole {
+  MANAGER
+  CLEANER
+  PRESSER
+  CASHIER
+  DELIVERY
+  // Enterprise roles (Phase 3 - Multi-tenant)
+  STORE_MANAGER // Single store management
+  REGIONAL_MANAGER // Multi-store oversight
+  ENTERPRISE_ADMIN // Full organization access
+  STAFF_MEMBER // Limited access
+  FINANCE_MANAGER // Billing & reports only
+  OPERATIONS // Orders & dispatch only
+}
+
+model Staff {
+  id         String    @id @default(cuid())
+  merchantId String
+  firstName  String
+  lastName   String
+  email      String?
+  phone      String
+  role       StaffRole
+  hourlyRate Float?
+  isActive   Boolean   @default(true)
+  hiredAt    DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  merchant    Merchant          @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  permissions StaffPermission[] // Phase 3: Granular RBAC
+
+  @@index([merchantId])
+  @@index([isActive])
+}
+
+// Phase 3: Role-Based Access Control (RBAC)
+model StaffPermission {
+  id         String  @id @default(cuid())
+  staffId    String
+  merchantId String
+  locationId String? // null = all locations
+
+  // Permissions
+  canViewOrders      Boolean @default(false)
+  canCreateOrders    Boolean @default(false)
+  canEditOrders      Boolean @default(false)
+  canCancelOrders    Boolean @default(false)
+  canViewAnalytics   Boolean @default(false)
+  canViewFinance     Boolean @default(false)
+  canManageStaff     Boolean @default(false)
+  canManageEquipment Boolean @default(false)
+  canManageSettings  Boolean @default(false)
+  canManageInventory Boolean @default(false)
+  canManageDrivers   Boolean @default(false)
+  canViewReports     Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  staff Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId])
+  @@index([merchantId])
+  @@index([locationId])
+}
+
+// ============================================
+// PROMOTIONS & DISCOUNTS
+// ============================================
+
+enum PromotionType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_DELIVERY
+  BOGO
+}
+
+model Promotion {
+  id            String        @id @default(cuid())
+  merchantId    String?
+  code          String        @unique
+  name          String
+  description   String?
+  type          PromotionType
+  value         Float
+  minOrderValue Float?
+  maxDiscount   Float?
+  startDate     DateTime
+  endDate       DateTime
+  usageLimit    Int?
+  usageCount    Int           @default(0)
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  merchant Merchant? @relation(fields: [merchantId], references: [id])
+
+  @@index([code])
+  @@index([merchantId])
+  @@index([isActive])
+}
+
+// ============================================
+// SUBSCRIPTIONS
+// ============================================
+
+enum SubscriptionFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+model Subscription {
+  id                  String                @id @default(cuid())
+  customerId          String
+  merchantId          String
+  frequency           SubscriptionFrequency
+  status              SubscriptionStatus    @default(ACTIVE)
+  nextScheduledDate   DateTime
+  preferredPickupTime String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@index([status])
+  @@index([nextScheduledDate])
+}
+
+// ============================================
+// WARDROBE MANAGEMENT (AI Feature)
+// ============================================
+
+model WardrobeItem {
+  id            String    @id @default(cuid())
+  customerId    String
+  name          String
+  category      String // "SHIRT", "PANTS", "DRESS", etc.
+  fabricType    String? // AI-detected
+  color         String?
+  brand         String?
+  photoUrl      String?
+  purchaseDate  DateTime?
+  lastCleanedAt DateTime?
+  cleaningCount Int       @default(0)
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+}
+
+// ============================================
+// REFERRALS & LOYALTY
+// ============================================
+
+model Referral {
+  id            String   @id @default(cuid())
+  referrerId    String
+  referredId    String   @unique
+  code          String   @unique
+  rewardEarned  Float    @default(0)
+  rewardPaidOut Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  referrer Customer @relation("Referrer", fields: [referrerId], references: [id])
+  referred Customer @relation("Referred", fields: [referredId], references: [id])
+
+  @@index([referrerId])
+  @@index([code])
+}
+
+model FavoriteMerchant {
+  id         String   @id @default(cuid())
+  customerId String
+  merchantId String
+  createdAt  DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, merchantId])
+  @@index([customerId])
+  @@index([merchantId])
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+enum NotificationType {
+  ORDER_UPDATE
+  PAYMENT
+  PROMOTION
+  SYSTEM
+  DRIVER_ASSIGNMENT
+  DELIVERY
+}
+
+enum NotificationChannel {
+  PUSH
+  EMAIL
+  SMS
+}
+
+model Notification {
+  id      String              @id @default(cuid())
+  userId  String
+  type    NotificationType
+  channel NotificationChannel
+  title   String
+  message String
+  data    Json?
+  isRead  Boolean             @default(false)
+  sentAt  DateTime            @default(now())
+  readAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([sentAt])
+}
+
+// ============================================
+// ANALYTICS & TRACKING
+// ============================================
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  eventType String // "ORDER_CREATED", "PAGE_VIEW", etc.
+  eventData Json
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+// ============================================
+// WORKFLOW STATE PERSISTENCE (Phase 3)
+// ============================================
+
+enum WorkflowType {
+  // Order processing workflows
+  CREATE_ORDER
+  SCHEDULE_MAINTENANCE
+  BOOK_APPOINTMENT
+  DRIVER_DISPATCH
+  CUSTOMER_REGISTRATION
+  BULK_ORDER_UPLOAD
+
+  // Marketing automation workflows (Phase 2)
+  SEO_EMPIRE
+  TREND_CONTENT
+  LINK_BUILDING
+  CAMPAIGN_ORCHESTRATION
+}
+
+model WorkflowState {
+  id           String       @id @default(cuid())
+  userId       String
+  merchantId   String?
+  workflowType WorkflowType
+  stepIndex    Int          @default(0)
+  totalSteps   Int
+  data         Json // Current form data / progress
+  completedAt  DateTime?
+  expiresAt    DateTime? // Auto-cleanup old workflows
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([userId, workflowType])
+  @@index([merchantId])
+  @@index([completedAt])
+  @@index([expiresAt])
+}
+
+// ============================================
+// AUDIT LOGGING & COMPLIANCE (Phase 3)
+// ============================================
+
+enum AuditAction {
+  // Order actions
+  ORDER_CREATED
+  ORDER_UPDATED
+  ORDER_CANCELLED
+  ORDER_STATUS_CHANGED
+  ORDER_REFUNDED
+
+  // Staff actions
+  STAFF_CREATED
+  STAFF_UPDATED
+  STAFF_DELETED
+  STAFF_PERMISSION_CHANGED
+  STAFF_ROLE_CHANGED
+
+  // Equipment actions
+  EQUIPMENT_CREATED
+  EQUIPMENT_UPDATED
+  EQUIPMENT_DELETED
+  EQUIPMENT_MAINTENANCE_SCHEDULED
+
+  // Settings actions
+  SETTINGS_UPDATED
+  PRICING_CHANGED
+  LOCATION_ADDED
+  LOCATION_REMOVED
+
+  // Financial actions
+  PAYMENT_PROCESSED
+  REFUND_ISSUED
+  PAYOUT_COMPLETED
+
+  // Security actions
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  PASSWORD_CHANGED
+  PERMISSION_DENIED
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  userId     String
+  merchantId String?
+  locationId String?
+  action     AuditAction
+  entityType String // "Order", "Staff", "Equipment", etc.
+  entityId   String
+  changes    Json? // Before/after diff
+  metadata   Json? // Additional context
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime    @default(now())
+
+  @@index([userId])
+  @@index([merchantId])
+  @@index([locationId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+// ============================================
+// IOT & EQUIPMENT TELEMETRY
+// ============================================
+
+// Real-time telemetry (latest reading)
+model EquipmentTelemetry {
+  id          String @id @default(cuid())
+  equipmentId String @unique
+
+  // Sensor readings
+  powerWatts  Float?
+  waterLiters Float?
+  temperature Float?
+  vibration   Float?
+  cycleType   String? // "WASH" | "DRY" | "STEAM" | "PRESS"
+
+  // Cycle info
+  isRunning         Boolean   @default(false)
+  cycleStartedAt    DateTime?
+  cycleEstimatedEnd DateTime?
+  cycleCount        Int       @default(0)
+
+  // Computed metrics
+  healthScore     Int @default(100) // 0-100
+  efficiencyScore Int @default(100) // 0-100
+
+  updatedAt DateTime  @updatedAt
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@index([equipmentId])
+}
+
+// Historical telemetry logs (for analytics and ML training)
+model EquipmentTelemetryLog {
+  id          String   @id @default(cuid())
+  equipmentId String
+  timestamp   DateTime @default(now())
+
+  // Snapshot of readings
+  data Json // Store full telemetry object for flexibility
+
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@index([equipmentId, timestamp])
+  @@index([timestamp])
+}
+
+// Maintenance alerts and recommendations
+enum MaintenanceAlertType {
+  PREVENTIVE_MAINTENANCE
+  HIGH_VIBRATION
+  HIGH_TEMPERATURE
+  LOW_EFFICIENCY
+  CYCLE_ANOMALY
+  FILTER_REPLACEMENT
+  PART_REPLACEMENT
+  UNUSUAL_NOISE
+  WATER_LEAK
+  POWER_SPIKE
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertStatus {
+  OPEN
+  ACKNOWLEDGED
+  IN_PROGRESS
+  RESOLVED
+  IGNORED
+}
+
+model MaintenanceAlert {
+  id          String @id @default(cuid())
+  equipmentId String
+  merchantId  String
+
+  type           MaintenanceAlertType
+  severity       AlertSeverity
+  title          String
+  description    String
+  recommendation String? // Suggested action
+
+  // Trigger data
+  triggerData Json? // What caused the alert
+
+  status         AlertStatus @default(OPEN)
+  createdAt      DateTime    @default(now())
+  acknowledgedAt DateTime?
+  resolvedAt     DateTime?
+  resolution     String? // How it was resolved
+
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  merchant  Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId, status])
+  @@index([equipmentId, status])
+  @@index([severity, status])
+  @@index([createdAt])
+}
+
+// ============================================
+// MARKETING & SEO SYSTEM
+// ============================================
+
+enum CampaignType {
+  AWARENESS
+  ENGAGEMENT
+  CONVERSION
+  RETENTION
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum BlogPostStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ContentAssetType {
+  IMAGE
+  VIDEO
+  COPY
+  CAPTION
+  SCRIPT
+}
+
+model Campaign {
+  id             String         @id @default(cuid())
+  name           String
+  type           CampaignType
+  status         CampaignStatus @default(DRAFT)
+  platforms      Json // ['meta', 'google', 'linkedin']
+  budgetTotal    Decimal?       @db.Decimal(10, 2)
+  targetAudience Json? // Audience config
+  aiGenerated    Boolean        @default(true)
+  aiAgent        String? // 'ava', 'mira', 'leo'
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  // Relationships
+  contentAssets      ContentAsset[]
+  campaignContents   CampaignContent[]
+  campaignMetrics    CampaignMetric[]
+  socialQueue        SocialQueue[]
+  emailCampaigns     EmailCampaign[]
+  budgetAllocations  BudgetAllocation[]
+  campaignWorkflows  CampaignWorkflow[]
+  repurposedContents RepurposedContent[]
+
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model BlogPost {
+  id              String         @id @default(cuid())
+  title           String
+  slug            String         @unique
+  content         String         @db.Text
+  excerpt         String?        @db.Text
+  keywords        String[] // SEO keywords
+  metaTitle       String?
+  metaDescription String?
+  status          BlogPostStatus @default(DRAFT)
+  publishedAt     DateTime?
+  viewCount       Int            @default(0)
+  aiGenerated     Boolean        @default(true)
+  aiBrief         Json? // Original AI generation brief
+  serpRank        Int? // Current Google ranking
+  repurposedCount Int            @default(0)
+  createdBy       String         @default("mira") // AI agent name
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relationships
+  seoMetrics    SEOMetric[]
+  contentAssets ContentAsset[]
+
+  @@index([status])
+  @@index([slug])
+  @@index([publishedAt])
+  @@index([createdAt])
+}
+
+model ContentAsset {
+  id                   String           @id @default(cuid())
+  type                 ContentAssetType
+  content              String?          @db.Text // Text content or file URL
+  platform             String? // 'meta', 'tiktok', 'linkedin'
+  sourceBlogId         String?
+  campaignId           String?
+  generatedFromTrendId String? // Link to TrendData that generated this
+  performanceScore     Decimal?         @db.Decimal(3, 2) // 0.00 to 1.00
+  reuseCount           Int              @default(0)
+  aiGenerated          Boolean          @default(true)
+  metadata             Json? // Platform-specific metadata
+
+  // Phase 4: Video DNA System
+  videoScript     String?  @db.Text // Full video script with timestamps
+  videoHook       String? // First 3 seconds hook text
+  videoCaptions   String[] @default([]) // Array of caption texts
+  videoHashtags   String[] @default([]) // Platform-optimized hashtags
+  videoDuration   Int? // Duration in seconds
+  videoFormat     String? // 'VERTICAL_9_16', 'SQUARE_1_1', 'HORIZONTAL_16_9'
+  videoStyle      String? // 'TALKING_HEAD', 'B_ROLL', 'SLIDESHOW', 'ANIMATION'
+  viralPrediction Decimal? @db.Decimal(3, 2) // 0.00 to 1.00
+  engagementScore Decimal? @db.Decimal(3, 2) // 0.00 to 1.00
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  sourceBlog         BlogPost?    @relation(fields: [sourceBlogId], references: [id], onDelete: SetNull)
+  campaign           Campaign?    @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  generatedFromTrend TrendData?   @relation(fields: [generatedFromTrendId], references: [id], onDelete: SetNull)
+  videoAssets        VideoAsset[] // Video adaptations of this content
+
+  @@index([type])
+  @@index([platform])
+  @@index([performanceScore])
+  @@index([videoFormat])
+  @@index([viralPrediction])
+  @@index([generatedFromTrendId])
+  @@index([createdAt])
+}
+
+model SEOMetric {
+  id             String   @id @default(cuid())
+  blogPostId     String
+  date           DateTime @db.Date
+  impressions    Int      @default(0)
+  clicks         Int      @default(0)
+  ctr            Decimal? @db.Decimal(5, 2) // Click-through rate
+  avgPosition    Decimal? @db.Decimal(4, 1) // SERP position
+  keywordsRanked Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  // Relationships
+  blogPost BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+
+  @@unique([blogPostId, date])
+  @@index([date])
+  @@index([createdAt])
+}
+
+model AIAgentLog {
+  id              String   @id @default(cuid())
+  agentName       String // 'mira', 'leo', 'rin'
+  actionType      String // 'GENERATE_BLOG', 'REPURPOSE_CONTENT'
+  inputData       Json?
+  outputData      Json?
+  modelUsed       String // 'haiku', 'sonnet', 'pending'
+  tokensUsed      Int?
+  executionTimeMs Int?
+  success         Boolean  @default(true)
+  errorMessage    String?  @db.Text
+  createdAt       DateTime @default(now())
+
+  @@index([agentName])
+  @@index([actionType])
+  @@index([createdAt])
+}
+
+model WorkflowRun {
+  id             String    @id @default(cuid())
+  workflowName   String // 'blog-publisher', 'content-repurposer'
+  triggerType    String // 'SCHEDULED', 'EVENT', 'MANUAL'
+  status         String    @default("RUNNING") // 'RUNNING', 'SUCCESS', 'FAILED'
+  stepsCompleted Int       @default(0)
+  stepsTotal     Int?
+  executionLog   Json?
+  createdAt      DateTime  @default(now())
+  completedAt    DateTime?
+
+  @@index([workflowName])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================
+// Phase 3: Campaign Orchestration Tables
+// ============================================
+
+model CampaignContent {
+  id          String    @id @default(cuid())
+  campaignId  String
+  channel     String // 'EMAIL', 'SOCIAL', 'ADS'
+  contentType String? // 'TEXT', 'VIDEO', 'CAROUSEL', 'SCRIPT'
+  content     Json // Format-specific content
+  status      String    @default("DRAFT") // 'DRAFT', 'SCHEDULED', 'PUBLISHED'
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relationships
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([channel])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model CampaignMetric {
+  id          String   @id @default(cuid())
+  campaignId  String
+  date        DateTime @db.Date
+  channel     String? // 'EMAIL', 'SOCIAL', 'ADS'
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  conversions Int      @default(0)
+  spend       Decimal? @db.Decimal(10, 2)
+  revenue     Decimal? @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, date, channel])
+  @@index([campaignId])
+  @@index([date])
+  @@index([channel])
+}
+
+model SocialQueue {
+  id            String    @id @default(cuid())
+  campaignId    String?
+  platform      String // 'twitter', 'facebook', 'instagram', 'linkedin'
+  contentId     String? // Reference to CampaignContent
+  content       String?   @db.Text
+  scheduledTime DateTime
+  publishedTime DateTime?
+  status        String    @default("QUEUED") // 'QUEUED', 'PUBLISHED', 'FAILED'
+  errorMessage  String?   @db.Text
+  metrics       Json? // Post performance metrics
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relationships
+  campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@index([platform])
+  @@index([status])
+  @@index([scheduledTime])
+  @@index([createdAt])
+}
+
+model EmailCampaign {
+  id          String    @id @default(cuid())
+  campaignId  String
+  templateId  String?
+  segmentId   String?
+  subject     String
+  previewText String?
+  htmlContent String?   @db.Text
+  status      String    @default("DRAFT") // 'DRAFT', 'SCHEDULED', 'SENT'
+  sentAt      DateTime?
+  opens       Int       @default(0)
+  clicks      Int       @default(0)
+  conversions Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relationships
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model BudgetAllocation {
+  id                    String   @id @default(cuid())
+  campaignId            String
+  channel               String // 'EMAIL', 'SOCIAL', 'ADS'
+  allocatedBudget       Decimal  @db.Decimal(10, 2)
+  spent                 Decimal  @default(0) @db.Decimal(10, 2)
+  roi                   Decimal? @db.Decimal(10, 4)
+  recommendedAllocation Decimal? @db.Decimal(10, 2)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relationships
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, channel])
+  @@index([campaignId])
+  @@index([channel])
+}
+
+model CampaignWorkflow {
+  id           String    @id @default(cuid())
+  campaignId   String
+  step         Int // Workflow step number
+  action       String // 'CREATE', 'DESIGN', 'SCHEDULE', 'PUBLISH', 'ANALYZE'
+  status       String    @default("PENDING") // 'PENDING', 'RUNNING', 'COMPLETED', 'FAILED'
+  startedAt    DateTime?
+  completedAt  DateTime?
+  errorMessage String?   @db.Text
+  metadata     Json? // Step-specific data
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relationships
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Add relationships to Campaign model
+model RepurposedContent {
+  id              String   @id @default(cuid())
+  sourceId        String // BlogPost ID
+  campaignId      String?
+  format          String // 'SOCIAL_POST', 'EMAIL', 'ADS'
+  content         String   @db.Text
+  status          String   @default("DRAFT")
+  performanceData Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relationships
+  campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@index([sourceId])
+  @@index([campaignId])
+  @@index([format])
+  @@index([createdAt])
+}
+
+// ============================================
+// MARKETING PLATFORM - WORKFLOW & CAMPAIGNS
+// ============================================
+
+enum MultiPlatformWorkflowType {
+  AUTONOMOUS
+  CUSTOM_CAMPAIGN
+}
+
+enum MultiPlatformWorkflowStatus {
+  CONFIGURING
+  GENERATING
+  REVIEW
+  PUBLISHING
+  COMPLETED
+  FAILED
+}
+
+enum ContentType {
+  BLOG
+  SOCIAL_POST
+  VIDEO
+  IMAGE
+  THREAD
+  STORY
+}
+
+enum ContentStatus {
+  GENERATED
+  REVIEW
+  APPROVED
+  REJECTED
+  SCHEDULED
+  PUBLISHED
+  FAILED
+}
+
+enum AIAgent {
+  MIRA
+  LEO
+  AVA
+  RIN
+}
+
+model MultiPlatformWorkflow {
+  id     String                      @id @default(cuid())
+  name   String
+  type   MultiPlatformWorkflowType
+  status MultiPlatformWorkflowStatus @default(CONFIGURING)
+
+  // Custom Campaign Input
+  customInput Json? // { freeText?: string, structured?: {...} }
+
+  // Platform Configuration
+  platformConfig Json // { platforms: [...], presetUsed?: string }
+
+  // Cost Tracking
+  estimatedCosts Json? // Cost breakdown
+  actualCosts    Json? // Actual spending
+
+  // Metrics
+  metrics Json? // Performance metrics
+
+  createdAt   DateTime  @default(now())
+  launchedAt  DateTime?
+  completedAt DateTime?
+  createdBy   String
+
+  // Relationships
+  contentPieces PublishedContent[]
+  costLogs      PublishingAPILog[]
+  suggestions   PublishingSuggestion[]
+  warnings      PublishingWarning[]
+  performance   MultiPlatformWorkflowPerformance?
+
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@index([createdBy])
+}
+
+model PublishingPlatform {
+  id      String  @id @default(cuid())
+  name    String
+  slug    String  @unique // 'facebook', 'twitter', etc.
+  type    String // 'social', 'blog', 'video', 'community', 'review'
+  enabled Boolean @default(true)
+
+  // API Configuration
+  apiConfig Json? // { provider, endpoint, rateLimit, costPerRequest }
+
+  // Content Specifications
+  contentSpecs Json? // { maxLength, supportsImages, etc. }
+
+  // Targeting Capabilities
+  targetingOptions Json? // { geographic, demographic, interests, behavioral }
+
+  // Performance Data
+  avgEngagementRate Decimal? @db.Decimal(5, 4)
+  avgReach          Int?
+  bestContentTypes  String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  presets       PublishingPreset[]
+  contentPieces PublishedContent[]
+
+  @@index([slug])
+  @@index([type])
+  @@index([enabled])
+}
+
+model PublishingPreset {
+  id             String  @id @default(cuid())
+  name           String
+  description    String?
+  isSystemPreset Boolean @default(false)
+  createdBy      String?
+
+  // Platform Configuration
+  configuration Json // { platforms: [...] }
+
+  usageCount Int       @default(0)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relationships
+  platforms PublishingPlatform[]
+
+  @@index([isSystemPreset])
+  @@index([createdBy])
+  @@index([createdAt])
+}
+
+model PublishedContent {
+  id         String @id @default(cuid())
+  workflowId String
+
+  type       ContentType
+  platformId String
+  pillar     String
+
+  status ContentStatus @default(GENERATED)
+
+  // Content Data
+  content Json // { title, body, media, hashtags, mentions, links }
+
+  // SEO Data
+  seoData Json? // { keywords, metaTitle, metaDescription, slug, schema }
+
+  // Geography
+  geography Json // { level, location, coordinates }
+
+  // Targeting
+  targeting Json? // { demographics, interests, behaviors }
+
+  // Costs
+  generationCost Decimal @default(0) @db.Decimal(10, 4)
+  publishingCost Decimal @default(0) @db.Decimal(10, 4)
+  totalCost      Decimal @default(0) @db.Decimal(10, 4)
+
+  // Scheduling
+  optimalPublishTime   DateTime?
+  scheduledPublishTime DateTime?
+  publishedAt          DateTime?
+
+  // Performance
+  performance Json? // { impressions, reach, clicks, engagement, conversions, viralScore, roi }
+
+  // Metadata
+  aiGenerated Boolean @default(true)
+  humanEdited Boolean @default(false)
+  generatedBy AIAgent @default(MIRA)
+  reviewedBy  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  workflow MultiPlatformWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  platform PublishingPlatform    @relation(fields: [platformId], references: [id])
+
+  @@index([workflowId])
+  @@index([platformId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model PublishingAPILog {
+  id           String   @id @default(cuid())
+  workflowId   String
+  service      String // 'anthropic', 'twitter', 'linkedin', etc.
+  operation    String
+  tokensUsed   Int?
+  requestsUsed Int?
+  cost         Decimal  @db.Decimal(10, 4)
+  timestamp    DateTime @default(now())
+
+  // Relationships
+  workflow MultiPlatformWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([service])
+  @@index([timestamp])
+}
+
+model PublishingSuggestion {
+  id                  String   @id @default(cuid())
+  workflowId          String
+  suggestedPlatformId String
+  reason              String   @db.Text
+  confidence          Int // 0-100
+  accepted            Boolean  @default(false)
+  createdAt           DateTime @default(now())
+
+  // Relationships
+  workflow MultiPlatformWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([createdAt])
+}
+
+model PublishingWarning {
+  id           String   @id @default(cuid())
+  workflowId   String
+  platformId   String
+  warningType  String // 'mismatch', 'low_roi', 'rate_limit', 'cost_alert'
+  message      String   @db.Text
+  severity     String // 'info', 'warning', 'critical'
+  acknowledged Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  // Relationships
+  workflow MultiPlatformWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+model TrendData {
+  id          String  @id @default(cuid())
+  source      String // 'google', 'twitter', 'reddit', 'tiktok', 'news', 'youtube'
+  keyword     String
+  volume      Int
+  growth      Decimal @db.Decimal(5, 2) // percentage
+  competition Int // 0-100
+
+  // Geography
+  geography Json // { level, location }
+
+  // Trend lifecycle
+  lifecycle         TrendLifecycle @default(EMERGING)
+  peakPrediction    DateTime?
+  opportunityWindow Json? // { start, end, confidence }
+
+  // Virality metrics
+  viralCoefficient Decimal? @db.Decimal(5, 2)
+  sentiment        Decimal? @db.Decimal(3, 2) // -1 to 1
+
+  relevanceScore Int // 0-100
+  pillar         String[]
+
+  relatedKeywords String[]
+  topContent      Json? // [{ title, url, engagement }]
+
+  expiresAt  DateTime
+  capturedAt DateTime @default(now())
+
+  // Relationships
+  generatedContent ContentAsset[] // Content generated from this trend
+
+  @@index([source])
+  @@index([keyword])
+  @@index([capturedAt])
+  @@index([lifecycle])
+}
+
+model MultiPlatformWorkflowPerformance {
+  id         String @id @default(cuid())
+  workflowId String @unique
+
+  period      String // 'hour', 'day', 'week', 'month'
+  periodStart DateTime
+  periodEnd   DateTime
+
+  // Metrics
+  metrics Json // Comprehensive metrics data
+
+  // Costs
+  costs Json // Cost breakdown
+
+  // ROI
+  roi Json // ROI metrics
+
+  // Top Content
+  topContent Json? // [{ contentId, platform, reach, engagement }]
+
+  createdAt DateTime @default(now())
+
+  // Relationships
+  workflow MultiPlatformWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([createdAt])
+}
+
+// ============================================
+// SEO & KEYWORD INTELLIGENCE
+// ============================================
+
+enum KeywordIntent {
+  INFORMATIONAL
+  COMMERCIAL
+  TRANSACTIONAL
+  NAVIGATIONAL
+}
+
+model Keyword {
+  id              String        @id @default(cuid())
+  keyword         String        @unique
+  searchVolume    Int
+  difficulty      Int // 0-100
+  cpc             Decimal?      @db.Decimal(10, 2)
+  intent          KeywordIntent
+  category        String // primary, secondary, tertiary, ultra-long-tail
+  parentKeywordId String?
+
+  // SERP data
+  currentRank     Int?
+  previousRank    Int?
+  bestRank        Int?
+  featuredSnippet Boolean @default(false)
+
+  // Metadata
+  lastChecked DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relationships
+  parentKeyword  Keyword?           @relation("KeywordHierarchy", fields: [parentKeywordId], references: [id])
+  childKeywords  Keyword[]          @relation("KeywordHierarchy")
+  generatedPages ProgrammaticPage[]
+  serpResults    SerpResult[]
+
+  @@index([keyword])
+  @@index([searchVolume])
+  @@index([currentRank])
+}
+
+enum PageType {
+  LOCATION_PAGE
+  SERVICE_PAGE
+  COMPARISON_PAGE
+  QUESTION_PAGE
+  ULTIMATE_GUIDE
+  BLOG_POST
+}
+
+model ProgrammaticPage {
+  id              String  @id @default(cuid())
+  slug            String  @unique
+  title           String
+  content         String  @db.Text
+  metaDescription String?
+
+  pageType     PageType
+  templateUsed String
+
+  targetKeywordId   String
+  secondaryKeywords String[]
+  schemaMarkup      Json?
+  internalLinks     Json?
+
+  publishedAt DateTime?
+  indexed     Boolean   @default(false)
+  impressions Int       @default(0)
+  clicks      Int       @default(0)
+  avgPosition Decimal?  @db.Decimal(5, 2)
+
+  wordCount        Int
+  readabilityScore Int?
+  originalityScore Int?
+
+  aiGenerated      Boolean @default(true)
+  humanReviewed    Boolean @default(false)
+  generationPrompt String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  targetKeyword Keyword         @relation(fields: [targetKeywordId], references: [id])
+  cluster       ContentCluster? @relation("SpokePages", fields: [clusterId], references: [id])
+  clusterId     String?
+  pillarCluster ContentCluster? @relation("PillarPage")
+
+  @@index([slug])
+  @@index([publishedAt])
+  @@index([indexed])
+}
+
+model SerpResult {
+  id          String  @id @default(cuid())
+  keywordId   String
+  position    Int
+  url         String
+  title       String
+  description String?
+  domain      String
+
+  isCompetitor   Boolean @default(false)
+  competitorName String?
+
+  hasSnippet Boolean @default(false)
+  hasVideo   Boolean @default(false)
+  hasImage   Boolean @default(false)
+
+  estimatedTraffic Int?
+
+  checkedAt DateTime @default(now())
+
+  keyword Keyword @relation(fields: [keywordId], references: [id])
+
+  @@index([keywordId, checkedAt])
+  @@index([domain])
+}
+
+model ContentCluster {
+  id           String  @id @default(cuid())
+  name         String
+  pillarPageId String? @unique
+
+  mainTopic String
+  keywords  String[]
+
+  totalImpressions Int      @default(0)
+  totalClicks      Int      @default(0)
+  avgPosition      Decimal? @db.Decimal(5, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pillarPage ProgrammaticPage?  @relation("PillarPage", fields: [pillarPageId], references: [id])
+  spokePages ProgrammaticPage[] @relation("SpokePages")
+
+  @@index([mainTopic])
+}
+
+enum BacklinkType {
+  HARO
+  GUEST_POST
+  BROKEN_LINK
+  RESOURCE_PAGE
+  PARTNERSHIP
+  UGC_TOOL
+  ORGANIC
+  OTHER
+}
+
+enum BacklinkStatus {
+  ACTIVE
+  LOST
+  TOXIC
+  DISAVOWED
+}
+
+model Backlink {
+  id           String  @id @default(cuid())
+  sourceUrl    String
+  sourceDomain String
+  targetUrl    String
+  anchorText   String?
+
+  domainAuthority Int?
+  pageAuthority   Int?
+  isDoFollow      Boolean @default(true)
+
+  acquisitionType    BacklinkType
+  outreachCampaignId String?
+
+  status    BacklinkStatus @default(ACTIVE)
+  firstSeen DateTime       @default(now())
+  lastSeen  DateTime       @default(now())
+  lostAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  // Relationships
+  outreachCampaign OutreachCampaign? @relation(fields: [outreachCampaignId], references: [id], onDelete: SetNull)
+
+  @@index([sourceDomain])
+  @@index([targetUrl])
+  @@index([status])
+  @@index([outreachCampaignId])
+}
+
+enum TrendLifecycle {
+  EMERGING
+  GROWING
+  PEAK
+  DECLINING
+  DEAD
+}
+
+enum OutreachType {
+  HARO
+  GUEST_POST
+  BROKEN_LINK
+  RESOURCE_PAGE
+  PARTNERSHIP
+}
+
+model OutreachCampaign {
+  id   String       @id @default(cuid())
+  name String
+  type OutreachType
+
+  targetDomains String[]
+  emailTemplate String   @db.Text
+
+  emailsSent        Int @default(0)
+  responses         Int @default(0)
+  backlinksAcquired Int @default(0)
+
+  status CampaignStatus @default(ACTIVE)
+
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  // Relationships
+  backlinks Backlink[] // Backlinks acquired through this campaign
+
+  @@index([type])
+  @@index([status])
+}
+
+// ============================================
+// PHASE 2: LINK BUILDING AUTOMATION
+// ============================================
+
+enum HAROQueryStatus {
+  NEW
+  RESPONDED
+  ACCEPTED
+  REJECTED
+  PUBLISHED
+}
+
+model HAROQuery {
+  id              String @id @default(cuid())
+  source          String // 'haro', 'sourcebottle', 'terkel', 'qwoted'
+  queryId         String @unique
+  journalist      String
+  outlet          String
+  domain          String
+  domainAuthority Int?
+
+  // Query details
+  subject  String
+  query    String   @db.Text
+  category String
+  deadline DateTime
+
+  // Our response
+  status      HAROQueryStatus @default(NEW)
+  ourResponse String?         @db.Text
+  respondedAt DateTime?
+
+  // Results
+  published    Boolean @default(false)
+  publishedUrl String?
+  backlink     Boolean @default(false)
+
+  // Automation
+  relevanceScore Int // 0-100 AI-calculated relevance
+  autoResponded  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([source])
+  @@index([status])
+  @@index([deadline])
+  @@index([relevanceScore])
+}
+
+enum BrokenLinkStatus {
+  DISCOVERED
+  VERIFIED
+  CONTACTED
+  WAITING_RESPONSE
+  LINK_REPLACED
+  REJECTED
+}
+
+model BrokenLinkOpportunity {
+  id String @id @default(cuid())
+
+  // Target site (where the broken link is)
+  targetDomain    String
+  targetUrl       String
+  targetPageTitle String?
+  domainAuthority Int?
+
+  // Broken link details
+  brokenUrl     String
+  brokenText    String?
+  brokenContext String? @db.Text
+
+  // Our replacement content
+  ourContentUrl   String?
+  ourContentTitle String?
+  relevanceScore  Int // 0-100 how relevant our content is
+
+  // Outreach
+  status        BrokenLinkStatus @default(DISCOVERED)
+  contactEmail  String?
+  contactName   String?
+  emailSentAt   DateTime?
+  lastFollowUp  DateTime?
+  followUpCount Int              @default(0)
+
+  // Result
+  linkAcquired Boolean   @default(false)
+  acquiredAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([targetDomain])
+  @@index([status])
+  @@index([relevanceScore])
+}
+
+enum PartnershipStatus {
+  PROSPECTING
+  CONTACTED
+  NEGOTIATING
+  ACTIVE
+  PAUSED
+  ENDED
+}
+
+model PartnershipProposal {
+  id String @id @default(cuid())
+
+  // Partner details
+  partnerDomain   String
+  partnerName     String
+  partnerEmail    String?
+  domainAuthority Int?
+
+  // Partnership type
+  partnershipType String // 'content_exchange', 'guest_post', 'resource_share', 'co_marketing'
+
+  // Proposal details
+  ourProposal       String  @db.Text
+  theirRequirements String? @db.Text
+  valueExchange     String? @db.Text
+
+  // Status tracking
+  status           PartnershipStatus @default(PROSPECTING)
+  contactedAt      DateTime?
+  responseReceived Boolean           @default(false)
+  responseAt       DateTime?
+
+  // Partnership terms
+  agreedTerms String?   @db.Text
+  startDate   DateTime?
+  endDate     DateTime?
+
+  // Results
+  contentShared     Int @default(0)
+  backlinksReceived Int @default(0)
+  backlinksGiven    Int @default(0)
+  trafficReceived   Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([partnerDomain])
+  @@index([status])
+  @@index([partnershipType])
+}
+
+enum ResourcePageStatus {
+  DISCOVERED
+  ANALYZED
+  CONTACTED
+  WAITING
+  ADDED
+  REJECTED
+}
+
+model ResourcePageTarget {
+  id String @id @default(cuid())
+
+  // Page details
+  pageUrl         String @unique
+  pageDomain      String
+  pageTitle       String
+  domainAuthority Int?
+
+  // Resource page analysis
+  topic         String
+  resourceCount Int?
+  isActive      Boolean   @default(true)
+  lastUpdated   DateTime?
+
+  // Our content fit
+  ourResourceUrl   String?
+  ourResourceTitle String?
+  ourResourceDesc  String? @db.Text
+  relevanceScore   Int // 0-100
+
+  // Contact info
+  status        ResourcePageStatus @default(DISCOVERED)
+  curatorEmail  String?
+  curatorName   String?
+  contactedAt   DateTime?
+  followUpCount Int                @default(0)
+  lastFollowUp  DateTime?
+
+  // Result
+  linkAdded    Boolean   @default(false)
+  addedAt      DateTime?
+  linkPosition Int? // Position in the resource list
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pageDomain])
+  @@index([status])
+  @@index([topic])
+  @@index([relevanceScore])
+}
+
+// ============================================
+// PHASE 4: VIDEO DNA SYSTEM
+// ============================================
+
+model VideoDNA {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+
+  // Visual Identity
+  colorPalette Json // { primary: [], secondary: [], enforceRangeRGB: {} }
+  visualStyle  Json // { cinematography, lighting, cameraMovement, pacing, transitions }
+
+  // Characters
+  characters Json[] // Array of character objects with LoRA models
+
+  // Scene Templates
+  sceneTemplates Json[] // Reusable scene configurations
+
+  // Audio Identity
+  audioSignature Json // { voiceProfile, musicStyle, sfxLibrary }
+
+  // Quality Standards
+  minQualityScore Int @default(85)
+
+  // Brand association
+  organizationId String?
+  isDefault      Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  videoAssets VideoAsset[]
+
+  @@index([organizationId])
+}
+
+enum VideoStatus {
+  GENERATING
+  GENERATED
+  QUALITY_CHECK_FAILED
+  APPROVED
+  PUBLISHED
+  REJECTED
+}
+
+model VideoAsset {
+  id             String  @id @default(cuid())
+  videoDnaId     String
+  contentAssetId String? // Link to ContentAsset
+
+  // Asset info
+  fileName   String
+  filePath   String
+  duration   Int // seconds
+  resolution String // "1920x1080"
+  format     String // "mp4", "mov"
+
+  // Generation info
+  generationModel  String // "runway-gen3", "pika", "kling"
+  generationPrompt String  @db.Text
+  scriptId         String? // Link to the script that generated it
+
+  // Quality scores
+  consistencyScore Int // 0-100
+  brandAlignment   Int // 0-100
+  visualQuality    Int // 0-100
+  overallScore     Int // 0-100
+
+  // Status
+  status   VideoStatus @default(GENERATED)
+  approved Boolean     @default(false)
+
+  // Metadata
+  metadata Json? // Additional video metadata
+
+  createdAt DateTime @default(now())
+
+  // Relationships
+  videoDna     VideoDNA      @relation(fields: [videoDnaId], references: [id])
+  contentAsset ContentAsset? @relation(fields: [contentAssetId], references: [id])
+
+  @@index([videoDnaId])
+  @@index([contentAssetId])
+  @@index([status])
+}
+
+// ============================================
+// PHASE 13: A/B TESTING SYSTEM
+// ============================================
+
+enum ABTestStatus {
+  DRAFT
+  RUNNING
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+model ABTest {
+  id         String @id @default(cuid())
+  name       String
+  hypothesis String @db.Text
+  element    String // 'headline', 'cta', 'image', 'layout', etc.
+
+  // Test configuration
+  campaignId   String?
+  status       ABTestStatus @default(DRAFT)
+  trafficSplit Int          @default(50) // Percentage to each variant
+
+  // Results
+  confidence      Decimal? @db.Decimal(5, 2) // 0-99%
+  winnerVariantId String?
+
+  // Timing
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relationships
+  variants TestVariant[]
+
+  @@index([campaignId])
+  @@index([status])
+}
+
+model TestVariant {
+  id          String  @id @default(cuid())
+  testId      String
+  name        String // 'Variant A', 'Variant B', 'Control'
+  description String  @db.Text
+  isControl   Boolean @default(false)
+
+  // Content
+  content Json // The actual variant content
+
+  // Metrics
+  impressions Int     @default(0)
+  clicks      Int     @default(0)
+  conversions Int     @default(0)
+  revenue     Decimal @default(0) @db.Decimal(10, 2)
+
+  // Calculated metrics
+  ctr Decimal? @db.Decimal(5, 2)
+  cvr Decimal? @db.Decimal(5, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  test ABTest @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@index([testId])
+}
+
+// ============================================
+// PHASE 15: CAMPAIGN MEMORY SYSTEM
+// ============================================
+
+model CampaignMemory {
+  id           String  @id @default(cuid())
+  campaignId   String?
+  campaignName String
+  objective    String // 'awareness', 'conversion', 'engagement', etc.
+  campaignType String // 'social', 'seo', 'video', 'multi-channel'
+
+  // Execution details
+  execution Json // What was done
+
+  // Results
+  reach       Int      @default(0)
+  engagement  Int      @default(0)
+  conversions Int      @default(0)
+  revenue     Decimal  @default(0) @db.Decimal(10, 2)
+  spend       Decimal  @default(0) @db.Decimal(10, 2)
+  roi         Decimal? @db.Decimal(10, 2)
+
+  // Learnings
+  whatWorked      String[] // Success factors
+  whatDidnt       String[] // Failure points
+  patterns        String[] // Identified patterns
+  recommendations String[] // For future campaigns
+
+  // AI analysis
+  confidence Int     @default(0) // 0-100
+  aiInsights String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campaignId])
+  @@index([objective])
+  @@index([campaignType])
+}
+
+// ============================================
+// PHASE 9: ALGORITHM DECODER
+// ============================================
+
+enum ExperimentStatus {
+  DRAFT
+  RUNNING
+  ANALYZING
+  COMPLETED
+  FAILED
+}
+
+model AlgorithmExperiment {
+  id         String @id @default(cuid())
+  platform   String // 'tiktok', 'instagram', 'youtube', 'linkedin'
+  variable   String // What we're testing
+  hypothesis String @db.Text
+
+  // Experiment design
+  control Json // Control configuration
+  variant Json // Variant configuration
+
+  // Results
+  status             ExperimentStatus @default(DRAFT)
+  controlPerformance Decimal?         @db.Decimal(10, 2)
+  variantPerformance Decimal?         @db.Decimal(10, 2)
+  improvement        Decimal?         @db.Decimal(5, 2) // Percentage
+
+  // Statistical analysis
+  statistically_significant Boolean  @default(false)
+  confidence                Decimal? @db.Decimal(5, 2) // 0-99%
+  pValue                    Decimal? @db.Decimal(5, 4)
+
+  // Learning
+  learning       String  @db.Text
+  recommendation String? @db.Text
+
+  // Timing
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([platform])
+  @@index([status])
+}
+
+// ============================================
+// PHASE 10: E-E-A-T SIGNALS
+// ============================================
+
+enum SignalType {
+  EXPERIENCE
+  EXPERTISE
+  AUTHORITATIVENESS
+  TRUSTWORTHINESS
+}
+
+enum SignalStatus {
+  MISSING
+  PARTIAL
+  COMPLETE
+  VERIFIED
+}
+
+model EEATSignal {
+  id          String     @id @default(cuid())
+  signalType  SignalType
+  name        String
+  description String     @db.Text
+
+  // Assessment
+  status SignalStatus @default(MISSING)
+  score  Int          @default(0) // 0-100
+  impact String // 'low', 'medium', 'high'
+
+  // Evidence
+  evidence   String[] // URLs, references, etc.
+  verifiedAt DateTime?
+
+  // Improvement
+  recommendation String?   @db.Text
+  implemented    Boolean   @default(false)
+  implementedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([signalType])
+  @@index([status])
+  @@index([score])
+}
+
+// ============================================
+// PHASE 11: MULTI-TOUCH ATTRIBUTION
+// ============================================
+
+model CustomerJourney {
+  id        String  @id @default(cuid())
+  userId    String // Anonymous or identified user ID
+  sessionId String?
+
+  // Conversion
+  converted       Boolean   @default(false)
+  conversionDate  DateTime?
+  conversionValue Decimal?  @db.Decimal(10, 2)
+  conversionType  String? // 'purchase', 'signup', 'trial', etc.
+
+  // Attribution results (JSON stored)
+  attribution Json // All 6 attribution model results
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  touchPoints TouchPoint[]
+
+  @@index([userId])
+  @@index([converted])
+  @@index([conversionDate])
+}
+
+model TouchPoint {
+  id        String @id @default(cuid())
+  journeyId String
+
+  // Touch point details
+  timestamp DateTime
+  channel   String // 'organic_search', 'paid_search', 'social', 'email', 'direct', etc.
+  source    String // 'google', 'facebook', 'newsletter', etc.
+  medium    String // 'cpc', 'organic', 'social', 'email'
+  campaign  String?
+  content   String?
+
+  // Page/interaction
+  url       String
+  pageTitle String?
+  eventType String // 'page_view', 'click', 'form_submit', etc.
+
+  // Value
+  value Decimal @default(0) @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+
+  // Relationships
+  journey CustomerJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+
+  @@index([journeyId])
+  @@index([timestamp])
+  @@index([channel])
+}
+
+// ============================================
+// PHASE 7: HYPER-PREDICTIVE INTELLIGENCE
+// ============================================
+
+enum SignalStrength {
+  WEAK
+  MODERATE
+  STRONG
+  VERY_STRONG
+}
+
+model WeakSignal {
+  id        String @id @default(cuid())
+  keyword   String
+  source    String // 'reddit', 'discord', 'forum', 'niche_blog'
+  sourceUrl String
+
+  // Signal details
+  signal        String         @db.Text
+  strength      SignalStrength @default(WEAK)
+  strengthScore Int // 0-100
+
+  // Context
+  community       String // Name of community
+  communitySize   Int?
+  engagementLevel String? // 'low', 'medium', 'high'
+
+  // Prediction
+  predictedTrendIn Int? // Days until mainstream
+  confidence       Decimal? @db.Decimal(5, 2)
+
+  // Tracking
+  firstDetected  DateTime @default(now())
+  lastSeen       DateTime @default(now())
+  detectionCount Int      @default(1)
+
+  // Status
+  becameTrend Boolean @default(false)
+  trendId     String? // Link to TrendData if it became a trend
+
+  @@index([keyword])
+  @@index([source])
+  @@index([strength])
+  @@index([firstDetected])
+}
+
+model InfluencerIndicator {
+  id      String @id @default(cuid())
+  keyword String
+
+  // Influencer details
+  influencer    String // Username or name
+  platform      String // 'twitter', 'instagram', 'tiktok', 'youtube'
+  profileUrl    String
+  followerCount Int
+  engagement    Decimal @db.Decimal(5, 2) // Engagement rate
+
+  // Adoption
+  adoptionDate DateTime
+  contentUrl   String // Where they mentioned the keyword/trend
+  contentType  String // 'post', 'video', 'story', 'tweet'
+
+  // Impact assessment
+  impact      String // 'low', 'medium', 'high', 'viral'
+  impactScore Int // 0-100
+  reach       Int? // Estimated reach
+
+  // Prediction
+  indicatesMainstreamIn Int? // Days until mainstream adoption
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([keyword])
+  @@index([platform])
+  @@index([adoptionDate])
+  @@index([impact])
+}
+
+model CommunityMonitor {
+  id   String @id @default(cuid())
+  name String
+  type String // 'subreddit', 'discord', 'forum', 'slack', 'facebook_group'
+  url  String @unique
+
+  // Community stats
+  memberCount   Int?
+  activeMembers Int?
+  postsPerDay   Int?
+
+  // Monitoring
+  isActive Boolean  @default(true)
+  keywords String[] // Keywords we're monitoring in this community
+
+  // Performance
+  signalsDetected  Int  @default(0)
+  trendsDiscovered Int  @default(0)
+  avgLeadTime      Int? // Average days ahead of mainstream
+
+  // Quality
+  relevanceScore Int    @default(50) // 0-100
+  noiseLevel     String @default("medium") // 'low', 'medium', 'high'
+
+  lastChecked DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([type])
+  @@index([isActive])
+  @@index([relevanceScore])
+}
+
+// ============================================
+// WORKFLOW AUTOMATION (Phase 2)
+// ============================================
+
+enum WorkflowStatus {
+  IDLE
+  ANALYZING
+  PLANNING
+  EXECUTING
+  LEARNING
+  COMPLETED
+  FAILED
+}
+
+// Tracks workflow execution runs
+model WorkflowExecution {
+  id           String         @id @default(cuid())
+  workflowType WorkflowType
+  status       WorkflowStatus @default(IDLE)
+
+  // Timing
+  startedAt   DateTime
+  completedAt DateTime?
+  duration    Int? // milliseconds
+
+  // State and results
+  state   Json // Current state (ANALYZING, PLANNING, etc.) with context
+  results Json? // Results/metrics from execution
+
+  // Error handling
+  error      String?
+  retryCount Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workflowType])
+  @@index([status])
+  @@index([startedAt])
+}
+
+// Stores generated plans before execution
+model WorkflowPlan {
+  id           String       @id @default(cuid())
+  workflowType WorkflowType
+
+  // Plan details
+  planType String // 'seo-optimization', 'content-brief', 'outreach-campaign', 'campaign-design'
+  targetId String? // Related entity (keywordId, trendId, backlinkId, campaignId)
+  plan     Json // The actual plan with action steps
+
+  // Prioritization
+  priority Int    @default(0)
+  impact   Float? // Estimated impact (0-100)
+
+  // Execution tracking
+  status      String    @default("pending") // 'pending', 'in-progress', 'completed', 'failed', 'cancelled'
+  executedAt  DateTime?
+  completedAt DateTime?
+  results     Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workflowType])
+  @@index([status])
+  @@index([priority])
+  @@index([targetId])
+}
+
+// Records what worked/didn't work for continuous improvement
+model WorkflowLearning {
+  id           String       @id @default(cuid())
+  workflowType WorkflowType
+
+  // Entity reference
+  entityId   String // keywordId, trendId, campaignId, backlinkId, etc.
+  entityType String // 'keyword', 'trend', 'campaign', 'backlink', 'outreach'
+
+  // Learnings
+  whatWorked String @db.Text
+  whatDidnt  String @db.Text
+
+  // Confidence and insights
+  confidence Float   @default(0.5) // 0-1
+  aiInsights String? @db.Text
+
+  // Metrics
+  metricsBefore Json? // Metrics before applying the learning
+  metricsAfter  Json? // Metrics after applying the learning
+  improvement   Float? // % improvement
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workflowType])
+  @@index([entityId])
+  @@index([entityType])
+  @@index([confidence])
+}
+
+// ============================================
+// AUTONOMOUS MARKETING ENGINE
+// ============================================
+
+// Marketing profile for autonomous campaign management
+model MarketingProfile {
+  id     String @id @default(cuid())
+  userId String // Owner of this profile
+
+  // Required fields (Option A)
+  name           String // "Healthcare SaaS Campaign"
+  industry       String // "B2B SaaS for healthcare"
+  targetAudience String  @db.Text // "Hospital administrators, 40-60"
+  primaryGoal    String // "Increase demo bookings by 50%"
+  monthlyBudget  Decimal @db.Decimal(10, 2)
+
+  // Optional advanced fields (Option C)
+  brandVoice             String?  @db.Text
+  geographicFocus        String?
+  competitorUrls         String[] // URLs to analyze
+  websiteUrl             String?
+  socialProfiles         Json? // {twitter: "@handle", linkedin: "..."}
+  productDescription     String?  @db.Text
+  valueProposition       String?  @db.Text
+  contentPreferences     Json? // {preferVideo: true, videoLength: "5-10min"}
+  publishingFrequency    Json? // {blogs: 2, social: 5}
+  brandGuidelines        Json? // {colors: ["#..."], tone: "..."}
+  complianceRequirements String[] // ["HIPAA", "GDPR"]
+
+  // AI-Generated Strategy
+  landscapeAnalysis Json? // AI's analysis of niche
+  strategyPlan      Json? // AI's recommended strategy
+  repurposingRules  Json? // Custom repurposing logic
+
+  // Status
+  status String @default("draft") // draft, active, paused, archived
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  platformConnections PlatformConnection[]
+  campaigns           CampaignOrder[]
+  content             ContentPiece[]
+  publishedPosts      PublishedPost[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+// Platform connections for each marketing profile
+model PlatformConnection {
+  id        String           @id @default(cuid())
+  profileId String
+  profile   MarketingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  platform String // "wordpress", "twitter", "linkedin", etc.
+
+  // Connection Details
+  isConnected    Boolean @default(false)
+  connectionType String // "oauth", "api_key", "credentials"
+
+  // OAuth tokens (encrypted in application layer)
+  accessToken  String?   @db.Text
+  refreshToken String?   @db.Text
+  tokenExpiry  DateTime?
+
+  // API credentials (encrypted in application layer)
+  apiKey    String? @db.Text
+  apiSecret String? @db.Text
+
+  // Platform-specific config
+  config Json? // {siteUrl: "...", accountId: "...", etc.}
+
+  // Domain tracking
+  domains String[] // ["blog.example.com", "medium.com/@user"]
+
+  // Status
+  status       String    @default("disconnected") // disconnected, connected, error
+  lastSynced   DateTime?
+  errorMessage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([profileId, platform])
+  @@index([profileId])
+  @@index([platform])
+}
+
+// Campaign orders created from marketing profiles
+model CampaignOrder {
+  id        String           @id @default(cuid())
+  profileId String
+  profile   MarketingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Campaign Config
+  name     String
+  strategy String // "viral-first", "evergreen-first", "conversion-first"
+
+  // Content Selection (user chose)
+  contentTypes Json // {blogs: true, videos: false, socialPosts: true}
+  platforms    Json // {twitter: true, linkedin: true, instagram: false}
+
+  // Repurposing Config (customized per campaign)
+  repurposingRules Json // {blog: {twitter: 10, linkedin: 5, ...}}
+
+  // Cost Breakdown
+  estimatedCost Decimal  @db.Decimal(10, 2)
+  actualCost    Decimal? @db.Decimal(10, 2)
+  costBreakdown Json // Detailed invoice
+
+  // Budget Tracking
+  budgetAllocated Decimal @db.Decimal(10, 2)
+  budgetUsed      Decimal @default(0) @db.Decimal(10, 2)
+  budgetRemaining Decimal @db.Decimal(10, 2)
+
+  // Execution
+  status String @default("draft") // draft, planning, generating, publishing, active, paused, completed
+  mode   String @default("hybrid") // full_auto, semi_auto, hybrid
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  // AI Workflow Tracking
+  workflowState Json? // Current agent status, progress
+
+  // Performance
+  metrics Json? // {views, engagement, conversions, revenue}
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  content          ContentPiece[]
+  publishedPosts   PublishedPost[]
+  optimizationLogs OptimizationLog[]
+
+  @@index([profileId])
+  @@index([status])
+}
+
+// Content pieces generated or managed
+model ContentPiece {
+  id         String           @id @default(cuid())
+  profileId  String
+  profile    MarketingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  campaignId String?
+  campaign   CampaignOrder?   @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  // Content Details
+  type    String // "blog", "video", "social_post", "infographic", etc.
+  title   String
+  content String @db.Text // Generated content
+
+  // SEO/Metadata
+  keywords        String[]
+  metaTitle       String?
+  metaDescription String?
+  metadata        Json? // Additional flexible metadata storage
+
+  // Quality Metrics
+  qualityScore     Int @default(0) // 0-100
+  readabilityScore Int @default(0)
+  seoScore         Int @default(0)
+
+  // Generation Details
+  sourceType  String? // "trend", "keyword", "manual"
+  sourceId    String? // ID of trend/keyword if generated from one
+  generatedBy String  @default("ai") // "ai", "user", "hybrid"
+
+  // Repurposing Chain
+  parentId String? // If repurposed from another piece
+  parent   ContentPiece?  @relation("Repurposed", fields: [parentId], references: [id], onDelete: SetNull)
+  children ContentPiece[] @relation("Repurposed")
+
+  // Cost
+  generationCost Decimal? @db.Decimal(8, 2)
+
+  // Status
+  status String @default("draft") // draft, approved, published, archived
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  publishedPosts PublishedPost[]
+
+  @@index([profileId])
+  @@index([campaignId])
+  @@index([type])
+  @@index([status])
+}
+  metadata   Json?
+
+// Track published posts across platforms and domains
+model PublishedPost {
+  id         String           @id @default(cuid())
+  profileId  String
+  profile    MarketingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  campaignId String?
+  campaign   CampaignOrder?   @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  contentId  String? // FIX: Made optional - not always available at publish time
+  content    ContentPiece?    @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  // Publishing Details
+  platform       String // "wordpress", "twitter", "linkedin", etc.
+  domain         String? // FIX: Made optional - can be derived from postUrl later
+  postUrl        String? // Full URL to published content
+  platformPostId String? // ID from platform (for updates/deletes)
+  postId         String? // Alias or alternative platform post ID
+
+  // Content (denormalized for quick access)
+  contentType String // Denormalized from ContentPiece.type
+  title       String? // Denormalized from ContentPiece.title
+
+  // Publishing Config
+  publishedAt  DateTime
+  scheduledFor DateTime?
+
+  // Status Tracking
+  status       String  @default("pending") // "pending", "scheduled", "publishing", "published", "failed"
+  errorMessage String? @db.Text // Error details for failed posts
+  retryCount   Int     @default(0) // Number of retry attempts
+
+  // Performance Metrics
+  views       Int @default(0)
+  likes       Int @default(0)
+  comments    Int @default(0)
+  shares      Int @default(0)
+  clicks      Int @default(0)
+  conversions Int @default(0)
+
+  engagementRate Decimal? @db.Decimal(5, 2)
+  conversionRate Decimal? @db.Decimal(5, 2)
+
+  // Performance vs Average
+  performanceRating String? // "high", "medium", "low"
+
+  // Cost
+  publishingCost Decimal? @db.Decimal(8, 2)
+
+  // Optimization
+  isOptimized Boolean @default(false)
+  isPaused    Boolean @default(false)
+  pauseReason String?
+
+  // Tracking
+  lastSyncedAt DateTime?
+  metrics      Json? // Platform-specific metrics and metadata
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@index([campaignId])
+  @@index([platform])
+  @@index([domain])
+  @@index([performanceRating])
+  @@index([status])
+}
+  campaignId  String?  @map("campaign_id")
+
+// Log optimization actions taken by AI
+model OptimizationLog {
+  id         String        @id @default(cuid())
+  campaignId String
+  campaign   CampaignOrder @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  // Optimization Details
+  type   String // "boost", "pause", "remove", "adjust_strategy"
+  reason String @db.Text
+
+  // What was optimized
+  targetType String // "post", "content_type", "platform", "strategy"
+  targetId   String?
+
+  // Before/After
+  metricsBefore Json
+  metricsAfter  Json?
+
+  // AI Decision
+  confidence  Decimal @db.Decimal(3, 2) // 0.00-1.00
+  aiReasoning String  @db.Text
+
+  // Impact
+  impact      String? // "positive", "neutral", "negative"
+  impactScore Decimal? @db.Decimal(5, 2)
+
+  createdAt DateTime @default(now())
+
+  @@index([campaignId])
+  @@index([type])
+}
+
+// ============================================
+// OFFER-LAB ENGINE (PHASE 1)
+// ============================================
+
+// Scraper execution logs for debugging
+model ScraperLog {
+  id           String   @id @default(cuid())
+  network      String // 'maxbounty', 'clickbank', etc.
+  status       String // 'success', 'error', 'timeout'
+  offersFound  Int      @default(0)
+  errorMessage String?  @db.Text
+  duration     Int? // milliseconds
+  createdAt    DateTime @default(now())
+
+  @@index([network, createdAt])
+  @@index([status])
+}
+
+// Affiliate offers imported from networks
+model Offer {
+  id             String    @id @default(cuid())
+  network        String // 'maxbounty', 'clickbank'
+  externalId     String // Network's offer ID
+  title          String
+  category       String[]
+  description    String?   @db.Text
+  epc            Decimal   @db.Decimal(10, 2) // Earnings per click
+  payout         Decimal   @db.Decimal(10, 2)
+  currency       String    @default("USD")
+  conversionRate Decimal?  @db.Decimal(5, 2)
+  geoTargets     String[]
+  allowedTraffic String[] // ['email', 'social', 'search']
+  creativeUrls   String[]
+  previewUrl     String?
+  terms          String?   @db.Text
+  score          Decimal   @db.Decimal(5, 2) // Calculated score (0-100)
+  trackingLink   String? // User-entered after manual activation
+  activatedAt    DateTime?
+  status         String    @default("pending") // pending|testing|paused|scaling|inactive
+  lastSyncedAt   DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relationships
+  funnels   Funnel[]
+  campaigns AdCampaign[]
+
+  @@unique([network, externalId])
+  @@index([network])
+  @@index([status])
+  @@index([score(sort: Desc)])
+  @@index([lastSyncedAt])
+}
+
+// Generated funnels for offers
+model Funnel {
+  id           String      @id @default(cuid())
+  offerId      String
+  offer        Offer       @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  templateUsed String // 'aida-standard', 'vsl-short', etc.
+  headline     String
+  subheadline  String?
+  heroImageUrl String?
+  bodyContent  String      @db.Text // AIDA-structured HTML
+  ctaText      String
+  ctaUrl       String // Populated from Offer.trackingLink
+  leadMagnetId String?
+  leadMagnet   LeadMagnet? @relation(fields: [leadMagnetId], references: [id])
+  fleschScore  Int?
+  ctrEstimate  Decimal?    @db.Decimal(5, 2)
+  status       String      @default("draft") // draft|published|archived
+  publishedAt  DateTime?
+  views        Int         @default(0)
+  clicks       Int         @default(0)
+  leads        Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  // Relationships
+  funnelLeads FunnelLead[]
+  campaigns   AdCampaign[]
+
+  @@index([offerId])
+  @@index([status])
+  @@index([publishedAt])
+}
+
+// Lead magnets (PDFs, checklists, etc.)
+model LeadMagnet {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  format      String // 'pdf', 'html'
+  fileUrl     String // Local path or S3 URL later
+  fileSize    Int? // bytes
+  downloads   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  // Relationships
+  funnels Funnel[]
+
+  @@index([format])
+}
+
+// Leads captured through funnels
+model FunnelLead {
+  id              String    @id @default(cuid())
+  funnelId        String
+  funnel          Funnel    @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  campaignId      String? // Optional: link to traffic campaign
+  email           String
+  firstName       String?
+  lastName        String?
+  ipAddress       String?
+  userAgent       String?   @db.Text
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
+  // Conversion tracking (Phase 2)
+  converted       Boolean   @default(false)
+  conversionDate  DateTime?
+  conversionValue Decimal?  @db.Decimal(10, 2)
+  transactionId   String?
+  createdAt       DateTime  @default(now())
+
+  @@index([funnelId])
+  @@index([email])
+  @@index([campaignId])
+  @@index([converted])
+  @@index([createdAt])
+}
+
+// ============================================
+// OFFER-LAB ENGINE (PHASE 2: TRAFFIC)
+// ============================================
+
+// Traffic network connections (ad platforms)
+model TrafficConnection {
+  id         String    @id @default(cuid())
+  network    String // 'popads', 'propellerads', 'taboola', etc.
+  apiKey     String    @db.Text // Encrypted
+  apiSecret  String?   @db.Text // Encrypted (if needed)
+  isActive   Boolean   @default(true)
+  isSandbox  Boolean   @default(false)
+  lastSyncAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relationships
+  campaigns     AdCampaign[]
+  qualityScores TrafficQualityScore[]
+
+  @@index([network])
+  @@index([isActive])
+}
+
+// Ad campaigns for testing offers
+model AdCampaign {
+  id                 String            @id @default(cuid())
+  connectionId       String
+  connection         TrafficConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  offerId            String
+  offer              Offer             @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  funnelId           String
+  funnel             Funnel            @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  externalCampaignId String? // Network's campaign ID (renamed from externalId for clarity)
+  name               String
+  dailyBudget        Decimal           @db.Decimal(10, 2)
+  totalBudget        Decimal           @db.Decimal(10, 2)
+  totalSpent         Decimal           @default(0) @db.Decimal(10, 2)
+  status             String            @default("active") // active|paused|completed|error
+  pauseReason        String?
+  pausedAt           DateTime? // When campaign was paused
+  targetGeos         String[]
+  targetDevices      String[] // ['desktop', 'mobile', 'tablet']
+  bidAmount          Decimal?          @db.Decimal(10, 4)
+  startDate          DateTime          @default(now())
+  endDate            DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  // Relationships
+  variants      AdVariant[]
+  metrics       AdMetric[]
+  scalingEvents ScalingEvent[]
+
+  @@index([connectionId])
+  @@index([offerId])
+  @@index([funnelId])
+  @@index([status])
+  @@index([startDate])
+  externalCampaignId String?  @map("external_campaign_id")
+  pausedAt           DateTime?
+}
+
+// Ad creative variants
+model AdVariant {
+  id           String     @id @default(cuid())
+  campaignId   String
+  campaign     AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  headline     String
+  description  String
+  imageUrl     String?
+  ctaText      String     @default("Learn More")
+  callToAction String? // Alias for ctaText, used in some services
+  isActive     Boolean    @default(true)
+  impressions  Int        @default(0)
+  clicks       Int        @default(0)
+  conversions  Int        @default(0)
+  spend        Decimal    @default(0) @db.Decimal(10, 2)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([campaignId])
+  @@index([isActive])
+}
+  angle         String?
+  callToAction  String?
+
+// Ad performance metrics (hourly snapshots)
+model AdMetric {
+  id          String     @id @default(cuid())
+  campaignId  String
+  campaign    AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  timestamp   DateTime   @default(now())
+  impressions Int        @default(0)
+  clicks      Int        @default(0)
+  conversions Int        @default(0)
+  spend       Decimal    @default(0) @db.Decimal(10, 2)
+  revenue     Decimal    @default(0) @db.Decimal(10, 2)
+  cpc         Decimal?   @db.Decimal(10, 4) // Cost per click
+  ctr         Decimal?   @db.Decimal(5, 2) // Click-through rate
+  epc         Decimal?   @db.Decimal(10, 4) // Earnings per click
+  roi         Decimal?   @db.Decimal(10, 2) // Return on investment
+
+  @@index([campaignId, timestamp])
+  @@index([timestamp])
+}
+
+// ============================================
+// OFFER-LAB PHASE 3: OPTIMIZATION LAYER
+// ============================================
+
+// Traffic quality scores
+model TrafficQualityScore {
+  id             String            @id @default(cuid())
+  connectionId   String
+  connection     TrafficConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  date           DateTime          @default(now())
+  qualityScore   Int // 0-100
+  conversionRate Decimal           @db.Decimal(5, 2)
+  bounceRate     Decimal           @db.Decimal(5, 2)
+  avgTimeOnPage  Int // Seconds
+  fraudScore     Int // 0-100 (higher = more fraud)
+  isBlacklisted  Boolean           @default(false)
+  createdAt      DateTime          @default(now())
+
+  @@unique([connectionId, date])
+  @@index([qualityScore])
+  @@index([isBlacklisted])
+}
+
+// Scaling history
+model ScalingEvent {
+  id          String     @id @default(cuid())
+  campaignId  String
+  campaign    AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  scalingType String // 'manual' | 'auto'
+  scaleFactor Decimal    @db.Decimal(5, 2) // 2.0 = 2x, 5.0 = 5x
+  oldBudget   Decimal    @db.Decimal(10, 2)
