@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { QueueConfigService } from '@/common/queues/queue-config.service';
+import { QueueConfigService } from '@/common/queues/queue.config';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { EncryptionService } from '../services/offer-lab/encryption.service';
 import { PopAdsAdapterService } from '../services/offer-lab/traffic/networks/popads-adapter.service';
@@ -198,7 +198,7 @@ export class AdMetricsSyncProcessor implements OnModuleInit {
 
       // Calculate EPC and ROI
       const epc = metric.clicks > 0 ? 0 / metric.clicks : 0; // Will be updated by conversion tracker
-      const roi = metric.spent > 0 ? (0 - metric.spent) / metric.spent * 100 : 0; // Will be updated
+      const roi = metric.spend > 0 ? (0 - metric.spend) / metric.spend * 100 : 0; // Will be updated
 
       await this.prisma.adMetric.create({
         data: {
@@ -209,9 +209,9 @@ export class AdMetricsSyncProcessor implements OnModuleInit {
           conversions: 0, // Updated by conversion tracker
           revenue: new Decimal(0), // Updated by conversion tracker
           ctr: new Decimal(metric.ctr),
-          epc: new Decimal(epc.toFixed(4)),
+          epc: new Decimal(metric.ctr),
           roi: new Decimal(roi.toFixed(2)),
-          recordedAt: metric.timestamp,
+          timestamp: metric.timestamp,
         },
       });
 
@@ -219,7 +219,7 @@ export class AdMetricsSyncProcessor implements OnModuleInit {
       await this.prisma.adCampaign.update({
         where: { id: campaign.id },
         data: {
-          totalSpent: { increment: new Decimal(metric.spent) },
+          totalSpent: { increment: new Decimal(metric.spend) },
         },
       });
     }

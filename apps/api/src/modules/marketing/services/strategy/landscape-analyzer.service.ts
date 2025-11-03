@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { SonnetService } from '../../ai/sonnet.service';
 import { CompetitorAnalysisService } from '../competitor-analysis.service';
+import { CompetitorAnalysis } from '../../interfaces/strategy.interface';
 
 /**
  * LANDSCAPE ANALYZER SERVICE
@@ -200,25 +201,69 @@ export class LandscapeAnalyzerService {
   /**
    * Analyze competitors
    */
-  private async analyzeCompetitors(profile: any) {
-    const competitors = [];
+  private async analyzeCompetitors(profile: any): Promise<CompetitorAnalysis[]> {
+    const competitors: CompetitorAnalysis[] = [];
 
-    // Analyze each competitor URL
+    // Analyze each competitor URL using AI
     for (const url of profile.competitorUrls || []) {
       try {
-        const analysis = await this.competitorAnalysis.analyzeCompetitor(url);
-        competitors.push({
+        const prompt = `
+Analyze this competitor website/business:
+
+URL: ${url}
+Our Industry: ${profile.industry}
+Our Target Audience: ${profile.targetAudience}
+
+Provide a comprehensive competitor analysis including:
+1. Company name
+2. Competitive strength (weak/moderate/strong/dominant)
+3. Marketing strategies they use
+4. Weaknesses in their approach
+5. Content types they produce
+6. Platforms they are active on
+7. Estimated marketing budget
+
+Format as JSON:
+{
+  "name": "Company Name",
+  "strength": "weak|moderate|strong|dominant",
+  "strategies": ["strategy 1", "strategy 2", ...],
+  "weaknesses": ["weakness 1", "weakness 2", ...],
+  "contentTypes": ["blog", "video", ...],
+  "platforms": ["platform 1", "platform 2", ...],
+  "estimatedBudget": "$X,XXX - $X,XXX/month"
+}
+`;
+
+        const analysis = await this.sonnetService.generateStructuredContent(prompt);
+
+        // Ensure the analysis has the correct structure
+        const competitorAnalysis: CompetitorAnalysis = {
           name: analysis.name || url,
           url,
-          strength: this.assessCompetitorStrength(analysis),
+          strength: analysis.strength || 'moderate',
           strategies: analysis.strategies || [],
           weaknesses: analysis.weaknesses || [],
           contentTypes: analysis.contentTypes || [],
           platforms: analysis.platforms || [],
           estimatedBudget: analysis.estimatedBudget || 'Unknown',
-        });
+        };
+
+        competitors.push(competitorAnalysis);
       } catch (error) {
         this.logger.warn(`Failed to analyze competitor ${url}:`, error.message);
+
+        // Add a basic entry even if analysis fails
+        competitors.push({
+          name: url,
+          url,
+          strength: 'moderate',
+          strategies: [],
+          weaknesses: [],
+          contentTypes: [],
+          platforms: [],
+          estimatedBudget: 'Unknown',
+        });
       }
     }
 
@@ -494,7 +539,7 @@ Format as JSON array:
   /**
    * Generate hypothetical competitors using AI
    */
-  private async generateHypotheticalCompetitors(profile: any) {
+  private async generateHypotheticalCompetitors(profile: any): Promise<CompetitorAnalysis[]> {
     const prompt = `
 Generate 3-5 hypothetical typical competitors in this industry:
 
@@ -526,7 +571,13 @@ Format as JSON array:
 `;
 
     const response = await this.sonnetService.generateStructuredContent(prompt);
-    return response;
+
+    // Ensure response is an array
+    if (Array.isArray(response)) {
+      return response as CompetitorAnalysis[];
+    }
+
+    return [];
   }
 
   /**

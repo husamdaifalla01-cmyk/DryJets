@@ -474,4 +474,44 @@ export class FacebookInstagramIntegration {
       mediaRequirements: 'Images: 1200x628px, Videos: up to 4GB, MP4 format preferred',
     }
   }
+
+  /**
+   * Exchange OAuth authorization code for access token
+   */
+  async exchangeCodeForToken(code: string, redirectUri: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    // TODO: Implement real OAuth 2.0 exchange with Facebook/Instagram Graph API
+    this.logger.log(`Exchanging authorization code for access token (mock)`);
+    return {
+      accessToken: `facebook_access_${Date.now()}`,
+      refreshToken: `facebook_refresh_${Date.now()}`,
+      expiresAt: new Date(Date.now() + 5184000000), // 60 days
+    };
+  }
+
+  /**
+   * Refresh an expired access token
+   */
+  async refreshAccessToken(refreshToken: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    // TODO: Implement real token refresh with Facebook/Instagram Graph API
+    this.logger.log(`Refreshing access token (mock)`);
+    return {
+      accessToken: `facebook_refreshed_${Date.now()}`,
+      refreshToken: refreshToken,
+      expiresAt: new Date(Date.now() + 5184000000),
+    };
+  }
+
+  getAuthorizationUrl(redirectUri: string): string {
+    const clientId = process.env.FACEBOOK_APP_ID || "client_id";
+    const encodedRedirect = encodeURIComponent(redirectUri);
+    return `https://www.facebook.com/v18.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodedRedirect}&scope=pages_manage_posts,pages_read_engagement,instagram_basic,instagram_content_publish`;
+  }
 }

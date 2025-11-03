@@ -488,4 +488,44 @@ export class YouTubeIntegration {
 
     return categoryMap[category] || '24'
   }
+
+  /**
+   * Exchange OAuth authorization code for access token
+   */
+  async exchangeCodeForToken(code: string, redirectUri: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    // TODO: Implement real OAuth 2.0 exchange with YouTube/Google API
+    this.logger.log(`Exchanging authorization code for access token (mock)`);
+    return {
+      accessToken: `youtube_access_${Date.now()}`,
+      refreshToken: `youtube_refresh_${Date.now()}`,
+      expiresAt: new Date(Date.now() + 3600000), // 1 hour
+    };
+  }
+
+  /**
+   * Refresh an expired access token
+   */
+  async refreshAccessToken(refreshToken: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    // TODO: Implement real token refresh with YouTube/Google API
+    this.logger.log(`Refreshing access token (mock)`);
+    return {
+      accessToken: `youtube_refreshed_${Date.now()}`,
+      refreshToken: refreshToken,
+      expiresAt: new Date(Date.now() + 3600000),
+    };
+  }
+
+  getAuthorizationUrl(redirectUri: string): string {
+    const clientId = process.env.GOOGLE_CLIENT_ID || "client_id";
+    const encodedRedirect = encodeURIComponent(redirectUri);
+    return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodedRedirect}&response_type=code&scope=https://www.googleapis.com/auth/youtube.upload%20https://www.googleapis.com/auth/youtube.readonly`;
+  }
 }

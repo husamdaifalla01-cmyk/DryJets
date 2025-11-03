@@ -97,11 +97,11 @@ export class BudgetRebalancerService {
         // Check if campaign has run long enough
         const campaign = await this.prisma.adCampaign.findUnique({
           where: { id: rec.campaignId },
-          select: { createdAt: true, startedAt: true },
+          select: { createdAt: true, startDate: true },
         });
 
         if (campaign) {
-          const startDate = campaign.startedAt || campaign.createdAt;
+          const startDate = campaign.startDate || campaign.createdAt;
           const daysRunning = Math.floor(
             (Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24),
           );

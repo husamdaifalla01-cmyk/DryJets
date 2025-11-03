@@ -367,9 +367,9 @@ export class MultiPlatformPublisherService {
           post.profileId,
           post.platform,
           {
-            type: post.contentType,
+            type: post.contentId || ""Type,
             title: post.title,
-            body: post.content,
+            body: post.contentId || "",
           },
           post.campaignId,
         );
@@ -431,9 +431,9 @@ export class MultiPlatformPublisherService {
         post.profileId,
         post.platform,
         {
-          type: post.contentType,
+          type: post.contentId || ""Type,
           title: post.title,
-          body: post.content,
+          body: post.contentId || "",
         },
         post.campaignId,
       );

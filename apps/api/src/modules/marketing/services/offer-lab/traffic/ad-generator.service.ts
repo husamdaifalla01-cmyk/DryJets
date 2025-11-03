@@ -80,7 +80,7 @@ export class AdGeneratorService {
     const prompt = `You are a direct-response copywriter for pop traffic campaigns.
 
 Offer: ${options.offerTitle}
-Category: ${options.category.join(', ')}
+Category: ${options.offerCategory.join(', ')}
 Target Market: ${options.targetGeo}
 Angle: ${angle} - ${anglePrompts[angle]}
 Tone: ${tone}
@@ -125,7 +125,7 @@ Format: JSON
     try {
       const imagePrompt = `Professional advertising banner for: ${headline}.
 Style: Modern, clean, high-converting.
-Category: ${options.category.join(', ')}.
+Category: ${options.offerCategory.join(', ')}.
 No text in image. 300x250 banner dimensions.`;
 
       const response = await this.openai.images.generate({

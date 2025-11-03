@@ -161,7 +161,7 @@ export class ConversionTrackerService {
 
         const clicks = updated.clicks;
         const revenue = parseFloat(updated.revenue.toString());
-        const spent = parseFloat(updated.spent.toString());
+        const spent = parseFloat(updated.spend.toString());
 
         const epc = clicks > 0 ? revenue / clicks : 0;
         const roi = spent > 0 ? ((revenue - spent) / spent) * 100 : 0;

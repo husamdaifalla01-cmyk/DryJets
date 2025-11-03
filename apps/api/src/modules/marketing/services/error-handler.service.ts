@@ -361,6 +361,7 @@ export class ErrorHandlerService {
     let failureCount = 0
     let isOpen = false
     let lastFailureTime = 0
+    const logger = this.logger // Capture logger in closure
 
     return {
       async execute(fn: RetryableFunction, ...args: any[]): Promise<any> {
@@ -382,7 +383,7 @@ export class ErrorHandlerService {
 
           if (failureCount >= threshold) {
             isOpen = true
-            this.logger.error(
+            logger.error(
               `Circuit breaker opened for ${serviceName} after ${failureCount} failures`
             )
           }
@@ -402,7 +403,7 @@ export class ErrorHandlerService {
       reset() {
         failureCount = 0
         isOpen = false
-        this.logger.log(`Circuit breaker reset for ${serviceName}`)
+        logger.log(`Circuit breaker reset for ${serviceName}`)
       },
     }
   }

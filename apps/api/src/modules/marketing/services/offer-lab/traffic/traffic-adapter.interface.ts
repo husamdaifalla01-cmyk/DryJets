@@ -32,7 +32,7 @@ export interface CampaignMetrics {
   externalCampaignId: string;
   impressions: number;
   clicks: number;
-  spent: number;
+  spend: number; // Match Prisma AdMetric.spend field
   ctr: number;
   cpc: number;
   timestamp: Date;

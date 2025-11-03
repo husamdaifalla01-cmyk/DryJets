@@ -375,4 +375,48 @@ export class LinkedInIntegration {
       errors,
     }
   }
+
+  /**
+   * Exchange OAuth authorization code for access token
+   */
+  async exchangeCodeForToken(code: string, redirectUri: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    // TODO: Implement real OAuth 2.0 exchange with LinkedIn API
+    this.logger.log(`Exchanging authorization code for access token (mock)`);
+    return {
+      accessToken: `linkedin_access_${Date.now()}`,
+      refreshToken: `linkedin_refresh_${Date.now()}`,
+      expiresAt: new Date(Date.now() + 5184000000), // 60 days
+    };
+  }
+
+  /**
+   * Refresh an expired access token
+   */
+  async refreshAccessToken(refreshToken: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    // TODO: Implement real token refresh with LinkedIn API
+    this.logger.log(`Refreshing access token (mock)`);
+    return {
+      accessToken: `linkedin_refreshed_${Date.now()}`,
+      refreshToken: refreshToken,
+      expiresAt: new Date(Date.now() + 5184000000),
+    };
+  }
+
+  /**
+   * Get OAuth authorization URL
+   */
+  getAuthorizationUrl(redirectUri: string): string {
+    // TODO: Implement real OAuth URL generation with LinkedIn
+    const clientId = process.env.LINKEDIN_CLIENT_ID || 'client_id';
+    const encodedRedirect = encodeURIComponent(redirectUri);
+    return `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodedRedirect}&scope=w_member_social%20r_liteprofile%20r_emailaddress`;
+  }
 }

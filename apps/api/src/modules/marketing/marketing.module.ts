@@ -155,7 +155,7 @@ import { FraudDetectorService } from './services/offer-lab/optimization/fraud-de
 import { SmartScalerService } from './services/offer-lab/optimization/smart-scaler.service'
 import { PerformanceThresholdCheckerService } from './services/offer-lab/optimization/performance-threshold-checker.service'
 import { BudgetSafetyGuardService } from './services/offer-lab/optimization/budget-safety-guard.service'
-import { BudgetOptimizerService } from './services/offer-lab/optimization/budget-optimizer.service'
+import { BudgetOptimizerService as OfferLabBudgetOptimizer } from './services/offer-lab/optimization/budget-optimizer.service'
 import { ROIPredictorService } from './services/offer-lab/optimization/roi-predictor.service'
 import { BudgetRebalancerService } from './services/offer-lab/optimization/budget-rebalancer.service'
 import { FunnelAnalyzerService } from './services/offer-lab/optimization/funnel-analyzer.service'
@@ -336,7 +336,7 @@ import { OfferLabOptimizationController } from './controllers/offer-lab-optimiza
     SmartScalerService,
     PerformanceThresholdCheckerService,
     BudgetSafetyGuardService,
-    BudgetOptimizerService,
+    OfferLabBudgetOptimizer,
     ROIPredictorService,
     BudgetRebalancerService,
     FunnelAnalyzerService,

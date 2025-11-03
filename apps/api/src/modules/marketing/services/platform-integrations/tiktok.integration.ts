@@ -431,4 +431,44 @@ export class TikTokIntegration {
       ],
     }
   }
+
+  /**
+   * Exchange OAuth authorization code for access token
+   */
+  async exchangeCodeForToken(code: string, redirectUri: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    // TODO: Implement real OAuth 2.0 exchange with TikTok API
+    this.logger.log(`Exchanging authorization code for access token (mock)`);
+    return {
+      accessToken: `tiktok_access_${Date.now()}`,
+      refreshToken: `tiktok_refresh_${Date.now()}`,
+      expiresAt: new Date(Date.now() + 86400000), // 24 hours
+    };
+  }
+
+  /**
+   * Refresh an expired access token
+   */
+  async refreshAccessToken(refreshToken: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    // TODO: Implement real token refresh with TikTok API
+    this.logger.log(`Refreshing access token (mock)`);
+    return {
+      accessToken: `tiktok_refreshed_${Date.now()}`,
+      refreshToken: refreshToken,
+      expiresAt: new Date(Date.now() + 86400000),
+    };
+  }
+
+  getAuthorizationUrl(redirectUri: string): string {
+    const clientId = process.env.TIKTOK_CLIENT_KEY || "client_id";
+    const encodedRedirect = encodeURIComponent(redirectUri);
+    return `https://www.tiktok.com/auth/authorize/?client_key=${clientId}&response_type=code&scope=user.info.basic,video.list,video.upload&redirect_uri=${encodedRedirect}`;
+  }
 }

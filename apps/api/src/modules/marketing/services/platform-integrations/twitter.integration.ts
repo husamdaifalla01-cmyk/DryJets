@@ -428,4 +428,48 @@ export class TwitterIntegration {
       ],
     }
   }
+
+  /**
+   * Exchange OAuth authorization code for access token
+   */
+  async exchangeCodeForToken(code: string, redirectUri: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    // TODO: Implement real OAuth 2.0 exchange with Twitter API
+    this.logger.log(`Exchanging authorization code for access token (mock)`);
+    return {
+      accessToken: `twitter_access_${Date.now()}`,
+      refreshToken: `twitter_refresh_${Date.now()}`,
+      expiresAt: new Date(Date.now() + 7200000), // 2 hours
+    };
+  }
+
+  /**
+   * Refresh an expired access token
+   */
+  async refreshAccessToken(refreshToken: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    // TODO: Implement real token refresh with Twitter API
+    this.logger.log(`Refreshing access token (mock)`);
+    return {
+      accessToken: `twitter_refreshed_${Date.now()}`,
+      refreshToken: refreshToken,
+      expiresAt: new Date(Date.now() + 7200000),
+    };
+  }
+
+  /**
+   * Get OAuth authorization URL
+   */
+  getAuthorizationUrl(redirectUri: string): string {
+    // TODO: Implement real OAuth URL generation
+    const clientId = process.env.TWITTER_CLIENT_ID || 'client_id';
+    const encodedRedirect = encodeURIComponent(redirectUri);
+    return `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodedRedirect}&scope=tweet.read%20tweet.write%20users.read`;
+  }
 }

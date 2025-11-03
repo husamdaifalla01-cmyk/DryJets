@@ -188,7 +188,7 @@ export class BidStrategySelectorService {
     }
 
     // Highly profitable + sufficient data: Target ROAS
-    if (profile.profitability === 'highly-profitable' && profile.dataQuality !== 'insufficient') {
+    if (profile.profitability === 'highly-profitable' && profile.dataQuality === 'excellent' || profile.dataQuality === 'sufficient' || profile.dataQuality === 'limited') {
       const targetROAS = Math.max(2, currentROAS * 0.9); // Target 90% of current ROAS
 
       return {

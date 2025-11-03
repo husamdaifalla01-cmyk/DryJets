@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { QueueConfigService } from '@/common/queues/queue-config.service';
+import { QueueConfigService } from '@/common/queues/queue.config';
 import { TrafficOrchestratorService } from '../services/offer-lab/traffic/traffic-orchestrator.service';
 
 /**

@@ -249,11 +249,11 @@ export class ROIPredictorService {
       return `Stable profitable performance. Predicted ROI: ${predictedROI.toFixed(0)}%.`;
     }
 
-    if (trend === 'declining' && predictedROI < 0) {
+    if (trend !== 'improving' && trend !== 'stable' && predictedROI < 0) {
       return `Declining performance. Predicted negative ROI (${predictedROI.toFixed(0)}%). Consider pausing or pivoting.`;
     }
 
-    if (trend === 'declining') {
+    if (trend !== 'improving' && trend !== 'stable') {
       return `Performance declining. Predicted ROI: ${predictedROI.toFixed(0)}%. Investigate and optimize.`;
     }
 
@@ -261,7 +261,7 @@ export class ROIPredictorService {
       return `High volatility or insufficient data. Prediction confidence is low. Continue monitoring.`;
     }
 
-    return `Predicted 30-day ROI: ${predictedROI.toFixed(0)}%. ${trend === 'improving' ? 'Trending up' : trend === 'declining' ? 'Trending down' : 'Stable'}.`;
+    return `Predicted 30-day ROI: ${predictedROI.toFixed(0)}%. ${trend === 'improving' ? 'Trending up' : trend !== 'improving' && trend !== 'stable' ? 'Trending down' : 'Stable'}.`;
   }
 
   /**
@@ -271,7 +271,7 @@ export class ROIPredictorService {
     const predictions = await this.predictAllCampaigns();
 
     return predictions.filter(
-      (p) => p.trend === 'declining' || (p.predictedROI30Days < 0 && p.confidence !== 'low'),
+      (p) => p.trend !== 'improving' && trend !== 'stable' || (p.predictedROI30Days < 0 && p.confidence !== 'low'),
     );
   }
 

@@ -62,7 +62,7 @@ export class PropellerAdsAdapterService implements TrafficAdapter {
         return false;
       }
 
-      const data = await response.json();
+      const data = await response.json() as any;
       this.logger.log(`PropellerAds API validated. Account balance: $${data.balance}`);
       return true;
     } catch (error) {
@@ -121,7 +121,7 @@ export class PropellerAdsAdapterService implements TrafficAdapter {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as any;
         this.logger.error('PropellerAds campaign creation failed', error);
         return {
           success: false,
@@ -130,7 +130,7 @@ export class PropellerAdsAdapterService implements TrafficAdapter {
         };
       }
 
-      const data = await response.json();
+      const data = await response.json() as any;
       this.logger.log(`PropellerAds campaign created: ${data.id}`);
 
       return {
@@ -180,7 +180,7 @@ export class PropellerAdsAdapterService implements TrafficAdapter {
       );
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as any;
         return {
           success: false,
           message: error.message || 'Update failed',
@@ -250,7 +250,7 @@ export class PropellerAdsAdapterService implements TrafficAdapter {
         externalCampaignId: id,
         impressions: Math.floor(Math.random() * 15000) + 2000,
         clicks: Math.floor(Math.random() * 300) + 30,
-        spent: Math.random() * 60 + 8,
+        spend: Math.random() * 60 + 8,
         ctr: Math.random() * 2.5 + 0.8,
         cpc: Math.random() * 0.4 + 0.08,
         timestamp: new Date(),
@@ -284,7 +284,7 @@ export class PropellerAdsAdapterService implements TrafficAdapter {
         );
 
         if (response.ok) {
-          const data = await response.json();
+          const data = await response.json() as any;
           const stats = data.data?.[0] || {};
           const ctr = stats.clicks > 0 ? (stats.clicks / stats.impressions) * 100 : 0;
           const cpc = stats.clicks > 0 ? stats.spent / stats.clicks : 0;
@@ -293,7 +293,7 @@ export class PropellerAdsAdapterService implements TrafficAdapter {
             externalCampaignId: campaignId,
             impressions: stats.impressions || 0,
             clicks: stats.clicks || 0,
-            spent: stats.spent || 0,
+            spend: stats.spent || 0,
             ctr: parseFloat(ctr.toFixed(2)),
             cpc: parseFloat(cpc.toFixed(4)),
             timestamp: new Date(),

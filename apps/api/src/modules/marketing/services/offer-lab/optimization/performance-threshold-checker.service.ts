@@ -121,10 +121,10 @@ export class PerformanceThresholdCheckerService {
     }
 
     // Check spend
-    if (performance.spent >= thresholds.minSpend) {
-      passedChecks.push(`✓ Spend: $${performance.spent.toFixed(2)} >= $${thresholds.minSpend}`);
+    if (performance.spend >= thresholds.minSpend) {
+      passedChecks.push(`✓ Spend: $${performance.spend.toFixed(2)} >= $${thresholds.minSpend}`);
     } else {
-      failedChecks.push(`✗ Spend: $${performance.spent.toFixed(2)} < $${thresholds.minSpend}`);
+      failedChecks.push(`✗ Spend: $${performance.spend.toFixed(2)} < $${thresholds.minSpend}`);
     }
 
     // Check ROI
@@ -333,7 +333,7 @@ export class PerformanceThresholdCheckerService {
     }
 
     // Check if underperforming
-    if (performance.roi < -50 && performance.spent > 50) {
+    if (performance.roi < -50 && performance.spend > 50) {
       return {
         action: 'pause',
         reason: 'Severe negative ROI. Pause and investigate.',

@@ -3472,6 +3472,7 @@ model AdCampaign {
   totalSpent    Decimal           @default(0) @db.Decimal(10, 2)
   status        String            @default("active") // active|paused|completed|error
   pauseReason   String?
+  pausedAt      DateTime? // When campaign was paused
   targetGeos    String[]
   targetDevices String[] // ['desktop', 'mobile', 'tablet']
   bidAmount     Decimal?          @db.Decimal(10, 4)

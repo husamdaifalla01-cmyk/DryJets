@@ -61,8 +61,8 @@ export class PopAdsAdapterService implements TrafficAdapter {
         return false;
       }
 
-      const data = await response.json();
-      this.logger.log(`PopAds API validated. Account balance: $${data.balance}`);
+      const data = await response.json() as { balance?: number };
+      this.logger.log(`PopAds API validated. Account balance: $${data.balance || 0}`);
       return true;
     } catch (error) {
       this.logger.error(`PopAds API validation error: ${error.message}`);
@@ -117,7 +117,7 @@ export class PopAdsAdapterService implements TrafficAdapter {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as { message?: string; errors?: any[] };
         this.logger.error('PopAds campaign creation failed', error);
         return {
           success: false,
@@ -126,12 +126,12 @@ export class PopAdsAdapterService implements TrafficAdapter {
         };
       }
 
-      const data = await response.json();
-      this.logger.log(`PopAds campaign created: ${data.campaign_id}`);
+      const data = await response.json() as { campaign_id?: string | number };
+      this.logger.log(`PopAds campaign created: ${data.campaign_id || 'unknown'}`);
 
       return {
         success: true,
-        externalCampaignId: data.campaign_id.toString(),
+        externalCampaignId: (data.campaign_id || '').toString(),
         message: 'Campaign created successfully',
       };
     } catch (error) {
@@ -176,7 +176,7 @@ export class PopAdsAdapterService implements TrafficAdapter {
       );
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as { message?: string };
         return {
           success: false,
           message: error.message || 'Update failed',
@@ -246,7 +246,7 @@ export class PopAdsAdapterService implements TrafficAdapter {
         externalCampaignId: id,
         impressions: Math.floor(Math.random() * 10000) + 1000,
         clicks: Math.floor(Math.random() * 200) + 20,
-        spent: Math.random() * 50 + 5,
+        spend: Math.random() * 50 + 5,
         ctr: Math.random() * 2 + 0.5,
         cpc: Math.random() * 0.5 + 0.1,
         timestamp: new Date(),
@@ -279,15 +279,18 @@ export class PopAdsAdapterService implements TrafficAdapter {
         );
 
         if (response.ok) {
-          const data = await response.json();
-          const ctr = data.clicks > 0 ? (data.clicks / data.impressions) * 100 : 0;
-          const cpc = data.clicks > 0 ? data.spent / data.clicks : 0;
+          const data = await response.json() as { impressions?: number; clicks?: number; spend?: number; spent?: number };
+          const impressions = data.impressions || 0;
+          const clicks = data.clicks || 0;
+          const spend = data.spend || data.spent || 0;
+          const ctr = clicks > 0 ? (clicks / impressions) * 100 : 0;
+          const cpc = clicks > 0 ? spend / clicks : 0;
 
           metrics.push({
             externalCampaignId: campaignId,
-            impressions: data.impressions || 0,
-            clicks: data.clicks || 0,
-            spent: data.spent || 0,
+            impressions,
+            clicks,
+            spend,
             ctr: parseFloat(ctr.toFixed(2)),
             cpc: parseFloat(cpc.toFixed(4)),
             timestamp: new Date(),

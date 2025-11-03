@@ -110,7 +110,8 @@ export class MaxBountyAdapterService implements NetworkAdapter {
 
     // Check if login was successful
     const isLoggedIn = await page.evaluate(() => {
-      return !window.location.href.includes('login');
+      // @ts-ignore - Running in browser context via Puppeteer
+      return !(window as any).location.href.includes('login');
     });
 
     if (!isLoggedIn) {
@@ -131,12 +132,14 @@ export class MaxBountyAdapterService implements NetworkAdapter {
       });
 
       // Extract offer data
+      // @ts-ignore - Running in browser context via Puppeteer
       const rawOffers = await page.evaluate(() => {
+        // @ts-ignore - document is available in browser context
         const offerRows = Array.from(
           document.querySelectorAll('tr.offer-row, .offer-item, table.offers-table tbody tr'),
         );
 
-        return offerRows.map((row) => {
+        return offerRows.map((row: any) => {
           try {
             // Extract data from table cells or divs
             const cells = row.querySelectorAll('td, .offer-cell');
@@ -171,7 +174,7 @@ export class MaxBountyAdapterService implements NetworkAdapter {
             const getGeos = () => {
               const geoCell = row.querySelector('.geo, .countries, td:nth-child(6)');
               const geoText = geoCell ? geoCell.textContent.trim() : 'US';
-              return geoText.split(/[,;]/).map((g) => g.trim());
+              return geoText.split(/[,;]/).map((g: string) => g.trim());
             };
 
             return {

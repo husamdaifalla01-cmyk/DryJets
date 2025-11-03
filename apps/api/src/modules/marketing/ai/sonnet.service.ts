@@ -49,6 +49,45 @@ export class SonnetService {
   }
 
   /**
+   * Generate structured content from a prompt
+   * Used by strategy services for competitor analysis, content validation, etc.
+   *
+   * @param prompt - The prompt to send to Claude Sonnet
+   * @returns Parsed JSON object or raw text if parsing fails
+   */
+  async generateStructuredContent(prompt: string): Promise<any> {
+    try {
+      this.logger.log('[SonnetService] Generating structured content...');
+
+      const message = await this.anthropic.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 4000,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      });
+
+      const response = message.content[0].type === 'text' ? message.content[0].text : '';
+
+      // Attempt to parse as JSON
+      try {
+        const parsed = JSON.parse(response);
+        this.logger.log('[SonnetService] Successfully parsed structured content as JSON');
+        return parsed;
+      } catch (parseError) {
+        this.logger.warn('[SonnetService] Could not parse as JSON, returning raw text');
+        return { content: response, raw: true };
+      }
+    } catch (error) {
+      this.logger.error('[SonnetService] Error generating structured content:', error.message);
+      throw new Error(`Failed to generate structured content: ${error.message}`);
+    }
+  }
+
+  /**
    * MIRA: Blog Generation with SEO Optimization
    */
   private async miraBlogGeneration(actionType: string, data: any, startTime: number) {
