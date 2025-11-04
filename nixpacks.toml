@@ -1,0 +1,23 @@
+# Nixpacks configuration for Railway deployment
+# Railway's preferred build system
+
+[phases.setup]
+nixPkgs = ["nodejs-20_x", "python3"]
+
+[phases.install]
+cmds = [
+  "npm ci"
+]
+
+[phases.build]
+cmds = [
+  "cd apps/api && npm run prebuild",
+  "cd apps/api && npm run build"
+]
+
+[start]
+cmd = "cd apps/api && node dist/main.js"
+
+[variables]
+NODE_ENV = "production"
+CI = "false"
