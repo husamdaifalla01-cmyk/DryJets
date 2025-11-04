@@ -1,8 +1,8 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
-  "_comment": "Railway deployment configuration for DryJets API - Uses Nixpacks by default",
+  "_comment": "Railway deployment configuration for DryJets API - Monorepo build from root",
   "build": {
-    "buildCommand": "cd apps/api && npm ci && npm run prebuild && npm run build",
+    "buildCommand": "npm ci && cd apps/api && npm run prebuild && npm run build",
     "watchPaths": [
       "apps/api/**",
       "packages/database/**",
