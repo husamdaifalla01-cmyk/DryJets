@@ -53,10 +53,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Database
-*.db
-*.db-journal
-
 # Prisma
 prisma/migrations/dev.db*
 
@@ -74,3 +70,4 @@ tmp
 
 *storybook.log
 storybook-static
+jets.env

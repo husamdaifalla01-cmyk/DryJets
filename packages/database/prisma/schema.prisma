@@ -30,29 +30,37 @@ enum UserStatus {
 }
 
 model User {
-  id            String     @id @default(cuid())
-  email         String     @unique
-  phone         String?    @unique
-  passwordHash  String
-  role          UserRole
-  status        UserStatus @default(PENDING_VERIFICATION)
-  emailVerified Boolean    @default(false)
-  phoneVerified Boolean    @default(false)
-  profileImage  String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  lastLoginAt   DateTime?
+  id                   String     @id @default(cuid())
+  email                String     @unique
+  phone                String?    @unique
+  passwordHash         String
+  role                 UserRole
+  status               UserStatus @default(PENDING_VERIFICATION)
+  emailVerified        Boolean    @default(false)
+  phoneVerified        Boolean    @default(false)
+  profileImage         String?
+
+  // Stripe Integration
+  stripeCustomerId     String?    @unique // For customers
+  stripeConnectId      String?    @unique // For merchants/drivers (Express accounts)
+  stripeConnectStatus  String?    // Account status: pending, active, restricted, etc.
+
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  lastLoginAt          DateTime?
 
   // Relationships
-  customer      Customer?
-  driver        Driver?
-  merchant      Merchant?
-  notifications Notification[]
-  sessions      UserSession[]
+  customer             Customer?
+  driver               Driver?
+  merchant             Merchant?
+  notifications        Notification[]
+  sessions             UserSession[]
 
   @@index([email])
   @@index([phone])
   @@index([role])
+  @@index([stripeCustomerId])
+  @@index([stripeConnectId])
 }
 
 model UserSession {
@@ -495,28 +503,40 @@ enum PaymentMethod {
 }
 
 model Payment {
-  id                  String        @id @default(cuid())
-  orderId             String        @unique
-  customerId          String
-  merchantId          String
-  amount              Float
-  currency            String        @default("USD")
-  status              PaymentStatus @default(PENDING)
-  paymentMethod       PaymentMethod
-  stripePaymentIntent String?       @unique
-  stripeChargeId      String?
-  merchantPayout      Float
-  platformFee         Float
-  driverPayout        Float
-  refundAmount        Float         @default(0)
-  refundReason        String?
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  id                    String        @id @default(cuid())
+  orderId               String        @unique
+  customerId            String
+  merchantId            String
+  amount                Float
+  currency              String        @default("USD")
+  status                PaymentStatus @default(PENDING)
+  paymentMethod         PaymentMethod
+
+  // Stripe Integration
+  stripePaymentIntent   String?       @unique
+  stripeChargeId        String?
+  stripeFee             Float         @default(0) // Stripe processing fee
+  stripeTransferId      String?       // Transfer to merchant
+  stripeDriverTransferId String?      // Transfer to driver
+
+  // Payout Calculations
+  merchantPayout        Float
+  platformFee           Float
+  driverPayout          Float
+
+  // Refunds
+  refundAmount          Float         @default(0)
+  refundReason          String?
+  stripeRefundId        String?
+
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([status])
+  @@index([stripePaymentIntent])
   @@index([createdAt])
 }
 
@@ -754,20 +774,35 @@ enum SubscriptionStatus {
 }
 
 model Subscription {
-  id                  String                @id @default(cuid())
-  customerId          String
-  merchantId          String
-  frequency           SubscriptionFrequency
-  status              SubscriptionStatus    @default(ACTIVE)
-  nextScheduledDate   DateTime
-  preferredPickupTime String?
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
+  id                    String                @id @default(cuid())
+  customerId            String
+  merchantId            String
+  frequency             SubscriptionFrequency
+  status                SubscriptionStatus    @default(ACTIVE)
+
+  // Stripe Integration
+  stripeSubscriptionId  String?               @unique
+  stripePriceId         String?
+  planType              String                // "basic", "premium", "business"
+  amount                Float                 // Subscription amount in cents
+  freeLbsIncluded       Int                   // Free pounds included in plan
+  excessRate            Float                 // Rate per pound over free limit
+
+  nextScheduledDate     DateTime
+  preferredPickupTime   String?
+  cancelAtPeriodEnd     Boolean               @default(false)
+  cancelledAt           DateTime?
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 
   customer Customer @relation(fields: [customerId], references: [id])
 
   @@index([customerId])
   @@index([status])
+  @@index([stripeSubscriptionId])
   @@index([nextScheduledDate])
 }
 

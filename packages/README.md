@@ -1,6 +1,6 @@
 # DryJets Packages
 
-Monorepo packages for the DryJetsOS platform.
+Monorepo packages for the DryJets platform.
 
 ## Packages
 
@@ -9,7 +9,6 @@ Monorepo packages for the DryJetsOS platform.
 
 - Design tokens (colors, typography, spacing, shadows)
 - DryJetsButton (tactile button with neon glows)
-- SyncStatusIndicator (sync status dots)
 - ToastNotification (toast system with context)
 
 ```typescript
@@ -18,23 +17,6 @@ import { DryJetsButton, tokens } from '@dryjets/ui';
 <DryJetsButton variant="primary" size="md">
   Click me
 </DryJetsButton>
-```
-
-### [@dryjets/storage](./storage/)
-**Offline-first storage adapters**
-
-- Universal storage interface
-- DexieAdapter (IndexedDB for web)
-- SqliteAdapter (SQLite for Electron)
-- Auto-sync with retry logic
-
-```typescript
-import { createStorageAdapter } from '@dryjets/storage';
-
-const storage = createStorageAdapter('web');
-await storage.init();
-
-const localId = await storage.saveLocal('orders', orderData);
 ```
 
 ### [@dryjets/hooks](./hooks/)
@@ -47,7 +29,19 @@ const localId = await storage.saveLocal('orders', orderData);
 import { useNetworkStatus, useIsOnline } from '@dryjets/hooks';
 
 const isOnline = useIsOnline();
-const pendingCount = usePendingCount();
+```
+
+### [@dryjets/database](./database/)
+**Prisma database schema and migrations**
+
+- Supabase PostgreSQL integration
+- Type-safe database client
+- Database migrations
+
+```typescript
+import { prisma } from '@dryjets/database';
+
+const orders = await prisma.order.findMany();
 ```
 
 ## Installation
@@ -67,9 +61,9 @@ Each package has its own `package.json` and can be developed independently.
 ## Documentation
 
 - [Design Tokens](./ui/dryjets-tokens.ts)
-- [Storage Adapters](./storage/index.ts)
 - [Network Status Hook](./hooks/useNetworkStatus.ts)
 - [Keyboard Shortcuts](./hooks/useKeyboardShortcuts.ts)
+- [Database Schema](./database/prisma/schema.prisma)
 
 ## License
 

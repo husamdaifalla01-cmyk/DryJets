@@ -1,8 +1,8 @@
 # DryJets Platform
 
-> **Comprehensive Dry Cleaning & Laundry Marketplace Platform**
+> **Cloud-First Dry Cleaning & Laundry Marketplace Platform**
 
-DryJets is a three-sided marketplace platform connecting customers, drivers, and merchants (laundromats/dry cleaners) for on-demand and scheduled laundry services - like Uber Eats for dry cleaning.
+DryJets is a three-sided marketplace platform connecting customers, drivers, and merchants (laundromats/dry cleaners) for on-demand and scheduled laundry services - like Uber Eats for dry cleaning. Built entirely on Supabase for modern, scalable cloud infrastructure.
 
 ## Overview
 
@@ -52,26 +52,27 @@ DryJets revolutionizes the dry cleaning and laundry industry by providing:
 - **UI Framework**: Tailwind CSS + shadcn/ui
 - **State Management**: Zustand + TanStack Query
 
-### Backend
-- **API**: NestJS (Node.js) with TypeScript
-- **Database**: PostgreSQL with Prisma ORM
-- **Caching**: Redis
-- **Search**: Elasticsearch
-- **Real-time**: Socket.io
-- **Queue**: BullMQ
+### Backend & Cloud Infrastructure (Supabase)
+- **Database**: PostgreSQL with Prisma ORM (hosted on Supabase)
+- **Authentication**: Supabase Auth
+- **Real-time**: Supabase Realtime (WebSocket subscriptions)
+- **Storage**: Supabase Storage for file uploads
+- **Edge Functions**: Deno-based serverless functions
+- **API**: Auto-generated REST & GraphQL APIs via PostgREST
+- **Row-Level Security**: Built-in RLS policies
 
-### Infrastructure
+### Development Infrastructure
 - **Monorepo**: Turborepo
-- **Containerization**: Docker
-- **Cloud**: AWS/GCP (configurable)
+- **Local Development**: Docker Compose for supporting services
+- **Cloud**: Fully managed by Supabase
 
 ### Third-Party Services
+- **Cloud Platform**: Supabase (Database, Auth, Storage, Realtime)
 - **Payments**: Stripe Connect
 - **Maps**: Google Maps / Mapbox
 - **SMS**: Twilio
-- **Email**: SendGrid
+- **Email**: SendGrid / Supabase Email
 - **AI**: OpenAI GPT-4
-- **Storage**: AWS S3 / Cloudflare R2
 
 ## Project Structure
 
@@ -108,9 +109,8 @@ dryjets-platform/
 
 - **Node.js** 20.x or higher
 - **npm** 10.x or higher
-- **PostgreSQL** 16.x
-- **Redis** 7.x
-- **Docker** (optional but recommended)
+- **Supabase Account** (free tier available at https://supabase.com)
+- **Docker** (optional, for local Redis/testing only)
 
 ### Installation
 
@@ -127,52 +127,51 @@ cd dryjets-platform
 npm install
 ```
 
-3. **Set up environment variables**
+3. **Set up Supabase Project**
+
+- Create a new project at [supabase.com](https://supabase.com)
+- Copy your project URL and anon key
+- Create a `.env` file with your Supabase credentials:
 
 ```bash
 cp .env.example .env
-# Edit .env with your configuration
+# Add your Supabase credentials:
+# SUPABASE_URL=your-project-url
+# SUPABASE_ANON_KEY=your-anon-key
+# DATABASE_URL=your-supabase-postgres-connection-string
 ```
 
-4. **Start the database services**
-
-```bash
-cd infrastructure/docker
-docker-compose up -d postgres redis elasticsearch
-```
-
-5. **Run database migrations**
+4. **Run database migrations**
 
 ```bash
 cd packages/database
 npm run db:migrate
 ```
 
-6. **Generate Prisma client**
+5. **Generate Prisma client**
 
 ```bash
 npm run db:generate
 ```
 
-7. **Start the development servers**
+6. **Start the development servers**
 
 ```bash
 # Start all apps in development mode
 npm run dev
 
 # Or start specific apps:
-npm run dev --workspace=@dryjets/api
 npm run dev --workspace=@dryjets/web-merchant
 npm run dev --workspace=@dryjets/mobile-customer
 npm run dev --workspace=@dryjets/mobile-driver
 ```
 
+Note: Backend API is handled by Supabase auto-generated APIs. For custom business logic, deploy Edge Functions to your Supabase project.
+
 ### Accessing the Applications
 
-- **API**: http://localhost:3000
-- **API Docs**: http://localhost:3000/api/docs
-- **Merchant Portal**: http://localhost:3001
-- **Admin Dashboard**: http://localhost:3002
+- **Supabase Dashboard**: https://app.supabase.com (database, auth, storage management)
+- **Merchant Portal**: http://localhost:3002
 - **Customer App**: Expo Go (scan QR code)
 - **Driver App**: Expo Go (scan QR code)
 
@@ -239,19 +238,18 @@ npm run type-check
 
 ## Docker Development
 
-Use Docker Compose for a complete development environment:
+Docker is only needed for optional supporting services (not required as Supabase handles core infrastructure):
 
 ```bash
 cd infrastructure/docker
 docker-compose up
 ```
 
-This starts:
-- PostgreSQL database
-- Redis cache
-- Elasticsearch
-- Backend API
-- Merchant Portal
+This starts optional services like:
+- Redis cache (for caching if needed)
+- Other supporting services
+
+Note: PostgreSQL, Authentication, Storage, and Realtime are all handled by Supabase cloud.
 
 ## Deployment
 
@@ -283,36 +281,29 @@ docker-compose -f infrastructure/docker/docker-compose.prod.yml up -d
 
 ## API Documentation
 
-API documentation is automatically generated using Swagger/OpenAPI and is available at:
+DryJets uses Supabase's auto-generated APIs:
 
-```
-http://localhost:3000/api/docs
-```
+- **REST API**: Auto-generated by PostgREST based on your database schema
+- **GraphQL API**: Available through Supabase's GraphQL endpoint
+- **API Documentation**: View in your Supabase dashboard under "API Docs"
+- **Realtime Subscriptions**: WebSocket connections for real-time updates
+
+Custom business logic is implemented via Supabase Edge Functions (serverless Deno functions).
 
 ## Architecture
 
 ### Backend Architecture
 
-The backend follows a modular NestJS architecture:
+The backend leverages Supabase's cloud infrastructure:
 
-```
-apps/api/src/
-├── modules/
-│   ├── auth/           # Authentication & authorization
-│   ├── users/          # User management
-│   ├── orders/         # Order processing
-│   ├── merchants/      # Merchant operations
-│   ├── drivers/        # Driver operations
-│   ├── payments/       # Payment processing
-│   ├── notifications/  # Push/SMS/Email notifications
-│   └── analytics/      # Analytics & reporting
-├── common/
-│   ├── guards/         # Auth guards
-│   ├── interceptors/   # HTTP interceptors
-│   ├── filters/        # Exception filters
-│   └── decorators/     # Custom decorators
-└── config/             # Configuration modules
-```
+- **Database Layer**: PostgreSQL with Row-Level Security (RLS) policies
+- **API Layer**: Auto-generated REST & GraphQL APIs via PostgREST
+- **Auth Layer**: Supabase Auth with multiple providers (email, OAuth, etc.)
+- **Real-time Layer**: WebSocket subscriptions for live updates
+- **Storage Layer**: Supabase Storage for file uploads
+- **Business Logic**: Supabase Edge Functions (Deno-based serverless functions)
+
+Custom business logic and complex operations are handled via Edge Functions deployed to your Supabase project.
 
 ### Frontend Architecture
 

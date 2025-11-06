@@ -1,7 +1,7 @@
 /**
  * DryJets Design System Tokens
  *
- * Enterprise-grade design system for offline-first laundromat OS
+ * Enterprise-grade design system for cloud-first laundromat platform
  * Inspired by modern control centers with tactile, industrial aesthetics
  */
 
